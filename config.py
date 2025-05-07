@@ -1,13 +1,23 @@
 import os
 
-# Database configuration
-DATABASE_FILE = 'service_bot.db'
+# Токен Telegram бота
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 
-# Telegram bot token from environment variable
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+# Настройки базы данных
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-# Status options for orders
-ORDER_STATUSES = ['new', 'processing', 'completed', 'cancelled']
+# Роли пользователей
+ROLES = {
+    'dispatcher': 'Диспетчер',
+    'technician': 'Техник',
+    'admin': 'Администратор'
+}
 
-# User roles
-USER_ROLES = ['client', 'admin']
+# Статусы заказов
+ORDER_STATUSES = {
+    'new': 'Новый',
+    'assigned': 'Назначен',
+    'in_progress': 'В работе',
+    'completed': 'Завершен',
+    'cancelled': 'Отменен'
+}

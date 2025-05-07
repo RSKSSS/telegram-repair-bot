@@ -1,49 +1,32 @@
-import os
-import time
-import telepot
-import logging
-from telepot.loop import MessageLoop
-from database import initialize_database
-from bot import setup_handlers
-from config import TELEGRAM_BOT_TOKEN
+#!/usr/bin/env python3
+"""
+Главный файл для запуска Telegram бота для управления заказами на ремонт компьютеров
+"""
 
-# Enable logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-)
+import logging
+import os
+from database import initialize_database
+from bot import bot
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def main():
-    """Start the bot."""
-    if not TELEGRAM_BOT_TOKEN:
-        logger.error("No bot token provided. Please set the TELEGRAM_BOT_TOKEN environment variable.")
-        return
-    
-    # Initialize database
+    """Запуск бота"""
+    logger.info("Инициализация базы данных...")
     initialize_database()
     
-    logger.info("Starting Computer Repair Service Bot with telepot")
+    logger.info("Запуск бота сервиса ремонта компьютеров...")
     
-    # Create the bot
-    bot = telepot.Bot(TELEGRAM_BOT_TOKEN)
+    # Проверяем наличие токена
+    if not os.environ.get('TELEGRAM_BOT_TOKEN'):
+        logger.error("Ошибка: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
+        return
     
-    # Delete any existing webhook first
-    bot.deleteWebhook()
-    
-    # Setup handlers for messages and callbacks
-    handlers = setup_handlers(bot)
-    
-    # Set up message handler
-    MessageLoop(bot, handlers).run_as_thread()
-    logger.info("Bot is listening...")
-    
-    # Keep the program running
-    while True:
-        try:
-            time.sleep(10)
-        except KeyboardInterrupt:
-            logger.info("Bot stopped")
-            break
+    # Запускаем бота
+    logger.info("Бот слушает сообщения...")
+    bot.infinity_polling()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
