@@ -6,7 +6,7 @@
 ROLES = {
     'admin': 'Администратор',
     'dispatcher': 'Диспетчер',
-    'technician': 'Техник'
+    'technician': 'Мастер'
 }
 
 # Статусы заказов
