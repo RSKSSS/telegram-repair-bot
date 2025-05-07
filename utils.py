@@ -1,123 +1,157 @@
-import logging
 import re
-from typing import Dict, List, Optional, Tuple, Any
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode
-from telegram.ext import CallbackContext
-import database as db
-from config import ADMIN_IDS
-
-logger = logging.getLogger(__name__)
-
-# Regular expressions
-PHONE_REGEX = re.compile(r'^(?:\+\d{1,3})?\d{10,12}$')
+from typing import List, Dict, Tuple, Optional
+from database import get_user_role, get_all_users
 
 def is_admin(user_id: int) -> bool:
     """Check if a user is an admin"""
-    return user_id in ADMIN_IDS or db.get_user_role(user_id) == 'admin'
+    role = get_user_role(user_id)
+    return role == 'admin'
 
-def get_main_menu_keyboard(user_id: int) -> InlineKeyboardMarkup:
+def get_main_menu_keyboard(user_id: int):
     """Get the main menu keyboard based on user role"""
-    keyboard = [
-        [InlineKeyboardButton("Добавить заказ", callback_data='add_order')],
-        [InlineKeyboardButton("Мои заказы", callback_data='my_orders')]
+    from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
+    
+    # Общие кнопки для всех пользователей
+    buttons = [
+        [InlineKeyboardButton(text="📝 Новый заказ", callback_data="new_order")],
+        [InlineKeyboardButton(text="📋 Мои заказы", callback_data="my_orders")],
+        [InlineKeyboardButton(text="ℹ️ Помощь", callback_data="help")]
     ]
     
-    # Admin buttons
+    # Добавляем кнопки для админов
     if is_admin(user_id):
-        keyboard.extend([
-            [InlineKeyboardButton("Все заказы", callback_data='all_orders')],
-            [InlineKeyboardButton("Управление пользователями", callback_data='manage_users')]
-        ])
+        admin_buttons = [
+            [InlineKeyboardButton(text="👨‍💼 Управление заказами", callback_data="manage_orders")],
+            [InlineKeyboardButton(text="👥 Управление пользователями", callback_data="manage_users")]
+        ]
+        buttons = admin_buttons + buttons
     
-    return InlineKeyboardMarkup(keyboard)
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def get_order_status_keyboard(order_id: int) -> InlineKeyboardMarkup:
+def get_order_status_keyboard(order_id: int):
     """Get keyboard for updating order status"""
-    keyboard = [
+    from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
+    
+    buttons = [
         [
-            InlineKeyboardButton("В работе", callback_data=f'status:{order_id}:processing'),
-            InlineKeyboardButton("Завершен", callback_data=f'status:{order_id}:completed')
+            InlineKeyboardButton(text="⚙️ В работе", callback_data=f"status_{order_id}_processing"),
+            InlineKeyboardButton(text="✅ Завершен", callback_data=f"status_{order_id}_completed")
         ],
         [
-            InlineKeyboardButton("Отменен", callback_data=f'status:{order_id}:cancelled'),
-            InlineKeyboardButton("Назад", callback_data='all_orders')
+            InlineKeyboardButton(text="❌ Отменен", callback_data=f"status_{order_id}_cancelled")
+        ],
+        [
+            InlineKeyboardButton(text="🔙 Назад", callback_data="manage_orders")
         ]
     ]
-    return InlineKeyboardMarkup(keyboard)
+    
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def get_order_management_keyboard(order_id: int) -> InlineKeyboardMarkup:
+def get_order_management_keyboard(order_id: int):
     """Get keyboard for order management"""
-    keyboard = [
-        [InlineKeyboardButton("Изменить статус", callback_data=f'change_status:{order_id}')],
-        [InlineKeyboardButton("Добавить стоимость", callback_data=f'add_cost:{order_id}')],
-        [InlineKeyboardButton("Добавить описание работ", callback_data=f'add_description:{order_id}')],
-        [InlineKeyboardButton("Назад", callback_data='all_orders')]
+    from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
+    
+    buttons = [
+        [
+            InlineKeyboardButton(text="📊 Изменить статус", callback_data=f"change_status_{order_id}")
+        ],
+        [
+            InlineKeyboardButton(text="💰 Добавить стоимость", callback_data=f"add_cost_{order_id}"),
+            InlineKeyboardButton(text="📝 Добавить описание", callback_data=f"add_description_{order_id}")
+        ],
+        [
+            InlineKeyboardButton(text="🔙 Назад", callback_data="manage_orders")
+        ]
     ]
-    return InlineKeyboardMarkup(keyboard)
+    
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def get_back_to_main_menu_keyboard() -> InlineKeyboardMarkup:
+def get_back_to_main_menu_keyboard():
     """Get keyboard with only a back button to main menu"""
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("Вернуться в главное меню", callback_data='back_to_main')]
-    ])
-
-def get_user_management_keyboard() -> InlineKeyboardMarkup:
-    """Get keyboard for user management"""
-    keyboard = [
-        [InlineKeyboardButton("Список пользователей", callback_data='list_users')],
-        [InlineKeyboardButton("Добавить администратора", callback_data='add_admin')],
-        [InlineKeyboardButton("Вернуться в главное меню", callback_data='back_to_main')]
+    from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
+    
+    buttons = [
+        [InlineKeyboardButton(text="🔙 Главное меню", callback_data="main_menu")]
     ]
-    return InlineKeyboardMarkup(keyboard)
+    
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def send_order_notification_to_admins(context: CallbackContext, order_id: int):
+def get_user_management_keyboard():
+    """Get keyboard for user management"""
+    from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
+    
+    buttons = [
+        [InlineKeyboardButton(text="👨‍💼 Добавить администратора", callback_data="add_admin")],
+        [InlineKeyboardButton(text="👤 Список пользователей", callback_data="list_users")],
+        [InlineKeyboardButton(text="🔙 Главное меню", callback_data="main_menu")]
+    ]
+    
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+def send_order_notification_to_admins(bot, order_id: int):
     """Send a notification to all admins about a new order"""
-    order = db.get_order(order_id)
-    if not order:
-        logger.error(f"Failed to find order {order_id} for admin notification")
+    from database import get_order
+    
+    # Получаем данные заказа
+    order_data = get_order(order_id)
+    if not order_data:
         return
     
+    # Создаем объект Order из словаря
     from models import Order
-    order_obj = Order.from_dict(order)
+    order = Order.from_dict(order_data)
     
-    notification_text = (
-        f"🆕 <b>НОВЫЙ ЗАКАЗ #{order_id}</b>\n\n"
-        f"👤 <b>Клиент:</b> {order['client_name']}\n"
-        f"📞 <b>Телефон:</b> {order['client_phone']}\n"
-        f"🏠 <b>Адрес:</b> {order['client_address']}\n\n"
-        f"🔧 <b>Проблема:</b>\n{order['problem_description']}"
-    )
+    # Получаем список админов
+    admins = [user for user in get_all_users() if user['role'] == 'admin']
     
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("Детали заказа", callback_data=f'view_order:{order_id}')]
-    ])
+    # Формируем сообщение
+    message = f"🆕 <b>Новый заказ #{order_id}</b>\n\n"
+    message += f"👤 Клиент: {order.client_name}\n"
+    message += f"📞 Телефон: {order.client_phone}\n"
+    message += f"🏠 Адрес: {order.client_address}\n\n"
+    message += f"🔧 Проблема: {order.problem_description}\n"
     
-    for admin_id in ADMIN_IDS:
+    # Кнопки управления заказом
+    keyboard = get_order_management_keyboard(order_id)
+    
+    # Отправляем уведомление всем админам
+    for admin in admins:
         try:
-            context.bot.send_message(
-                chat_id=admin_id,
-                text=notification_text,
-                reply_markup=keyboard,
-                parse_mode=ParseMode.HTML
+            bot.sendMessage(
+                admin['user_id'],
+                message,
+                parse_mode='HTML',
+                reply_markup=keyboard
             )
         except Exception as e:
-            logger.error(f"Failed to send notification to admin {admin_id}: {e}")
+            print(f"Error sending notification to admin {admin['user_id']}: {e}")
 
 def validate_phone(phone: str) -> bool:
     """Validate phone number format"""
-    # Remove spaces and hyphens
-    phone = re.sub(r'[\s-]', '', phone)
-    return bool(PHONE_REGEX.match(phone))
+    # Удаляем все нецифровые символы для проверки
+    clean_phone = re.sub(r'\D', '', phone)
+    
+    # Проверяем, что телефон содержит 10-12 цифр
+    if 10 <= len(clean_phone) <= 12:
+        return True
+    
+    return False
 
-def format_orders_list(orders: List[Dict], show_buttons: bool = True) -> Tuple[str, Optional[InlineKeyboardMarkup]]:
+def format_orders_list(orders: List[Dict], show_buttons: bool = True) -> Tuple[str, Optional[dict]]:
     """Format a list of orders for display"""
+    from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
+    
     if not orders:
-        return "Заказов не найдено.", get_back_to_main_menu_keyboard() if show_buttons else None
+        return "У вас пока нет заказов.", get_back_to_main_menu_keyboard() if show_buttons else None
     
-    text = "<b>Список заказов:</b>\n\n"
-    keyboard = []
+    # Создаем текст сообщения
+    message = "<b>Список заказов:</b>\n\n"
     
-    for order in orders[:10]:  # Limit to 10 orders to avoid message size limits
+    # Создаем кнопки для каждого заказа, если нужно
+    buttons = []
+    
+    for order in orders:
+        # Эмодзи статуса
         status_emoji = {
             'new': '🆕',
             'processing': '⚙️',
@@ -125,20 +159,19 @@ def format_orders_list(orders: List[Dict], show_buttons: bool = True) -> Tuple[s
             'cancelled': '❌'
         }.get(order['status'], '❓')
         
-        order_line = (
-            f"{status_emoji} <b>Заказ #{order['order_id']}</b> - {order['client_name']} "
-            f"({order['client_phone']})\n"
-        )
-        text += order_line
+        # Добавляем информацию о заказе в сообщение
+        message += f"{status_emoji} <b>Заказ #{order['order_id']}</b> - {order['client_name']}\n"
         
+        # Если нужно показать кнопки, добавляем кнопку для этого заказа
         if show_buttons:
-            keyboard.append([InlineKeyboardButton(
-                f"Заказ #{order['order_id']} - {order['client_name']}",
-                callback_data=f'view_order:{order["order_id"]}'
+            buttons.append([InlineKeyboardButton(
+                text=f"Заказ #{order['order_id']} - {order['client_name']}",
+                callback_data=f"order_{order['order_id']}"
             )])
     
+    # Добавляем кнопку возврата в главное меню
     if show_buttons:
-        keyboard.append([InlineKeyboardButton("Вернуться в главное меню", callback_data='back_to_main')])
-        return text, InlineKeyboardMarkup(keyboard)
-    else:
-        return text, None
+        buttons.append([InlineKeyboardButton(text="🔙 Назад", callback_data="main_menu")])
+        return message, InlineKeyboardMarkup(inline_keyboard=buttons)
+    
+    return message, None

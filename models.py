@@ -1,75 +1,52 @@
-from datetime import datetime
-from typing import Optional, Dict, Any
-from app import db
+from dataclasses import dataclass
+from typing import Optional, List, Dict, Any
+import json
 
-class User(db.Model):
-    """User model for the database"""
-    __tablename__ = 'users'
-    
-    # Columns
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, unique=True, nullable=False)
-    first_name = db.Column(db.String(100), nullable=False)
-    last_name = db.Column(db.String(100))
-    username = db.Column(db.String(100))
-    role = db.Column(db.String(20), nullable=False, default='client')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    orders = db.relationship('Order', backref='user', lazy=True)
-    
-    def __repr__(self):
-        return f'<User {self.user_id}: {self.first_name}>'
+@dataclass
+class User:
+    user_id: int
+    first_name: str
+    last_name: Optional[str] = None
+    username: Optional[str] = None
+    role: str = 'client'
     
     @classmethod
     def from_dict(cls, data):
-        """Create a User instance from dictionary data"""
-        user = cls(
+        return cls(
             user_id=data['user_id'],
             first_name=data['first_name'],
             last_name=data.get('last_name'),
             username=data.get('username'),
             role=data.get('role', 'client')
         )
-        return user
     
     def to_dict(self):
-        """Convert User to dictionary"""
         return {
-            'id': self.id,
             'user_id': self.user_id,
             'first_name': self.first_name,
             'last_name': self.last_name,
             'username': self.username,
-            'role': self.role,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'role': self.role
         }
 
-
-class Order(db.Model):
-    """Order model for the database"""
-    __tablename__ = 'orders'
-    
-    # Columns
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-    client_phone = db.Column(db.String(20), nullable=False)
-    client_name = db.Column(db.String(100), nullable=False)
-    client_address = db.Column(db.String(255), nullable=False)
-    problem_description = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), nullable=False, default='new')
-    service_cost = db.Column(db.Float)
-    service_description = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    def __repr__(self):
-        return f'<Order {self.id}: {self.status}>'
+@dataclass
+class Order:
+    order_id: int
+    user_id: int
+    client_phone: str
+    client_name: str
+    client_address: str
+    problem_description: str
+    status: str = 'new'
+    service_cost: Optional[float] = None
+    service_description: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
     
     @classmethod
     def from_dict(cls, data):
-        """Create an Order instance from dictionary data"""
-        order = cls(
+        return cls(
+            order_id=data['order_id'],
             user_id=data['user_id'],
             client_phone=data['client_phone'],
             client_name=data['client_name'],
@@ -77,14 +54,14 @@ class Order(db.Model):
             problem_description=data['problem_description'],
             status=data.get('status', 'new'),
             service_cost=data.get('service_cost'),
-            service_description=data.get('service_description')
+            service_description=data.get('service_description'),
+            created_at=data.get('created_at'),
+            updated_at=data.get('updated_at')
         )
-        return order
     
     def to_dict(self):
-        """Convert Order to dictionary"""
         return {
-            'id': self.id,
+            'order_id': self.order_id,
             'user_id': self.user_id,
             'client_phone': self.client_phone,
             'client_name': self.client_name,
@@ -93,8 +70,8 @@ class Order(db.Model):
             'status': self.status,
             'service_cost': self.service_cost,
             'service_description': self.service_description,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'created_at': self.created_at,
+            'updated_at': self.updated_at
         }
     
     def format_for_display(self):
@@ -106,7 +83,7 @@ class Order(db.Model):
             'cancelled': '❌'
         }
         
-        order_text = f"📋 <b>Заказ #{self.id}</b>\n"
+        order_text = f"📋 <b>Заказ #{self.order_id}</b>\n"
         order_text += f"{status_emoji.get(self.status, '❓')} <b>Статус:</b> {self.status_to_russian()}\n\n"
         order_text += f"👤 <b>Клиент:</b> {self.client_name}\n"
         order_text += f"📞 <b>Телефон:</b> {self.client_phone}\n"
@@ -120,13 +97,11 @@ class Order(db.Model):
             order_text += f"\n💰 <b>Стоимость:</b> {self.service_cost} руб.\n"
         
         if self.created_at:
-            created_at_str = self.created_at.strftime("%Y-%m-%d %H:%M")
-            order_text += f"\n📅 <b>Создан:</b> {created_at_str}\n"
+            order_text += f"\n📅 <b>Создан:</b> {self.created_at}\n"
         
         return order_text
     
     def status_to_russian(self):
-        """Convert status to Russian language"""
         status_map = {
             'new': 'Новый',
             'processing': 'В работе',
