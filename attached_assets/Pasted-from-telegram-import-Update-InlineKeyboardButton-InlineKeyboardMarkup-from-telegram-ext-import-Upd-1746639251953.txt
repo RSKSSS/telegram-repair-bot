@@ -1,0 +1,103 @@
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, ConversationHandler
+from telegram.ext import CallbackContext
+
+# Определяем состояния
+ADD_ORDER, INPUT_PHONE, INPUT_NAME, INPUT_ADDRESS, INPUT_PROBLEM = range(5)
+user_roles = {}  # Словарь для хранения ролей пользователей
+
+# Хранение данных о клиентах (в реальном приложении лучше использовать базу данных)
+clients = {}
+
+def start(update: Update, context: CallbackContext):
+    keyboard = [
+        [InlineKeyboardButton("Добавить заказ", callback_data='add_order')],
+        [InlineKeyboardButton("История заказов", callback_data='order_history')]
+    ]
+    
+    # Проверяем роль пользователя
+    if user_roles.get(update.effective_user.id) == 'admin':
+        keyboard.append([InlineKeyboardButton("Управление пользователями", callback_data='manage_users')])
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text('Выберите действие:', reply_markup=reply_markup)
+
+def button(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+
+    if query.data == 'add_order':
+        query.edit_message_text(text="Введите номер телефона клиента:")
+        return INPUT_PHONE
+
+def input_phone(update: Update, context: CallbackContext):
+    context.user_data['phone'] = update.message.text
+    update.message.reply_text("Введите имя клиента:")
+    return INPUT_NAME
+
+def input_name(update: Update, context: CallbackContext):
+    context.user_data['name'] = update.message.text
+    update.message.reply_text("Введите адрес (город, улица, дом):")
+    return INPUT_ADDRESS
+
+def input_address(update: Update, context: CallbackContext):
+    context.user_data['address'] = update.message.text
+    update.message.reply_text("Опишите проблему с компьютером:")
+    return INPUT_PROBLEM
+
+def input_problem(update: Update, context: CallbackContext):
+    phone = context.user_data['phone']
+    
+    # Сохраняем данные о клиенте в словаре (или базе данных)
+    clients[phone] = {
+        'имя': context.user_data['name'],
+        'адрес': context.user_data['address'],
+        'проблема': update.message.text,
+        'стоимость_услуг': None,
+        'описание_услуг': None
+    }
+    
+    # Уведомляем администратора (здесь просто выводим в консоль)
+    print(f"Новый заказ от {context.user_data['name']}: {update.message.text}")
+    
+    # Возвращаемся в главное меню
+    start(update)
+
+def order_history(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    
+    if user_roles.get(user_id) == 'admin':
+        # Выводим историю всех заказов для администратора
+        history_message = "История всех заказов:\n"
+        for phone in clients:
+            history_message += f"{clients[phone]}\n"
+        
+        update.message.reply_text(history_message)
+        
+    else:
+        update.message.reply_text("У вас нет истории заказов.")
+
+def main():
+    updater = Updater("8158789441:AAHyTYrEYgTKInTE_1_EzjuePRGZpT65PlM
+")  # Замените YOUR_TOKEN на токен вашего бота
+    
+    dp = updater.dispatcher
+    
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            INPUT_PHONE: [MessageHandler(Filters.text & ~Filters.command, input_phone)],
+            INPUT_NAME: [MessageHandler(Filters.text & ~Filters.command, input_name)],
+            INPUT_ADDRESS: [MessageHandler(Filters.text & ~Filters.command, input_address)],
+            INPUT_PROBLEM: [MessageHandler(Filters.text & ~Filters.command, input_problem)],
+        },
+        fallbacks=[]
+    )
+    
+    dp.add_handler(conv_handler)
+    
+    updater.start_polling()
+    updater.idle()
+
+if name == '__main__':
+    main()
