@@ -127,12 +127,18 @@ def handle_start_command(message):
                 f"🔔 *Новый пользователь в системе*\n\n"
                 f"👤 {first_name} {last_name or ''}{username_info}\n"
                 f"🆔 ID: {user_id}\n\n"
-                f"Для подтверждения или отклонения используйте команду /manage_users"
             )
+            
+            # Создаем инлайн клавиатуру с кнопками принять/отказать
+            keyboard = types.InlineKeyboardMarkup(row_width=2)
+            approve_button = types.InlineKeyboardButton(text="✅ Принять", callback_data=f"approve_{user_id}")
+            reject_button = types.InlineKeyboardButton(text="❌ Отказать", callback_data=f"reject_{user_id}")
+            keyboard.add(approve_button, reject_button)
+            keyboard.add(types.InlineKeyboardButton(text="👥 Управление пользователями", callback_data="manage_users"))
             
             for admin in admins:
                 try:
-                    bot.send_message(admin.user_id, notification, parse_mode="Markdown")
+                    bot.send_message(admin.user_id, notification, parse_mode="Markdown", reply_markup=keyboard)
                 except Exception as e:
                     logger.error(f"Ошибка при отправке уведомления администратору {admin.user_id}: {e}")
 
@@ -184,7 +190,7 @@ def handle_help_command(message):
     elif user.is_technician():
         help_text += "*Команды мастера:*\n"
         help_text += "/my_assigned_orders - Просмотр назначенных вам заказов\n"
-        help_text += "\nКак техник, вы можете:\n"
+        help_text += "\nКак мастер, вы можете:\n"
         help_text += "• Просматривать назначенные вам заказы\n"
         help_text += "• Обновлять статус заказов\n"
         help_text += "• Добавлять стоимость выполненных работ\n"
@@ -592,7 +598,7 @@ def handle_help_callback(user_id, message_id):
     elif user.is_technician():
         help_text += "*Команды мастера:*\n"
         help_text += "/my_assigned_orders - Просмотр назначенных вам заказов\n"
-        help_text += "\nКак техник, вы можете:\n"
+        help_text += "\nКак мастер, вы можете:\n"
         help_text += "• Просматривать назначенные вам заказы\n"
         help_text += "• Обновлять статус заказов\n"
         help_text += "• Добавлять стоимость выполненных работ\n"
