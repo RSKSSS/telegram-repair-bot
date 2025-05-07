@@ -572,7 +572,7 @@ def handle_main_menu_callback(user_id, message_id):
     elif user.is_dispatcher():
         message_text = f"Здравствуйте, {user.get_full_name()}!\nВы вошли как *Диспетчер*.\n\nВыберите действие:"
     elif user.is_technician():
-        message_text = f"Здравствуйте, {user.get_full_name()}!\nВы вошли как *Техник*.\n\nВыберите действие:"
+        message_text = f"Здравствуйте, {user.get_full_name()}!\nВы вошли как *Мастер*.\n\nВыберите действие:"
     else:
         message_text = f"Здравствуйте, {user.get_full_name()}!\n\nВыберите действие:"
     
@@ -853,7 +853,7 @@ def handle_list_users_callback(user_id, message_id):
     
     # Добавляем мастеров
     if technicians:
-        message_text += "*Техники:*\n"
+        message_text += "*Мастера:*\n"
         for technician in technicians:
             message_text += technician
         message_text += "\n"
@@ -945,19 +945,19 @@ def handle_approve_user_callback(user_id, message_id, user_to_approve):
             )
             
             # Отправляем подтверждение администратору
-            bot.answer_callback_query(
-                callback_query_id=user_id,
-                text=f"Пользователь {approved_user.get_full_name()} успешно подтвержден."
+            bot.send_message(
+                user_id,
+                f"✅ Пользователь {approved_user.get_full_name()} успешно подтвержден."
             )
         else:
-            bot.answer_callback_query(
-                callback_query_id=user_id,
-                text="Ошибка при получении информации о пользователе."
+            bot.send_message(
+                user_id,
+                "❌ Ошибка при получении информации о пользователе."
             )
     else:
-        bot.answer_callback_query(
-            callback_query_id=user_id,
-            text="Ошибка при подтверждении пользователя."
+        bot.send_message(
+            user_id,
+            "❌ Ошибка при подтверждении пользователя."
         )
 
 def handle_reject_user_callback(user_id, message_id, user_to_reject):
@@ -1007,14 +1007,14 @@ def handle_reject_user_callback(user_id, message_id, user_to_reject):
         
         # Отправляем подтверждение администратору
         user_name = rejected_user.get_full_name() if rejected_user else "Пользователь"
-        bot.answer_callback_query(
-            callback_query_id=user_id,
-            text=f"{user_name} был отклонен."
+        bot.send_message(
+            user_id,
+            f"❌ {user_name} был отклонен."
         )
     else:
-        bot.answer_callback_query(
-            callback_query_id=user_id,
-            text="Ошибка при отклонении пользователя."
+        bot.send_message(
+            user_id,
+            "❌ Ошибка при отклонении пользователя."
         )
 
 def handle_add_admin_callback(user_id, message_id):
@@ -1284,9 +1284,9 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
                 except Exception as e:
                     logger.error(f"Ошибка при отправке уведомления диспетчеру {updated_order.dispatcher_id}: {e}")
     else:
-        bot.answer_callback_query(
-            call.id,
-            "Ошибка при обновлении статуса заказа."
+        bot.send_message(
+            user_id,
+            "❌ Ошибка при обновлении статуса заказа."
         )
 
 def handle_assign_technician_callback(user_id, message_id, order_id):
@@ -1406,9 +1406,9 @@ def handle_assign_order_callback(user_id, message_id, order_id, technician_id):
         except Exception as e:
             logger.error(f"Ошибка при отправке уведомления мастеру {technician_id}: {e}")
     else:
-        bot.answer_callback_query(
-            call.id,
-            "Ошибка при назначении мастера на заказ."
+        bot.send_message(
+            user_id,
+            "❌ Ошибка при назначении мастера на заказ."
         )
 
 def handle_add_cost_callback(user_id, message_id, order_id):
