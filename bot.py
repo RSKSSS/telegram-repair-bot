@@ -106,7 +106,7 @@ def handle_start_command(message):
         elif user.is_technician():
             bot.send_message(
                 user_id,
-                f"{greeting}\nВы вошли как *Техник*.\n\nВыберите действие:",
+                f"{greeting}\nВы вошли как *Мастер*.\n\nВыберите действие:",
                 reply_markup=get_main_menu_keyboard(user_id),
                 parse_mode="Markdown"
             )

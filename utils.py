@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 try:
     # Пытаемся импортировать из telebot
-    from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+    from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 except ImportError:
     # Если не получается, создаем свои классы для совместимости
     class InlineKeyboardMarkup:
@@ -30,10 +30,27 @@ except ImportError:
         def __init__(self, text, callback_data=None):
             self.text = text
             self.callback_data = callback_data
+    
+    class ReplyKeyboardMarkup:
+        def __init__(self, resize_keyboard=True, one_time_keyboard=False, row_width=3):
+            self.keyboard = []
+            self.resize_keyboard = resize_keyboard
+            self.one_time_keyboard = one_time_keyboard
+            self.row_width = row_width
+            
+        def add(self, *args):
+            for i in range(0, len(args), self.row_width):
+                self.keyboard.append(args[i:i+self.row_width])
+                
+    class KeyboardButton:
+        def __init__(self, text):
+            self.text = text
             
     class types:
         InlineKeyboardMarkup = InlineKeyboardMarkup
         InlineKeyboardButton = InlineKeyboardButton
+        ReplyKeyboardMarkup = ReplyKeyboardMarkup
+        KeyboardButton = KeyboardButton
 
 def is_admin(user_id: int) -> bool:
     """Проверяет, является ли пользователь администратором"""
@@ -60,7 +77,7 @@ def get_status_name(status: str) -> str:
 
 def get_main_menu_keyboard(user_id: int) -> InlineKeyboardMarkup:
     """
-    Возвращает клавиатуру главного меню в зависимости от роли пользователя
+    Возвращает инлайн-клавиатуру главного меню в зависимости от роли пользователя
     """
     keyboard = InlineKeyboardMarkup(row_width=1)
     
@@ -85,6 +102,34 @@ def get_main_menu_keyboard(user_id: int) -> InlineKeyboardMarkup:
         keyboard.add(
             InlineKeyboardButton("🔧 Мои заказы", callback_data="my_assigned_orders")
         )
+    
+    return keyboard
+    
+def get_reply_keyboard(user_id: int) -> ReplyKeyboardMarkup:
+    """
+    Возвращает клавиатуру-меню с основными командами в зависимости от роли пользователя
+    """
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    
+    # Добавляем общие команды
+    keyboard.add(KeyboardButton("/start"), KeyboardButton("/help"))
+    
+    # Проверяем роль пользователя
+    if is_admin(user_id):
+        # Кнопки для администраторов
+        keyboard.add(
+            KeyboardButton("/all_orders"),
+            KeyboardButton("/manage_users")
+        )
+    elif is_dispatcher(user_id):
+        # Кнопки для диспетчеров
+        keyboard.add(
+            KeyboardButton("/new_order"),
+            KeyboardButton("/my_orders")
+        )
+    elif is_technician(user_id):
+        # Кнопки для мастеров
+        keyboard.add(KeyboardButton("/my_assigned_orders"))
     
     return keyboard
 
