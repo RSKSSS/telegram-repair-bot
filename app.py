@@ -1,13 +1,11 @@
-#!/usr/bin/env python3
 """
-Главный файл для запуска Telegram бота для управления заказами на ремонт компьютеров
+Flask приложение для отображения веб-интерфейса сервиса
 """
 
-import logging
 import os
-from flask import Flask, render_template, redirect, url_for
+import logging
+from flask import Flask, render_template, request, redirect, url_for
 from database import initialize_database
-from bot import bot
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -17,10 +15,13 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "service_bot_secret_key")
 
+# Инициализация базы данных
+initialize_database()
+
 @app.route('/')
 def index():
     """Главная страница"""
-    return render_template_string("""
+    return """
     <!DOCTYPE html>
     <html lang="ru">
     <head>
@@ -84,45 +85,7 @@ def index():
         </div>
     </body>
     </html>
-    """)
-
-def template_folder():
-    """Create templates folder if it doesn't exist"""
-    if not os.path.exists('templates'):
-        os.makedirs('templates')
-
-def render_template_string(template_string):
-    """Render a template string"""
-    template_folder()
-    
-    # Create a temporary template file
-    with open('templates/temp.html', 'w') as f:
-        f.write(template_string)
-    
-    return render_template('temp.html')
-
-def main():
-    """Запуск бота"""
-    logger.info("Инициализация базы данных...")
-    initialize_database()
-    
-    logger.info("Запуск бота сервиса ремонта компьютеров...")
-    
-    # Проверяем наличие токена
-    if not os.environ.get('TELEGRAM_BOT_TOKEN'):
-        logger.error("Ошибка: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
-        return
-    
-    # Запускаем бота в отдельном потоке
-    import threading
-    bot_thread = threading.Thread(target=bot.infinity_polling)
-    bot_thread.daemon = True
-    bot_thread.start()
-    
-    logger.info("Бот слушает сообщения...")
-    
-    # Запускаем Flask-приложение для веб-интерфейса
-    app.run(host='0.0.0.0', port=5050)
+    """
 
 if __name__ == "__main__":
-    main()
+    app.run(host='0.0.0.0', port=5000)

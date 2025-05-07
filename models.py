@@ -1,5 +1,8 @@
-from typing import Optional, List, Dict
-from datetime import datetime
+"""
+Модели данных для работы с БД
+"""
+from typing import Dict, Optional
+from config import ORDER_STATUSES
 
 
 class User:
@@ -8,12 +11,13 @@ class User:
     """
     def __init__(self, user_id: int, first_name: str, last_name: Optional[str] = None,
                  username: Optional[str] = None, role: str = 'technician',
-                 created_at: Optional[str] = None):
+                 is_approved: bool = False, created_at: Optional[str] = None):
         self.user_id = user_id
         self.first_name = first_name
         self.last_name = last_name
         self.username = username
         self.role = role
+        self.is_approved = is_approved
         self.created_at = created_at
 
     @classmethod
@@ -21,15 +25,20 @@ class User:
         """
         Создание объекта User из словаря
         """
-        if not data:
-            return None
+        user_id = data.get('user_id')
+        first_name = data.get('first_name')
+        
+        # Проверяем, что обязательные поля не None
+        if user_id is None or first_name is None:
+            raise ValueError("user_id и first_name не могут быть None")
             
         return cls(
-            user_id=data['user_id'],
-            first_name=data['first_name'],
+            user_id=user_id,
+            first_name=first_name,
             last_name=data.get('last_name'),
             username=data.get('username'),
             role=data.get('role', 'technician'),
+            is_approved=data.get('is_approved', False),
             created_at=data.get('created_at')
         )
 
@@ -43,6 +52,7 @@ class User:
             'last_name': self.last_name,
             'username': self.username,
             'role': self.role,
+            'is_approved': self.is_approved,
             'created_at': self.created_at
         }
 
@@ -50,22 +60,23 @@ class User:
         """
         Получение полного имени пользователя
         """
+        full_name = self.first_name
         if self.last_name:
-            return f"{self.first_name} {self.last_name}"
-        return self.first_name
-    
+            full_name += f" {self.last_name}"
+        return full_name
+
     def is_admin(self) -> bool:
         """
         Проверка, является ли пользователь администратором
         """
         return self.role == 'admin'
-    
+
     def is_dispatcher(self) -> bool:
         """
         Проверка, является ли пользователь диспетчером
         """
         return self.role == 'dispatcher'
-    
+
     def is_technician(self) -> bool:
         """
         Проверка, является ли пользователь техником
@@ -82,13 +93,13 @@ class Order:
                  status: str = 'new', service_cost: Optional[float] = None,
                  service_description: Optional[str] = None, created_at: Optional[str] = None,
                  updated_at: Optional[str] = None, dispatcher_first_name: Optional[str] = None,
-                 dispatcher_last_name: Optional[str] = None):
+                 dispatcher_last_name: Optional[str] = None, technicians: Optional[list] = None):
         self.order_id = order_id
-        self.dispatcher_id = dispatcher_id
         self.client_phone = client_phone
         self.client_name = client_name
         self.client_address = client_address
         self.problem_description = problem_description
+        self.dispatcher_id = dispatcher_id
         self.status = status
         self.service_cost = service_cost
         self.service_description = service_description
@@ -96,37 +107,39 @@ class Order:
         self.updated_at = updated_at
         self.dispatcher_first_name = dispatcher_first_name
         self.dispatcher_last_name = dispatcher_last_name
-        self.technicians = []
+        self.technicians = technicians or []
 
     @classmethod
     def from_dict(cls, data: Dict):
         """
         Создание объекта Order из словаря
         """
-        if not data:
-            return None
+        order_id = data.get('order_id')
+        client_phone = data.get('client_phone')
+        client_name = data.get('client_name')
+        client_address = data.get('client_address')
+        problem_description = data.get('problem_description')
+        
+        # Проверяем обязательные поля
+        if order_id is None or client_phone is None or client_name is None or client_address is None or problem_description is None:
+            raise ValueError("Обязательные поля заказа не могут быть None")
             
-        order = cls(
-            order_id=data['order_id'],
+        return cls(
+            order_id=order_id,
+            client_phone=client_phone,
+            client_name=client_name,
+            client_address=client_address,
+            problem_description=problem_description,
             dispatcher_id=data.get('dispatcher_id'),
-            client_phone=data['client_phone'],
-            client_name=data['client_name'],
-            client_address=data['client_address'],
-            problem_description=data['problem_description'],
             status=data.get('status', 'new'),
             service_cost=data.get('service_cost'),
             service_description=data.get('service_description'),
             created_at=data.get('created_at'),
             updated_at=data.get('updated_at'),
             dispatcher_first_name=data.get('dispatcher_first_name'),
-            dispatcher_last_name=data.get('dispatcher_last_name')
+            dispatcher_last_name=data.get('dispatcher_last_name'),
+            technicians=data.get('technicians', [])
         )
-        
-        # Добавляем техников, если они есть
-        if 'technicians' in data:
-            order.technicians = data['technicians']
-            
-        return order
 
     def to_dict(self) -> Dict:
         """
@@ -134,11 +147,11 @@ class Order:
         """
         return {
             'order_id': self.order_id,
-            'dispatcher_id': self.dispatcher_id,
             'client_phone': self.client_phone,
             'client_name': self.client_name,
             'client_address': self.client_address,
             'problem_description': self.problem_description,
+            'dispatcher_id': self.dispatcher_id,
             'status': self.status,
             'service_cost': self.service_cost,
             'service_description': self.service_description,
@@ -153,55 +166,53 @@ class Order:
         """
         Форматирование заказа для отображения пользователям
         """
-        created_at = self.created_at.strftime('%d.%m.%Y %H:%M') if isinstance(self.created_at, datetime) else self.created_at
-        
-        order_text = (
-            f"📋 *Заказ №{self.order_id}*\n\n"
-            f"📱 *Телефон:* {self.client_phone}\n"
-            f"👤 *Клиент:* {self.client_name}\n"
-            f"🏠 *Адрес:* {self.client_address}\n"
-            f"🔧 *Проблема:* {self.problem_description}\n"
-            f"🔄 *Статус:* {self.status_to_russian()}\n"
+        result = (
+            f"📝 *Заказ #{self.order_id}*\n\n"
+            f"🔄 Статус: *{self.status_to_russian()}*\n"
+            f"📱 Телефон клиента: {self.client_phone}\n"
+            f"👤 Имя клиента: {self.client_name}\n"
+            f"🏠 Адрес: {self.client_address}\n"
+            f"🔧 Проблема: {self.problem_description}\n"
         )
-        
-        if self.service_cost:
-            order_text += f"💰 *Стоимость:* {self.service_cost} руб.\n"
-            
-        if self.service_description:
-            order_text += f"📝 *Описание работ:* {self.service_description}\n"
-            
-        if created_at:
-            order_text += f"⏱ *Создан:* {created_at}\n"
-            
+
+        # Добавляем информацию о диспетчере
         if self.dispatcher_first_name:
-            dispatcher_name = f"{self.dispatcher_first_name}"
+            dispatcher_name = self.dispatcher_first_name
             if self.dispatcher_last_name:
                 dispatcher_name += f" {self.dispatcher_last_name}"
-            order_text += f"📞 *Диспетчер:* {dispatcher_name}\n"
-            
+            result += f"📞 Диспетчер: {dispatcher_name}\n"
+
+        # Добавляем информацию о техниках
         if self.technicians:
             techs = []
             for tech in self.technicians:
                 tech_name = tech['first_name']
-                if tech.get('last_name'):
+                if tech['last_name']:
                     tech_name += f" {tech['last_name']}"
                 techs.append(tech_name)
-            order_text += f"👨‍🔧 *Назначен:* {', '.join(techs)}\n"
-            
-        return order_text
+            result += f"👨‍🔧 Назначенные техники: {', '.join(techs)}\n"
+
+        # Добавляем информацию о стоимости услуг
+        if self.service_cost is not None:
+            result += f"💰 Стоимость: {self.service_cost} руб.\n"
+
+        # Добавляем информацию о выполненных работах
+        if self.service_description:
+            result += f"📋 Описание работ: {self.service_description}\n"
+
+        # Добавляем информацию о дате создания и обновления
+        if self.created_at:
+            result += f"📅 Создан: {self.created_at}\n"
+        if self.updated_at:
+            result += f"🔄 Обновлен: {self.updated_at}\n"
+
+        return result
 
     def status_to_russian(self) -> str:
         """
         Преобразование статуса заказа в читаемый вид на русском языке
         """
-        status_map = {
-            'new': 'Новый',
-            'assigned': 'Назначен',
-            'in_progress': 'В работе',
-            'completed': 'Завершен',
-            'cancelled': 'Отменен'
-        }
-        return status_map.get(self.status, self.status)
+        return ORDER_STATUSES.get(self.status, self.status)
 
 
 class Assignment:
@@ -226,14 +237,20 @@ class Assignment:
         """
         Создание объекта Assignment из словаря
         """
-        if not data:
-            return None
-            
+        assignment_id = data.get('assignment_id')
+        order_id = data.get('order_id')
+        technician_id = data.get('technician_id')
+        assigned_by = data.get('assigned_by')
+        
+        # Проверяем обязательные поля
+        if assignment_id is None or order_id is None or technician_id is None or assigned_by is None:
+            raise ValueError("Обязательные поля назначения не могут быть None")
+        
         return cls(
-            assignment_id=data['assignment_id'],
-            order_id=data['order_id'],
-            technician_id=data['technician_id'],
-            assigned_by=data['assigned_by'],
+            assignment_id=assignment_id,
+            order_id=order_id,
+            technician_id=technician_id,
+            assigned_by=assigned_by,
             assigned_at=data.get('assigned_at'),
             first_name=data.get('first_name'),
             last_name=data.get('last_name'),
@@ -259,8 +276,7 @@ class Assignment:
         """
         Получение имени техника
         """
-        if self.first_name:
-            if self.last_name:
-                return f"{self.first_name} {self.last_name}"
-            return self.first_name
-        return f"ID: {self.technician_id}"
+        name = self.first_name or ""
+        if self.last_name:
+            name += f" {self.last_name}"
+        return name

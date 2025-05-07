@@ -1,16 +1,12 @@
-import os
-
-# Токен Telegram бота
-TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-
-# Настройки базы данных
-DATABASE_URL = os.environ.get('DATABASE_URL')
+"""
+Файл с конфигурацией и константами для бота
+"""
 
 # Роли пользователей
 ROLES = {
+    'admin': 'Администратор',
     'dispatcher': 'Диспетчер',
-    'technician': 'Техник',
-    'admin': 'Администратор'
+    'technician': 'Техник'
 }
 
 # Статусы заказов

@@ -4,10 +4,13 @@
 Используйте его для назначения первого администратора.
 """
 
-import sqlite3
+import logging
 import sys
-import os
-from config import DATABASE_FILE
+from database import get_connection, get_user, save_user, initialize_database
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def add_admin(user_id, first_name="Admin", last_name=None, username=None):
     """
@@ -18,60 +21,46 @@ def add_admin(user_id, first_name="Admin", last_name=None, username=None):
     :param last_name: Фамилия пользователя (опционально)
     :param username: Имя пользователя в Telegram (опционально)
     """
-    # Проверяем существование базы данных
-    if not os.path.exists(DATABASE_FILE):
-        print(f"Ошибка: База данных '{DATABASE_FILE}' не найдена.")
-        return False
+    initialize_database()
     
-    try:
-        # Подключаемся к базе данных
-        conn = sqlite3.connect(DATABASE_FILE)
+    # Проверяем, существует ли пользователь
+    user = get_user(user_id)
+    
+    if user:
+        # Обновляем роль существующего пользователя
+        conn = get_connection()
         cursor = conn.cursor()
-        
-        # Проверяем, существует ли пользователь
-        cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
-        user = cursor.fetchone()
-        
-        if user:
-            # Если пользователь существует, обновляем его роль
-            cursor.execute('UPDATE users SET role = ? WHERE user_id = ?', ('admin', user_id))
-            print(f"Пользователь с ID {user_id} успешно назначен администратором.")
-        else:
-            # Если пользователь не существует, создаем нового
-            cursor.execute('''
-            INSERT INTO users (user_id, first_name, last_name, username, role)
-            VALUES (?, ?, ?, ?, ?)
-            ''', (user_id, first_name, last_name, username, 'admin'))
-            print(f"Создан новый пользователь с ID {user_id} и ролью администратора.")
-        
-        # Сохраняем изменения
-        conn.commit()
-        conn.close()
-        return True
-    
-    except sqlite3.Error as e:
-        print(f"Ошибка SQLite: {e}")
-        return False
-    except Exception as e:
-        print(f"Неожиданная ошибка: {e}")
-        return False
+        try:
+            cursor.execute(
+                "UPDATE users SET role = 'admin', is_approved = TRUE WHERE user_id = %s",
+                (user_id,)
+            )
+            conn.commit()
+            logger.info(f"Пользователь (ID: {user_id}) повышен до администратора.")
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Ошибка при обновлении пользователя: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+    else:
+        # Создаем нового пользователя с ролью администратора
+        save_user(user_id, first_name, last_name, username, 'admin', True)
+        logger.info(f"Создан новый администратор (ID: {user_id}).")
 
 def main():
     """Основная функция"""
     if len(sys.argv) < 2:
-        print("Использование: python add_admin.py <user_id> [first_name] [last_name] [username]")
+        print("Использование: python add_admin.py <telegram_id> [first_name] [last_name] [username]")
+        print("Пример: python add_admin.py 123456789 John Doe johndoe")
         return
     
-    try:
-        user_id = int(sys.argv[1])
-        first_name = sys.argv[2] if len(sys.argv) > 2 else "Admin"
-        last_name = sys.argv[3] if len(sys.argv) > 3 else None
-        username = sys.argv[4] if len(sys.argv) > 4 else None
-        
-        add_admin(user_id, first_name, last_name, username)
+    user_id = int(sys.argv[1])
+    first_name = sys.argv[2] if len(sys.argv) > 2 else "Admin"
+    last_name = sys.argv[3] if len(sys.argv) > 3 else None
+    username = sys.argv[4] if len(sys.argv) > 4 else None
     
-    except ValueError:
-        print("Ошибка: ID пользователя должен быть числом.")
-
+    add_admin(user_id, first_name, last_name, username)
+    
 if __name__ == "__main__":
     main()
