@@ -89,10 +89,21 @@ def handle_start_command(message):
     greeting = f"Здравствуйте, {user.get_full_name()}!"
     
     if user.is_approved:
+        # Создаем постоянную клавиатуру с командами
+        from utils import get_reply_keyboard
+        reply_keyboard = get_reply_keyboard(user_id)
+        
         if user.is_admin():
             bot.send_message(
                 user_id,
                 f"{greeting}\nВы вошли как *Администратор*.\n\nВыберите действие:",
+                reply_markup=reply_keyboard,
+                parse_mode="Markdown"
+            )
+            # Отправляем еще одно сообщение с inline-кнопками для быстрого доступа
+            bot.send_message(
+                user_id,
+                "📲 *Быстрый доступ к функциям:*",
                 reply_markup=get_main_menu_keyboard(user_id),
                 parse_mode="Markdown"
             )
@@ -100,6 +111,13 @@ def handle_start_command(message):
             bot.send_message(
                 user_id,
                 f"{greeting}\nВы вошли как *Диспетчер*.\n\nВыберите действие:",
+                reply_markup=reply_keyboard,
+                parse_mode="Markdown"
+            )
+            # Отправляем еще одно сообщение с inline-кнопками для быстрого доступа
+            bot.send_message(
+                user_id,
+                "📲 *Быстрый доступ к функциям:*",
                 reply_markup=get_main_menu_keyboard(user_id),
                 parse_mode="Markdown"
             )
@@ -107,6 +125,13 @@ def handle_start_command(message):
             bot.send_message(
                 user_id,
                 f"{greeting}\nВы вошли как *Мастер*.\n\nВыберите действие:",
+                reply_markup=reply_keyboard,
+                parse_mode="Markdown"
+            )
+            # Отправляем еще одно сообщение с inline-кнопками для быстрого доступа
+            bot.send_message(
+                user_id,
+                "📲 *Быстрый доступ к функциям:*",
                 reply_markup=get_main_menu_keyboard(user_id),
                 parse_mode="Markdown"
             )
@@ -461,8 +486,8 @@ def handle_callback_query(call):
         )
         return
     
-    # Проверяем подтверждение пользователя (кроме callback для главного меню)
-    if not user.is_approved and callback_data != "main_menu":
+    # Проверяем подтверждение пользователя (кроме некоторых системных callback)
+    if not user.is_approved and callback_data != "main_menu" and not callback_data.startswith("approve_") and not callback_data.startswith("reject_"):
         bot.answer_callback_query(
             call.id,
             "Ваша учетная запись не подтверждена администратором. Пожалуйста, дождитесь подтверждения."
