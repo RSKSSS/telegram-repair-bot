@@ -79,7 +79,7 @@ class User:
 
     def is_technician(self) -> bool:
         """
-        Проверка, является ли пользователь техником
+        Проверка, является ли пользователь мастером
         """
         return self.role == 'technician'
 
@@ -190,7 +190,7 @@ class Order:
                 if tech['last_name']:
                     tech_name += f" {tech['last_name']}"
                 techs.append(tech_name)
-            result += f"👨‍🔧 Назначенные техники: {', '.join(techs)}\n"
+            result += f"👨‍🔧 Назначенные мастера: {', '.join(techs)}\n"
 
         # Добавляем информацию о стоимости услуг
         if self.service_cost is not None:
@@ -217,7 +217,7 @@ class Order:
 
 class Assignment:
     """
-    Модель назначения заказа технику
+    Модель назначения заказа мастеру
     """
     def __init__(self, assignment_id: int, order_id: int, technician_id: int,
                  assigned_by: int, assigned_at: Optional[str] = None,

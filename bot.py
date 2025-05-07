@@ -171,7 +171,7 @@ def handle_help_command(message):
         help_text += "\nКак администратор, вы можете:\n"
         help_text += "• Просматривать все заказы\n"
         help_text += "• Подтверждать новых пользователей\n"
-        help_text += "• Назначать техников на заказы\n"
+        help_text += "• Назначать мастеров на заказы\n"
         help_text += "• Изменять статусы заказов\n"
         help_text += "• Добавлять новых администраторов и диспетчеров\n"
     elif user.is_dispatcher():
@@ -182,7 +182,7 @@ def handle_help_command(message):
         help_text += "• Создавать новые заказы\n"
         help_text += "• Просматривать и редактировать созданные вами заказы\n"
     elif user.is_technician():
-        help_text += "*Команды техника:*\n"
+        help_text += "*Команды мастера:*\n"
         help_text += "/my_assigned_orders - Просмотр назначенных вам заказов\n"
         help_text += "\nКак техник, вы можете:\n"
         help_text += "• Просматривать назначенные вам заказы\n"
@@ -272,11 +272,11 @@ def handle_my_orders_command(message):
     # Отправляем сообщение с заказами
     bot.send_message(user_id, message_text, reply_markup=keyboard, parse_mode="Markdown")
 
-# Обработчик команды /my_assigned_orders (для техников)
+# Обработчик команды /my_assigned_orders (для мастеров)
 @bot.message_handler(commands=['my_assigned_orders'])
 def handle_my_assigned_orders_command(message):
     """
-    Обработчик команды /my_assigned_orders (для техников)
+    Обработчик команды /my_assigned_orders (для мастеров)
     """
     user_id = message.from_user.id
     
@@ -291,11 +291,11 @@ def handle_my_assigned_orders_command(message):
         )
         return
     
-    # Проверяем, является ли пользователь техником
+    # Проверяем, является ли пользователь мастером
     if not user.is_technician():
         bot.reply_to(
             message,
-            "Эта команда доступна только для техников."
+            "Эта команда доступна только для мастеров."
         )
         return
     
@@ -421,7 +421,7 @@ def handle_order_command(message):
         elif user.is_dispatcher() and order.dispatcher_id == user_id:
             keyboard = get_order_management_keyboard(order_id)
         elif user.is_technician():
-            # Проверяем, назначен ли заказ этому технику
+            # Проверяем, назначен ли заказ этому мастеру
             technicians = get_order_technicians(order_id)
             is_assigned = any(tech.technician_id == user_id for tech in technicians)
             
@@ -579,7 +579,7 @@ def handle_help_callback(user_id, message_id):
         help_text += "\nКак администратор, вы можете:\n"
         help_text += "• Просматривать все заказы\n"
         help_text += "• Подтверждать новых пользователей\n"
-        help_text += "• Назначать техников на заказы\n"
+        help_text += "• Назначать мастеров на заказы\n"
         help_text += "• Изменять статусы заказов\n"
         help_text += "• Добавлять новых администраторов и диспетчеров\n"
     elif user.is_dispatcher():
@@ -590,7 +590,7 @@ def handle_help_callback(user_id, message_id):
         help_text += "• Создавать новые заказы\n"
         help_text += "• Просматривать и редактировать созданные вами заказы\n"
     elif user.is_technician():
-        help_text += "*Команды техника:*\n"
+        help_text += "*Команды мастера:*\n"
         help_text += "/my_assigned_orders - Просмотр назначенных вам заказов\n"
         help_text += "\nКак техник, вы можете:\n"
         help_text += "• Просматривать назначенные вам заказы\n"
@@ -685,11 +685,11 @@ def handle_my_assigned_orders_callback(user_id, message_id):
     if not user:
         return
     
-    # Проверяем, является ли пользователь техником
+    # Проверяем, является ли пользователь мастером
     if not user.is_technician():
         bot.send_message(
             user_id,
-            "Эта функция доступна только для техников."
+            "Эта функция доступна только для мастеров."
         )
         return
     
@@ -820,7 +820,7 @@ def handle_list_users_callback(user_id, message_id):
             message_text += dispatcher
         message_text += "\n"
     
-    # Добавляем техников
+    # Добавляем мастеров
     if technicians:
         message_text += "*Техники:*\n"
         for technician in technicians:
@@ -1065,8 +1065,8 @@ def handle_add_technician_callback(user_id, message_id):
     bot.edit_message_text(
         chat_id=user_id,
         message_id=message_id,
-        text="👤 *Добавление техника*\n\n"
-        "Введите ID пользователя для назначения техником:",
+        text="👤 *Добавление мастера*\n\n"
+        "Введите ID пользователя для назначения мастером:",
         parse_mode="Markdown"
     )
     
@@ -1104,7 +1104,7 @@ def handle_order_detail_callback(user_id, message_id, order_id):
     elif user.is_dispatcher() and order.dispatcher_id == user_id:
         keyboard = get_order_management_keyboard(order_id)
     elif user.is_technician():
-        # Проверяем, назначен ли заказ этому технику
+        # Проверяем, назначен ли заказ этому мастеру
         technicians = get_order_technicians(order_id)
         is_assigned = any(tech.technician_id == user_id for tech in technicians)
         
@@ -1223,10 +1223,10 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
         
         # Отправляем уведомление о изменении статуса
         if updated_order and order.status != status:
-            # Получаем всех техников заказа
+            # Получаем всех мастеров заказа
             technicians = get_order_technicians(order_id)
             
-            # Отправляем уведомление техникам
+            # Отправляем уведомление мастерам
             for tech in technicians:
                 if tech.technician_id != user_id:  # Не отправляем уведомление тому, кто обновил статус
                     try:
@@ -1238,7 +1238,7 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
                             parse_mode="Markdown"
                         )
                     except Exception as e:
-                        logger.error(f"Ошибка при отправке уведомления технику {tech.technician_id}: {e}")
+                        logger.error(f"Ошибка при отправке уведомления мастеру {tech.technician_id}: {e}")
             
             # Отправляем уведомление диспетчеру
             if updated_order.dispatcher_id and updated_order.dispatcher_id != user_id:
@@ -1287,15 +1287,15 @@ def handle_assign_technician_callback(user_id, message_id, order_id):
         )
         return
     
-    # Получаем клавиатуру со списком техников
+    # Получаем клавиатуру со списком мастеров
     keyboard = get_technician_list_keyboard(order_id)
     
     # Редактируем сообщение
     bot.edit_message_text(
         chat_id=user_id,
         message_id=message_id,
-        text=f"👤 *Назначение техника на заказ #{order_id}*\n\n"
-        "Выберите техника из списка:",
+        text=f"👤 *Назначение мастера на заказ #{order_id}*\n\n"
+        "Выберите мастера из списка:",
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
@@ -1341,7 +1341,7 @@ def handle_assign_order_callback(user_id, message_id, order_id, technician_id):
         )
         return
     
-    # Назначаем техника на заказ
+    # Назначаем мастера на заказ
     assignment_id = assign_order(order_id, technician_id, user_id)
     
     if assignment_id:
@@ -1363,7 +1363,7 @@ def handle_assign_order_callback(user_id, message_id, order_id, technician_id):
             parse_mode="Markdown"
         )
         
-        # Отправляем уведомление технику о назначении
+        # Отправляем уведомление мастеру о назначении
         try:
             bot.send_message(
                 technician_id,
@@ -1373,11 +1373,11 @@ def handle_assign_order_callback(user_id, message_id, order_id, technician_id):
                 parse_mode="Markdown"
             )
         except Exception as e:
-            logger.error(f"Ошибка при отправке уведомления технику {technician_id}: {e}")
+            logger.error(f"Ошибка при отправке уведомления мастеру {technician_id}: {e}")
     else:
         bot.answer_callback_query(
             call.id,
-            "Ошибка при назначении техника на заказ."
+            "Ошибка при назначении мастера на заказ."
         )
 
 def handle_add_cost_callback(user_id, message_id, order_id):
@@ -1662,7 +1662,7 @@ def handle_user_id_input(user_id, text, role):
                 approve_user(target_user_id)
             
             # Отправляем подтверждение об обновлении роли
-            role_name = "администратора" if role == "admin" else "диспетчера" if role == "dispatcher" else "техника"
+            role_name = "администратора" if role == "admin" else "диспетчера" if role == "dispatcher" else "мастера"
             bot.send_message(
                 user_id,
                 f"✅ Пользователь {target_user.get_full_name()} успешно назначен на роль {role_name}.",

@@ -192,7 +192,7 @@ def get_approval_requests_keyboard() -> Tuple[str, Optional[InlineKeyboardMarkup
 
 def get_technician_list_keyboard(order_id: int) -> InlineKeyboardMarkup:
     """
-    Возвращает клавиатуру со списком техников для назначения
+    Возвращает клавиатуру со списком мастеров для назначения
     """
     technicians = get_technicians()
     keyboard = InlineKeyboardMarkup(row_width=1)

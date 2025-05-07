@@ -200,7 +200,7 @@ def get_all_users():
         conn.close()
 
 def get_technicians():
-    """Получение всех техников из базы данных"""
+    """Получение всех мастеров из базы данных"""
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -219,7 +219,7 @@ def get_technicians():
         
         return technicians
     except Exception as e:
-        logger.error(f"Ошибка при получении техников: {e}")
+        logger.error(f"Ошибка при получении мастеров: {e}")
         return []
     finally:
         cursor.close()
@@ -402,7 +402,7 @@ def get_order(order_id):
         # Создаем словарь с данными заказа
         order_dict = {column_names[i]: order_data[i] for i in range(len(column_names))}
         
-        # Получаем техников, назначенных на заказ
+        # Получаем мастеров, назначенных на заказ
         cursor.execute("""
             SELECT a.*, u.first_name, u.last_name, u.username
             FROM assignments a
@@ -412,12 +412,12 @@ def get_order(order_id):
         
         technicians_data = cursor.fetchall()
         
-        # Получаем имена столбцов для техников
+        # Получаем имена столбцов для мастеров
         tech_column_names = [desc[0] for desc in cursor.description]
         
         technicians = []
         for tech_data in technicians_data:
-            # Создаем словарь с данными техника
+            # Создаем словарь с данными мастера
             tech_dict = {tech_column_names[i]: tech_data[i] for i in range(len(tech_column_names))}
             technicians.append(tech_dict)
         
@@ -456,7 +456,7 @@ def get_orders_by_user(user_id):
             # Создаем словарь с данными заказа
             order_dict = {column_names[i]: order_data[i] for i in range(len(column_names))}
             
-            # Получаем техников, назначенных на заказ
+            # Получаем мастеров, назначенных на заказ
             cursor.execute("""
                 SELECT a.*, u.first_name, u.last_name, u.username
                 FROM assignments a
@@ -466,12 +466,12 @@ def get_orders_by_user(user_id):
             
             technicians_data = cursor.fetchall()
             
-            # Получаем имена столбцов для техников
+            # Получаем имена столбцов для мастеров
             tech_column_names = [desc[0] for desc in cursor.description]
             
             technicians = []
             for tech_data in technicians_data:
-                # Создаем словарь с данными техника
+                # Создаем словарь с данными мастера
                 tech_dict = {tech_column_names[i]: tech_data[i] for i in range(len(tech_column_names))}
                 technicians.append(tech_dict)
             
@@ -490,7 +490,7 @@ def get_orders_by_user(user_id):
         conn.close()
 
 def get_assigned_orders(technician_id):
-    """Получение заказов, назначенных технику"""
+    """Получение заказов, назначенных мастеру"""
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -513,7 +513,7 @@ def get_assigned_orders(technician_id):
             # Создаем словарь с данными заказа
             order_dict = {column_names[i]: order_data[i] for i in range(len(column_names))}
             
-            # Получаем техников, назначенных на заказ
+            # Получаем мастеров, назначенных на заказ
             cursor.execute("""
                 SELECT a.*, u.first_name, u.last_name, u.username
                 FROM assignments a
@@ -523,12 +523,12 @@ def get_assigned_orders(technician_id):
             
             technicians_data = cursor.fetchall()
             
-            # Получаем имена столбцов для техников
+            # Получаем имена столбцов для мастеров
             tech_column_names = [desc[0] for desc in cursor.description]
             
             technicians = []
             for tech_data in technicians_data:
-                # Создаем словарь с данными техника
+                # Создаем словарь с данными мастера
                 tech_dict = {tech_column_names[i]: tech_data[i] for i in range(len(tech_column_names))}
                 technicians.append(tech_dict)
             
@@ -578,7 +578,7 @@ def get_all_orders(status=None):
             # Создаем словарь с данными заказа
             order_dict = {column_names[i]: order_data[i] for i in range(len(column_names))}
             
-            # Получаем техников, назначенных на заказ
+            # Получаем мастеров, назначенных на заказ
             cursor.execute("""
                 SELECT a.*, u.first_name, u.last_name, u.username
                 FROM assignments a
@@ -588,12 +588,12 @@ def get_all_orders(status=None):
             
             technicians_data = cursor.fetchall()
             
-            # Получаем имена столбцов для техников
+            # Получаем имена столбцов для мастеров
             tech_column_names = [desc[0] for desc in cursor.description]
             
             technicians = []
             for tech_data in technicians_data:
-                # Создаем словарь с данными техника
+                # Создаем словарь с данными мастера
                 tech_dict = {tech_column_names[i]: tech_data[i] for i in range(len(tech_column_names))}
                 technicians.append(tech_dict)
             
@@ -612,7 +612,7 @@ def get_all_orders(status=None):
         conn.close()
 
 def assign_order(order_id, technician_id, assigned_by):
-    """Назначение заказа технику"""
+    """Назначение заказа мастеру"""
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -634,14 +634,14 @@ def assign_order(order_id, technician_id, assigned_by):
         return assignment_id
     except Exception as e:
         conn.rollback()
-        logger.error(f"Ошибка при назначении заказа технику: {e}")
+        logger.error(f"Ошибка при назначении заказа мастеру: {e}")
         return None
     finally:
         cursor.close()
         conn.close()
 
 def get_order_technicians(order_id):
-    """Получение списка техников, назначенных на заказ"""
+    """Получение списка мастеров, назначенных на заказ"""
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -660,20 +660,20 @@ def get_order_technicians(order_id):
         
         technicians = []
         for tech_data in technicians_data:
-            # Создаем словарь с данными техника
+            # Создаем словарь с данными мастера
             tech_dict = {column_names[i]: tech_data[i] for i in range(len(column_names))}
             technicians.append(Assignment.from_dict(tech_dict))
         
         return technicians
     except Exception as e:
-        logger.error(f"Ошибка при получении техников заказа: {e}")
+        logger.error(f"Ошибка при получении мастеров заказа: {e}")
         return []
     finally:
         cursor.close()
         conn.close()
 
 def unassign_order(order_id, technician_id):
-    """Отмена назначения заказа технику"""
+    """Отмена назначения заказа мастеру"""
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -688,7 +688,7 @@ def unassign_order(order_id, technician_id):
         cursor.execute("SELECT COUNT(*) FROM assignments WHERE order_id = %s", (order_id,))
         remaining_techs = cursor.fetchone()[0]
         
-        # Если не осталось техников и статус был 'assigned', возвращаем статус в 'new'
+        # Если не осталось мастеров и статус был 'assigned', возвращаем статус в 'new'
         if remaining_techs == 0:
             cursor.execute(
                 "UPDATE orders SET status = 'new', updated_at = CURRENT_TIMESTAMP WHERE order_id = %s AND status = 'assigned'",
