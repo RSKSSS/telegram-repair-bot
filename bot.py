@@ -577,7 +577,14 @@ def handle_callback_query(call):
     elif callback_data.startswith("status_"):
         parts = callback_data.split("_")
         order_id = int(parts[1])
-        status = parts[2]
+        
+        # Для случая "in_progress", части будут: ["status", "order_id", "in", "progress"]
+        # Для других статусов: ["status", "order_id", "status_name"]
+        if len(parts) > 3 and parts[2] == "in" and parts[3] == "progress":
+            status = "in_progress"
+        else:
+            status = parts[2]
+            
         handle_update_status_callback(user_id, message_id, order_id, status)
     elif callback_data.startswith("assign_technician_"):
         order_id = int(callback_data.split("_")[2])
