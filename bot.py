@@ -2054,14 +2054,59 @@ def handle_datetime_input(user_id, text):
         
         user_data[user_id]['scheduled_datetime'] = text
         
-        # Запрашиваем описание проблемы
-        bot.send_message(
-            user_id,
-            "🔧 Введите описание проблемы:"
-        )
-        
-        # Обновляем состояние пользователя
-        set_user_state(user_id, "waiting_for_problem")
+        # Создаем заказ
+        try:
+            scheduled_datetime = user_data[user_id].get('scheduled_datetime')
+            order_id = save_order(
+                user_id,
+                user_data[user_id]['phone'],
+                user_data[user_id]['name'],
+                user_data[user_id]['address'],
+                user_data[user_id]['problem'],
+                scheduled_datetime=scheduled_datetime
+            )
+            
+            if order_id:
+                # Получаем информацию о заказе
+                order = get_order(order_id)
+                
+                if order:
+                    # Отправляем подтверждение создания заказа
+                    bot.send_message(
+                        user_id,
+                        f"✅ *Заказ успешно создан*\n\n"
+                        f"Номер заказа: *#{order_id}*\n\n"
+                        f"{order.format_for_display(user_role='dispatcher')}",
+                        reply_markup=get_main_menu_keyboard(user_id),
+                        parse_mode="Markdown"
+                    )
+                    
+                    # Отправляем уведомление администраторам
+                    send_order_notification_to_admins(bot, order_id)
+                else:
+                    bot.send_message(
+                        user_id,
+                        "✅ Заказ успешно создан, но произошла ошибка при получении информации о нем.",
+                        reply_markup=get_main_menu_keyboard(user_id)
+                    )
+            else:
+                bot.send_message(
+                    user_id,
+                    "❌ Произошла ошибка при создании заказа. Пожалуйста, попробуйте позже.",
+                    reply_markup=get_main_menu_keyboard(user_id)
+                )
+        except Exception as e:
+            logger.error(f"Ошибка при создании заказа: {e}")
+            bot.send_message(
+                user_id,
+                "❌ Произошла ошибка при создании заказа. Пожалуйста, попробуйте позже.",
+                reply_markup=get_main_menu_keyboard(user_id)
+            )
+        finally:
+            # Очищаем данные пользователя и состояние
+            if user_id in user_data:
+                del user_data[user_id]
+            clear_user_state(user_id)
         
     except Exception as e:
         logger.error(f"Ошибка при обработке даты и времени: {e}")
@@ -2080,59 +2125,14 @@ def handle_problem_input(user_id, text):
     
     user_data[user_id]['problem'] = text
     
-    # Создаем заказ
-    try:
-        scheduled_datetime = user_data[user_id].get('scheduled_datetime')
-        order_id = save_order(
-            user_id,
-            user_data[user_id]['phone'],
-            user_data[user_id]['name'],
-            user_data[user_id]['address'],
-            user_data[user_id]['problem'],
-            scheduled_datetime=scheduled_datetime
-        )
-        
-        if order_id:
-            # Получаем информацию о заказе
-            order = get_order(order_id)
-            
-            if order:
-                # Отправляем подтверждение создания заказа
-                bot.send_message(
-                    user_id,
-                    f"✅ *Заказ успешно создан*\n\n"
-                    f"Номер заказа: *#{order_id}*\n\n"
-                    f"{order.format_for_display(user_role='dispatcher')}",
-                    reply_markup=get_main_menu_keyboard(user_id),
-                    parse_mode="Markdown"
-                )
-                
-                # Отправляем уведомление администраторам
-                send_order_notification_to_admins(bot, order_id)
-            else:
-                bot.send_message(
-                    user_id,
-                    "✅ Заказ успешно создан, но произошла ошибка при получении информации о нем.",
-                    reply_markup=get_main_menu_keyboard(user_id)
-                )
-        else:
-            bot.send_message(
-                user_id,
-                "❌ Произошла ошибка при создании заказа. Пожалуйста, попробуйте позже.",
-                reply_markup=get_main_menu_keyboard(user_id)
-            )
-    except Exception as e:
-        logger.error(f"Ошибка при создании заказа: {e}")
-        bot.send_message(
-            user_id,
-            "❌ Произошла ошибка при создании заказа. Пожалуйста, попробуйте позже.",
-            reply_markup=get_main_menu_keyboard(user_id)
-        )
-    finally:
-        # Очищаем данные пользователя и состояние
-        if user_id in user_data:
-            del user_data[user_id]
-        clear_user_state(user_id)
+    # Запрашиваем адрес клиента
+    bot.send_message(
+        user_id,
+        "🏠 Введите адрес клиента:"
+    )
+    
+    # Обновляем состояние пользователя
+    set_user_state(user_id, "waiting_for_address")
 
 def handle_user_id_input(user_id, text, role):
     """
