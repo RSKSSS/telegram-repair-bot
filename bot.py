@@ -894,8 +894,7 @@ def handle_approval_requests_callback(user_id, message_id):
         chat_id=user_id,
         message_id=message_id,
         text=message_text,
-        reply_markup=keyboard,
-        parse_mode="Markdown"
+        reply_markup=keyboard
     )
 
 def handle_approve_user_callback(user_id, message_id, user_to_approve):
@@ -925,9 +924,8 @@ def handle_approve_user_callback(user_id, message_id, user_to_approve):
             bot.send_message(
                 user_to_approve,
                 f"✅ Ваша учетная запись подтверждена администратором.\n\n"
-                f"Вы зарегистрированы как: *{approved_user.role.capitalize()}*\n\n"
-                f"Теперь вы можете использовать все функции бота.",
-                parse_mode="Markdown"
+                f"Вы зарегистрированы как: {approved_user.role.capitalize()}\n\n"
+                f"Теперь вы можете использовать все функции бота."
             )
             
             # Получаем обновленный список запросов на подтверждение
@@ -938,8 +936,7 @@ def handle_approve_user_callback(user_id, message_id, user_to_approve):
                 chat_id=user_id,
                 message_id=message_id,
                 text=message_text,
-                reply_markup=keyboard,
-                parse_mode="Markdown"
+                reply_markup=keyboard
             )
             
             # Отправляем подтверждение администратору
@@ -999,8 +996,7 @@ def handle_reject_user_callback(user_id, message_id, user_to_reject):
             chat_id=user_id,
             message_id=message_id,
             text=message_text,
-            reply_markup=keyboard,
-            parse_mode="Markdown"
+            reply_markup=keyboard
         )
         
         # Отправляем подтверждение администратору

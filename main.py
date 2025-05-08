@@ -122,7 +122,7 @@ def main():
     logger.info("Бот слушает сообщения...")
     
     # Запускаем Flask-приложение для веб-интерфейса
-    app.run(host='0.0.0.0', port=5050)
+    app.run(host='0.0.0.0', port=5051)
 
 if __name__ == "__main__":
     main()

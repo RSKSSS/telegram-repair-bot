@@ -209,12 +209,12 @@ def get_approval_requests_keyboard() -> Tuple[str, Optional[InlineKeyboardMarkup
     unapproved_users = get_unapproved_users()
     
     if not unapproved_users:
-        message = "📋 *Запросы на подтверждение*\n\nНет новых запросов на подтверждение."
+        message = "📋 Запросы на подтверждение\n\nНет новых запросов на подтверждение."
         keyboard = InlineKeyboardMarkup()
         keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
         return message, keyboard
     
-    message = "📋 *Запросы на подтверждение*\n\n"
+    message = "📋 Запросы на подтверждение\n\n"
     for user in unapproved_users:
         username_info = f" (@{user.username})" if user.username else ""
         message += f"👤 {user.get_full_name()}{username_info} - {get_role_name(user.role)}\n"
@@ -268,7 +268,7 @@ def send_order_notification_to_admins(bot, order_id: int) -> None:
     if not order:
         return
     
-    message = f"🔔 *Новый заказ #{order.order_id}*\n\n{order.format_for_display()}"
+    message = f"🔔 Новый заказ #{order.order_id}\n\n{order.format_for_display()}"
     
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton("👁️ Посмотреть заказ", callback_data=f"order_{order_id}"))
@@ -277,7 +277,7 @@ def send_order_notification_to_admins(bot, order_id: int) -> None:
     for user in users:
         if user.is_admin():
             try:
-                bot.send_message(user.user_id, message, reply_markup=keyboard, parse_mode="Markdown")
+                bot.send_message(user.user_id, message, reply_markup=keyboard)
             except Exception as e:
                 logger.error(f"Ошибка при отправке уведомления администратору {user.user_id}: {e}")
 
@@ -296,12 +296,12 @@ def format_orders_list(orders: List[Dict], show_buttons: bool = True) -> Tuple[s
     Форматирует список заказов для отображения
     """
     if not orders:
-        message = "📋 *Список заказов*\n\nНет заказов для отображения."
+        message = "📋 Список заказов\n\nНет заказов для отображения."
         keyboard = InlineKeyboardMarkup()
         keyboard.add(InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu"))
         return message, keyboard
     
-    message = "📋 *Список заказов*\n\n"
+    message = "📋 Список заказов\n\n"
     keyboard = None
     
     if show_buttons:
