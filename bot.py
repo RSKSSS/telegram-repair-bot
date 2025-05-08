@@ -1687,6 +1687,9 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
         )
         return
     
+    # Сохраняем текущий статус заказа перед обновлением
+    old_status = order.status
+    
     # Обновляем статус заказа
     if update_order(order_id, status=status):
         # Получаем обновленную информацию о заказе
@@ -1717,7 +1720,10 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
         )
         
         # Отправляем уведомление о изменении статуса
-        if updated_order and order.status != status:
+        if updated_order and old_status != status:
+            # Отправляем уведомление главному администратору
+            from utils import send_order_status_update_notification
+            send_order_status_update_notification(bot, order_id, old_status, status)
             # Получаем всех мастеров заказа
             technicians = get_order_technicians(order_id)
             
