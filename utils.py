@@ -268,7 +268,7 @@ def send_order_notification_to_admins(bot, order_id: int) -> None:
     if not order:
         return
     
-    message = f"🔔 Новый заказ #{order.order_id}\n\n{order.format_for_display()}"
+    message = f"🔔 Новый заказ #{order.order_id}\n\n{order.format_for_display(user_role='admin')}"
     
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton("👁️ Посмотреть заказ", callback_data=f"order_{order_id}"))
