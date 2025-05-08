@@ -318,7 +318,8 @@ def handle_my_orders_command(message):
     orders = get_orders_by_user(user_id)
     
     # Форматируем список заказов и получаем клавиатуру
-    message_text, keyboard = format_orders_list(orders)
+    role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+    message_text, keyboard = format_orders_list(orders, user_role=role)
     
     # Отправляем сообщение с заказами
     bot.send_message(user_id, message_text, reply_markup=keyboard, parse_mode="Markdown")
@@ -354,7 +355,8 @@ def handle_my_assigned_orders_command(message):
     orders = get_assigned_orders(user_id)
     
     # Форматируем список заказов и получаем клавиатуру
-    message_text, keyboard = format_orders_list(orders)
+    # Для мастера всегда используем роль 'technician'
+    message_text, keyboard = format_orders_list(orders, user_role='technician')
     
     # Отправляем сообщение с заказами
     bot.send_message(user_id, message_text, reply_markup=keyboard, parse_mode="Markdown")
@@ -390,7 +392,8 @@ def handle_all_orders_command(message):
     orders = get_all_orders()
     
     # Форматируем список заказов и получаем клавиатуру
-    message_text, keyboard = format_orders_list(orders)
+    role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+    message_text, keyboard = format_orders_list(orders, user_role=role)
     
     # Отправляем сообщение с заказами
     bot.send_message(user_id, message_text, reply_markup=keyboard, parse_mode="Markdown")
@@ -962,7 +965,8 @@ def handle_my_orders_callback(user_id, message_id):
     orders = get_orders_by_user(user_id)
     
     # Форматируем список заказов и получаем клавиатуру
-    message_text, keyboard = format_orders_list(orders)
+    role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+    message_text, keyboard = format_orders_list(orders, user_role=role)
     
     # Редактируем сообщение со списком заказов
     bot.edit_message_text(
@@ -994,7 +998,8 @@ def handle_my_assigned_orders_callback(user_id, message_id):
     orders = get_assigned_orders(user_id)
     
     # Форматируем список заказов и получаем клавиатуру
-    message_text, keyboard = format_orders_list(orders)
+    # Для мастера всегда используем роль 'technician'
+    message_text, keyboard = format_orders_list(orders, user_role='technician')
     
     # Редактируем сообщение со списком заказов
     bot.edit_message_text(
@@ -1026,7 +1031,8 @@ def handle_all_orders_callback(user_id, message_id):
     orders = get_all_orders()
     
     # Форматируем список заказов и получаем клавиатуру
-    message_text, keyboard = format_orders_list(orders)
+    role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+    message_text, keyboard = format_orders_list(orders, user_role=role)
     
     # Редактируем сообщение со списком заказов
     bot.edit_message_text(
