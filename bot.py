@@ -1741,6 +1741,29 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
                     )
                 except Exception as e:
                     logger.error(f"Ошибка при отправке уведомления диспетчеру {updated_order.dispatcher_id}: {e}")
+            
+            # Отправляем уведомление главному администратору (всем администраторам)
+            all_users = get_all_users()
+            for admin_user in all_users:
+                if admin_user.is_admin() and admin_user.user_id != user_id:  # Не отправляем тому, кто сам изменил статус
+                    try:
+                        # Создаем клавиатуру с кнопкой перехода к заказу
+                        order_keyboard = InlineKeyboardMarkup()
+                        order_keyboard.add(InlineKeyboardButton("👁️ Посмотреть детали", callback_data=f"order_{order_id}"))
+                        
+                        # Отправляем уведомление
+                        bot.send_message(
+                            admin_user.user_id,
+                            f"🔔 *Обновление статуса заказа #{order_id}*\n\n"
+                            f"Статус изменен на: *{updated_order.status_to_russian()}*\n"
+                            f"Клиент: {updated_order.client_name}\n"
+                            f"Телефон: {updated_order.client_phone}\n"
+                            f"Изменил: {user.get_full_name()} ({get_role_name(user.role)})",
+                            parse_mode="Markdown",
+                            reply_markup=order_keyboard
+                        )
+                    except Exception as e:
+                        logger.error(f"Ошибка при отправке уведомления администратору {admin_user.user_id}: {e}")
     else:
         bot.send_message(
             user_id,
