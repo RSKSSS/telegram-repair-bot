@@ -24,7 +24,7 @@ from utils import (
     get_technician_order_keyboard, get_back_to_main_menu_keyboard, get_approval_requests_keyboard,
     get_user_management_keyboard, is_admin, is_dispatcher, is_technician,
     send_order_notification_to_admins, validate_phone, format_orders_list, get_technician_list_keyboard,
-    get_role_name
+    get_role_name, get_user_list_for_deletion, get_order_list_for_deletion
 )
 from logger import get_component_logger, DEBUG, INFO, WARNING, ERROR, CRITICAL, log_function_call
 
@@ -611,11 +611,17 @@ def handle_callback_query(call):
     elif callback_data.startswith("delete_user_"):
         user_to_delete = int(callback_data.split("_")[2])
         handle_delete_user_callback(user_id, message_id, user_to_delete)
+    elif callback_data.startswith("confirm_delete_user_"):
+        user_to_delete = int(callback_data.split("_")[3])
+        handle_confirm_delete_user_callback(user_id, message_id, user_to_delete)
     elif callback_data == "manage_orders":
         handle_manage_orders_callback(user_id, message_id)
     elif callback_data.startswith("delete_order_"):
         order_id = int(callback_data.split("_")[2])
         handle_delete_order_callback(user_id, message_id, order_id)
+    elif callback_data.startswith("confirm_delete_order_"):
+        order_id = int(callback_data.split("_")[3])
+        handle_confirm_delete_order_callback(user_id, message_id, order_id)
     else:
         bot.answer_callback_query(call.id, "Неизвестная команда")
 
@@ -1965,6 +1971,263 @@ def handle_add_description_callback(user_id, message_id, order_id):
     
     # Устанавливаем состояние пользователя
     set_user_state(user_id, "waiting_for_description", order_id)
+
+def handle_delete_user_menu_callback(user_id, message_id):
+    """
+    Обработчик callback-запроса delete_user_menu
+    """
+    user = get_user(user_id)
+    
+    if not user:
+        return
+    
+    # Проверяем, является ли пользователь администратором
+    if not user.is_admin():
+        bot.send_message(
+            user_id,
+            "❌ Эта функция доступна только для администраторов."
+        )
+        return
+    
+    # Получаем клавиатуру со списком пользователей для удаления
+    message_text, keyboard = get_user_list_for_deletion()
+    
+    # Редактируем сообщение
+    bot.edit_message_text(
+        chat_id=user_id,
+        message_id=message_id,
+        text=message_text,
+        reply_markup=keyboard,
+        parse_mode="Markdown"
+    )
+
+def handle_delete_user_callback(user_id, message_id, user_to_delete):
+    """
+    Обработчик callback-запроса delete_user_{user_id}
+    """
+    user = get_user(user_id)
+    
+    if not user:
+        return
+    
+    # Проверяем, является ли пользователь администратором
+    if not user.is_admin():
+        bot.send_message(
+            user_id,
+            "❌ Эта функция доступна только для администраторов."
+        )
+        return
+    
+    # Получаем информацию о пользователе для удаления
+    user_to_delete_info = get_user(user_to_delete)
+    
+    if not user_to_delete_info:
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text="❌ Пользователь с указанным ID не найден.",
+            reply_markup=get_back_to_main_menu_keyboard()
+        )
+        return
+    
+    # Создаем клавиатуру для подтверждения удаления
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard.add(
+        InlineKeyboardButton("✅ Да, удалить", callback_data=f"confirm_delete_user_{user_to_delete}"),
+        InlineKeyboardButton("❌ Нет, отмена", callback_data="delete_user_menu")
+    )
+    
+    # Отправляем сообщение с запросом подтверждения
+    bot.edit_message_text(
+        chat_id=user_id,
+        message_id=message_id,
+        text=f"⚠️ *Подтверждение удаления пользователя*\n\n"
+             f"Вы действительно хотите удалить пользователя:\n"
+             f"*ID:* {user_to_delete_info.user_id}\n"
+             f"*Имя:* {user_to_delete_info.get_full_name()}\n"
+             f"*Роль:* {get_role_name(user_to_delete_info.role)}\n\n"
+             "⚠️ Все связанные с этим пользователем данные (заказы, назначения) будут также удалены!",
+        reply_markup=keyboard,
+        parse_mode="Markdown"
+    )
+
+def handle_manage_orders_callback(user_id, message_id):
+    """
+    Обработчик callback-запроса manage_orders
+    """
+    user = get_user(user_id)
+    
+    if not user:
+        return
+    
+    # Проверяем, является ли пользователь администратором
+    if not user.is_admin():
+        bot.send_message(
+            user_id,
+            "❌ Эта функция доступна только для администраторов."
+        )
+        return
+    
+    # Получаем клавиатуру со списком заказов для удаления
+    message_text, keyboard = get_order_list_for_deletion()
+    
+    # Редактируем сообщение
+    bot.edit_message_text(
+        chat_id=user_id,
+        message_id=message_id,
+        text=message_text,
+        reply_markup=keyboard,
+        parse_mode="Markdown"
+    )
+
+def handle_delete_order_callback(user_id, message_id, order_id):
+    """
+    Обработчик callback-запроса delete_order_{order_id}
+    """
+    user = get_user(user_id)
+    
+    if not user:
+        return
+    
+    # Проверяем, является ли пользователь администратором
+    if not user.is_admin():
+        bot.send_message(
+            user_id,
+            "❌ Эта функция доступна только для администраторов."
+        )
+        return
+    
+    # Получаем информацию о заказе
+    order = get_order(order_id)
+    
+    if not order:
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text="❌ Заказ с указанным номером не найден.",
+            reply_markup=get_back_to_main_menu_keyboard()
+        )
+        return
+    
+    # Создаем клавиатуру для подтверждения удаления
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard.add(
+        InlineKeyboardButton("✅ Да, удалить", callback_data=f"confirm_delete_order_{order_id}"),
+        InlineKeyboardButton("❌ Нет, отмена", callback_data="manage_orders")
+    )
+    
+    # Отправляем сообщение с запросом подтверждения
+    bot.edit_message_text(
+        chat_id=user_id,
+        message_id=message_id,
+        text=f"⚠️ *Подтверждение удаления заказа*\n\n"
+             f"Вы действительно хотите удалить заказ:\n"
+             f"*Номер:* {order.order_id}\n"
+             f"*Клиент:* {order.client_name}\n"
+             f"*Телефон:* {order.client_phone}\n"
+             f"*Статус:* {order.status_to_russian()}\n\n"
+             "⚠️ Все связанные с этим заказом данные (назначения мастеров, комментарии) будут также удалены!",
+        reply_markup=keyboard,
+        parse_mode="Markdown"
+    )
+
+def handle_confirm_delete_user_callback(user_id, message_id, user_to_delete):
+    """
+    Обработчик callback-запроса confirm_delete_user_{user_id}
+    """
+    user = get_user(user_id)
+    
+    if not user:
+        return
+    
+    # Проверяем, является ли пользователь администратором
+    if not user.is_admin():
+        bot.send_message(
+            user_id,
+            "❌ Эта функция доступна только для администраторов."
+        )
+        return
+    
+    # Получаем информацию о пользователе перед удалением
+    user_to_delete_info = get_user(user_to_delete)
+    
+    if not user_to_delete_info:
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text="❌ Пользователь с указанным ID не найден.",
+            reply_markup=get_back_to_main_menu_keyboard()
+        )
+        return
+    
+    # Удаляем пользователя из базы данных
+    if delete_user(user_to_delete):
+        # Успешное удаление
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text=f"✅ Пользователь {user_to_delete_info.get_full_name()} успешно удален.",
+            reply_markup=get_back_to_main_menu_keyboard(),
+            parse_mode="Markdown"
+        )
+    else:
+        # Ошибка при удалении
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text="❌ Произошла ошибка при удалении пользователя.",
+            reply_markup=get_back_to_main_menu_keyboard(),
+            parse_mode="Markdown"
+        )
+
+def handle_confirm_delete_order_callback(user_id, message_id, order_id):
+    """
+    Обработчик callback-запроса confirm_delete_order_{order_id}
+    """
+    user = get_user(user_id)
+    
+    if not user:
+        return
+    
+    # Проверяем, является ли пользователь администратором
+    if not user.is_admin():
+        bot.send_message(
+            user_id,
+            "❌ Эта функция доступна только для администраторов."
+        )
+        return
+    
+    # Получаем информацию о заказе перед удалением
+    order = get_order(order_id)
+    
+    if not order:
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text="❌ Заказ с указанным номером не найден.",
+            reply_markup=get_back_to_main_menu_keyboard()
+        )
+        return
+    
+    # Удаляем заказ из базы данных
+    if delete_order(order_id):
+        # Успешное удаление
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text=f"✅ Заказ #{order_id} успешно удален.",
+            reply_markup=get_back_to_main_menu_keyboard(),
+            parse_mode="Markdown"
+        )
+    else:
+        # Ошибка при удалении
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text="❌ Произошла ошибка при удалении заказа.",
+            reply_markup=get_back_to_main_menu_keyboard(),
+            parse_mode="Markdown"
+        )
 
 # Обработчик всех текстовых сообщений
 @bot.message_handler(func=lambda message: True)
