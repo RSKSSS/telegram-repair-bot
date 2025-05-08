@@ -303,6 +303,60 @@ def send_order_notification_to_admins(bot, order_id: int) -> None:
                 bot.send_message(user.user_id, message, reply_markup=keyboard)
             except Exception as e:
                 logger.error(f"Ошибка при отправке уведомления администратору {user.user_id}: {e}")
+                
+def send_order_status_update_notification(bot, order_id: int, old_status: str, new_status: str) -> None:
+    """
+    Отправляет уведомление главному администратору об изменении статуса заказа
+    
+    Args:
+        bot: Экземпляр бота
+        order_id: ID заказа
+        old_status: Предыдущий статус заказа
+        new_status: Новый статус заказа
+    """
+    from database import get_order
+    
+    # Получаем всех пользователей
+    users = get_all_users()
+    
+    # Получаем информацию о заказе
+    order = get_order(order_id)
+    
+    if not order:
+        logger.error(f"Не удалось получить информацию о заказе {order_id} для отправки уведомления об изменении статуса.")
+        return
+    
+    # Находим главного администратора (первого зарегистрированного)
+    admins = [user for user in users if user.is_admin()]
+    
+    if not admins:
+        logger.warning("В системе нет администраторов для отправки уведомления об изменении статуса заказа.")
+        return
+        
+    main_admin = admins[0]  # Берем первого администратора как главного
+    
+    # Получаем названия статусов на русском языке
+    old_status_name = get_status_name(old_status)
+    new_status_name = get_status_name(new_status)
+    
+    # Формируем текст уведомления
+    message = (
+        f"🔄 *Изменение статуса заказа #{order_id}*\n\n"
+        f"👤 Клиент: {order.client_name}\n"
+        f"📞 Телефон: {order.client_phone}\n\n"
+        f"Статус изменен: *{old_status_name}* → *{new_status_name}*\n\n"
+        f"🔍 Проблема: {order.problem_description}\n"
+    )
+    
+    # Создаем инлайн клавиатуру с кнопкой просмотра заказа
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton("👁️ Посмотреть заказ", callback_data=f"order_{order_id}"))
+    
+    try:
+        bot.send_message(main_admin.user_id, message, parse_mode="Markdown", reply_markup=keyboard)
+        logger.info(f"Уведомление об изменении статуса заказа #{order_id} отправлено главному администратору {main_admin.user_id}")
+    except Exception as e:
+        logger.error(f"Ошибка при отправке уведомления об изменении статуса заказа #{order_id} главному администратору {main_admin.user_id}: {e}")
 
 def validate_phone(phone: str) -> bool:
     """
