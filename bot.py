@@ -23,7 +23,8 @@ from utils import (
     get_main_menu_keyboard, get_order_status_keyboard, get_order_management_keyboard,
     get_technician_order_keyboard, get_back_to_main_menu_keyboard, get_approval_requests_keyboard,
     get_user_management_keyboard, is_admin, is_dispatcher, is_technician,
-    send_order_notification_to_admins, validate_phone, format_orders_list, get_technician_list_keyboard
+    send_order_notification_to_admins, validate_phone, format_orders_list, get_technician_list_keyboard,
+    get_role_name
 )
 from logger import get_component_logger, DEBUG, INFO, WARNING, ERROR, CRITICAL, log_function_call
 
@@ -1505,7 +1506,7 @@ def handle_set_role_callback(user_id, message_id, target_user_id, role):
             approve_user(target_user_id)
         
         # Отправляем подтверждение об обновлении роли
-        role_name = "администратора" if role == "admin" else "диспетчера" if role == "dispatcher" else "мастера"
+        role_name = get_role_name(role)
         bot.edit_message_text(
             chat_id=user_id,
             message_id=message_id,
@@ -1517,7 +1518,7 @@ def handle_set_role_callback(user_id, message_id, target_user_id, role):
         try:
             bot.send_message(
                 target_user_id,
-                f"✅ Вам назначена новая роль: *{get_role_name(role)}*\n\n"
+                f"✅ Вам назначена новая роль: *{role_name}*\n\n"
                 f"Теперь вы можете использовать все функции, доступные для этой роли.",
                 parse_mode="Markdown"
             )

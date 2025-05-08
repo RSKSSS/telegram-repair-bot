@@ -174,14 +174,25 @@ class Order:
             user_role (str): Роль пользователя, для которого форматируется заказ
                             ('admin', 'dispatcher', 'technician')
         """
-        result = (
-            f"📝 *Заказ #{self.order_id}*\n\n"
-            f"🔄 Статус: *{self.status_to_russian()}*\n"
-            f"📱 Телефон клиента: {self.client_phone}\n"
-            f"👤 Имя клиента: {self.client_name}\n"
-            f"🏠 Адрес: {self.client_address}\n"
-            f"🔧 Проблема: {self.problem_description}\n"
-        )
+        if user_role == 'dispatcher':
+            # Для диспетчера: номер, "Клиент:", проблема, адрес и время
+            result = (
+                f"📝 *Заказ #{self.order_id}*\n\n"
+                f"🔄 Статус: *{self.status_to_russian()}*\n"
+                f"👤 Клиент: {self.client_name}, {self.client_phone}\n"
+                f"🔧 Проблема: {self.problem_description}\n"
+                f"🏠 Адрес: {self.client_address}\n"
+            )
+        else:
+            # Для админа и мастера оставляем прежний порядок
+            result = (
+                f"📝 *Заказ #{self.order_id}*\n\n"
+                f"🔄 Статус: *{self.status_to_russian()}*\n"
+                f"📱 Телефон клиента: {self.client_phone}\n"
+                f"👤 Имя клиента: {self.client_name}\n"
+                f"🏠 Адрес: {self.client_address}\n"
+                f"🔧 Проблема: {self.problem_description}\n"
+            )
         
         # Добавляем информацию о запланированной дате и времени
         if self.scheduled_datetime:
