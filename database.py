@@ -2,23 +2,24 @@
 Модуль для работы с базой данных PostgreSQL
 """
 
-import logging
 import os
 import datetime
 import psycopg2
 from psycopg2 import sql
 from psycopg2.pool import ThreadedConnectionPool
 from typing import Optional, List, Dict
+import functools
 
 from models import User, Order, Assignment
+from logger import get_component_logger, DEBUG, INFO, WARNING, ERROR, log_function_call
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Настройка логирования для компонента database
+logger = get_component_logger('database', level=INFO)
 
 # Создаем пул соединений
 connection_pool = None
 
+@log_function_call(logger)
 def initialize_connection_pool():
     """Инициализация пула соединений с базой данных"""
     global connection_pool
@@ -31,24 +32,30 @@ def initialize_connection_pool():
             )
             logger.info("Пул соединений с базой данных успешно инициализирован")
         except Exception as e:
-            logger.error(f"Ошибка при инициализации пула соединений: {e}")
+            logger.error(f"Ошибка при инициализации пула соединений: {e}", exc_info=True)
             raise
 
+@log_function_call(logger)
 def get_connection():
     """Получение соединения с PostgreSQL базой данных из пула"""
     global connection_pool
     if connection_pool is None:
         initialize_connection_pool()
-    return connection_pool.getconn()
+    conn = connection_pool.getconn()
+    logger.debug(f"Получено соединение с БД: {id(conn)}")
+    return conn
 
+@log_function_call(logger)
 def release_connection(conn):
     """Возвращает соединение обратно в пул"""
     global connection_pool
     if connection_pool is not None:
+        logger.debug(f"Возвращено соединение с БД: {id(conn)}")
         connection_pool.putconn(conn)
 
 def with_db_connection(func):
     """Декоратор для автоматического управления соединениями с базой данных"""
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         conn = get_connection()
         try:
@@ -61,6 +68,7 @@ def with_db_connection(func):
 
 def with_db_transaction(func):
     """Декоратор для автоматического управления транзакциями базы данных"""
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         conn = get_connection()
         try:
@@ -68,16 +76,18 @@ def with_db_transaction(func):
             result = func(*args, **kwargs, conn=conn)
             # Если функция выполнилась успешно, фиксируем изменения
             conn.commit()
+            logger.debug(f"Транзакция для функции {func.__name__} успешно завершена")
             return result
         except Exception as e:
             # В случае ошибки откатываем изменения
             conn.rollback()
-            logger.error(f"Ошибка в транзакции: {e}")
+            logger.error(f"Ошибка в транзакции функции {func.__name__}: {e}", exc_info=True)
             raise
         finally:
             release_connection(conn)
     return wrapper
 
+@log_function_call(logger)
 def initialize_database():
     """Инициализация базы данных - создание таблиц если они не существуют"""
     logger.info("Инициализация базы данных...")
@@ -85,7 +95,7 @@ def initialize_database():
     try:
         initialize_connection_pool()
     except Exception as e:
-        logger.error(f"Ошибка при инициализации пула соединений: {e}")
+        logger.error(f"Ошибка при инициализации пула соединений: {e}", exc_info=True)
         return
         
     conn = get_connection()
@@ -93,6 +103,7 @@ def initialize_database():
     
     try:
         # Создаем таблицу пользователей
+        logger.debug("Создание таблицы users...")
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 user_id BIGINT PRIMARY KEY,
@@ -106,6 +117,7 @@ def initialize_database():
         ''')
         
         # Создаем таблицу заказов
+        logger.debug("Создание таблицы orders...")
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS orders (
                 order_id SERIAL PRIMARY KEY,
@@ -123,6 +135,7 @@ def initialize_database():
         ''')
         
         # Создаем таблицу назначений
+        logger.debug("Создание таблицы assignments...")
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS assignments (
                 assignment_id SERIAL PRIMARY KEY,
@@ -134,6 +147,7 @@ def initialize_database():
         ''')
         
         # Создаем таблицу для хранения состояний пользователей в боте
+        logger.debug("Создание таблицы user_states...")
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS user_states (
                 user_id BIGINT PRIMARY KEY,
@@ -145,6 +159,7 @@ def initialize_database():
         ''')
         
         # Добавляем индексы для ускорения запросов
+        logger.debug("Создание индексов для таблиц...")
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_users_is_approved ON users(is_approved)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)')
@@ -156,7 +171,7 @@ def initialize_database():
         logger.info("Инициализация базы данных успешно завершена.")
     except Exception as e:
         conn.rollback()
-        logger.error(f"Ошибка при инициализации базы данных: {e}")
+        logger.error(f"Ошибка при инициализации базы данных: {e}", exc_info=True)
     finally:
         cursor.close()
         release_connection(conn)
