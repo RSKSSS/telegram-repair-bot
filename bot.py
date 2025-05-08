@@ -623,6 +623,15 @@ def handle_callback_query(call):
     elif callback_data.startswith("confirm_delete_order_"):
         order_id = int(callback_data.split("_")[3])
         handle_confirm_delete_order_callback(user_id, message_id, order_id)
+    # Обработка логов активности
+    elif callback_data == "activity_logs":
+        handle_activity_logs_callback(user_id, message_id)
+    elif callback_data.startswith("logs_page_"):
+        page = int(callback_data.split("_")[2])
+        handle_logs_page_callback(user_id, message_id, page)
+    elif callback_data.startswith("logs_filter_"):
+        filter_type = callback_data.split("_")[2]
+        handle_logs_filter_callback(user_id, message_id, filter_type)
     else:
         bot.answer_callback_query(call.id, "Неизвестная команда")
 
