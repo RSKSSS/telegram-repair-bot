@@ -1468,6 +1468,68 @@ def handle_add_technician_callback(user_id, message_id):
         parse_mode="Markdown",
         reply_markup=keyboard
     )
+    
+def handle_set_role_callback(user_id, message_id, target_user_id, role):
+    """
+    Обработчик callback-запроса set_{role}_{user_id}
+    """
+    user = get_user(user_id)
+    
+    if not user:
+        return
+    
+    # Проверяем, является ли пользователь администратором
+    if not user.is_admin():
+        bot.send_message(
+            user_id,
+            "Эта функция доступна только для администраторов."
+        )
+        return
+    
+    # Получаем пользователя по ID
+    target_user = get_user(target_user_id)
+    
+    if not target_user:
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text="❌ Пользователь с указанным ID не найден.",
+            reply_markup=get_back_to_user_management_keyboard()
+        )
+        return
+    
+    # Обновляем роль пользователя
+    if update_user_role(target_user_id, role):
+        # Подтверждаем пользователя, если он не был подтвержден
+        if not target_user.is_approved:
+            approve_user(target_user_id)
+        
+        # Отправляем подтверждение об обновлении роли
+        role_name = "администратора" if role == "admin" else "диспетчера" if role == "dispatcher" else "мастера"
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text=f"✅ Пользователь {target_user.get_full_name()} успешно назначен на роль {role_name}.",
+            reply_markup=get_user_management_keyboard()
+        )
+        
+        # Отправляем уведомление пользователю
+        try:
+            bot.send_message(
+                target_user_id,
+                f"✅ Вам назначена новая роль: *{get_role_name(role)}*\n\n"
+                f"Теперь вы можете использовать все функции, доступные для этой роли.",
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            logger.error(f"Ошибка при отправке уведомления пользователю {target_user_id}: {e}")
+    else:
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text="❌ Произошла ошибка при обновлении роли пользователя. Пожалуйста, попробуйте позже.",
+            reply_markup=get_back_to_user_management_keyboard()
+        )
 
 def handle_order_detail_callback(user_id, message_id, order_id):
     """
