@@ -158,6 +158,19 @@ def initialize_database():
             )
         ''')
         
+        # Создаем таблицу шаблонов проблем
+        logger.debug("Создание таблицы problem_templates...")
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS problem_templates (
+                template_id SERIAL PRIMARY KEY,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                created_by BIGINT REFERENCES users(user_id),
+                is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         # Добавляем индексы для ускорения запросов
         logger.debug("Создание индексов для таблиц...")
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)')
@@ -166,6 +179,8 @@ def initialize_database():
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_orders_dispatcher_id ON orders(dispatcher_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_assignments_order_id ON assignments(order_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_assignments_technician_id ON assignments(technician_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_problem_templates_created_by ON problem_templates(created_by)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_problem_templates_is_active ON problem_templates(is_active)')
         
         conn.commit()
         logger.info("Инициализация базы данных успешно завершена.")

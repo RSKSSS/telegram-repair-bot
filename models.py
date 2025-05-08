@@ -1,7 +1,7 @@
 """
 Модели данных для работы с БД
 """
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from config import ORDER_STATUSES
 
 
@@ -280,3 +280,54 @@ class Assignment:
         if self.last_name:
             name += f" {self.last_name}"
         return name
+
+
+class ProblemTemplate:
+    """
+    Модель шаблона проблемы для быстрого создания заказов
+    """
+    def __init__(self, template_id: int, title: str, description: str, 
+                 created_by: int, is_active: bool = True, 
+                 created_at: Optional[str] = None):
+        self.template_id = template_id
+        self.title = title
+        self.description = description
+        self.created_by = created_by
+        self.is_active = is_active
+        self.created_at = created_at
+    
+    @classmethod
+    def from_dict(cls, data: Dict):
+        """
+        Создание объекта ProblemTemplate из словаря
+        """
+        template_id = data.get('template_id')
+        title = data.get('title')
+        description = data.get('description')
+        created_by = data.get('created_by')
+        
+        # Проверяем обязательные поля
+        if template_id is None or title is None or description is None or created_by is None:
+            raise ValueError("Обязательные поля шаблона не могут быть None")
+        
+        return cls(
+            template_id=template_id,
+            title=title,
+            description=description,
+            created_by=created_by,
+            is_active=data.get('is_active', True),
+            created_at=data.get('created_at')
+        )
+    
+    def to_dict(self) -> Dict:
+        """
+        Конвертация объекта ProblemTemplate в словарь
+        """
+        return {
+            'template_id': self.template_id,
+            'title': self.title,
+            'description': self.description,
+            'created_by': self.created_by,
+            'is_active': self.is_active,
+            'created_at': self.created_at
+        }
