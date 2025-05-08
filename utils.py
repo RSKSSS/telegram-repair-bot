@@ -304,9 +304,14 @@ def validate_phone(phone: str) -> bool:
     # Проверяем длину (от 10 до 15 цифр)
     return 10 <= len(digits_only) <= 15
 
-def format_orders_list(orders: List[Dict], show_buttons: bool = True) -> Tuple[str, Optional[InlineKeyboardMarkup]]:
+def format_orders_list(orders: List[Dict], show_buttons: bool = True, user_role: str = 'admin') -> Tuple[str, Optional[InlineKeyboardMarkup]]:
     """
     Форматирует список заказов для отображения
+    
+    Args:
+        orders: Список заказов для отображения
+        show_buttons: Показывать ли кнопки для каждого заказа
+        user_role: Роль пользователя ('admin', 'dispatcher', 'technician')
     """
     if not orders:
         message = "📋 Список заказов\n\nНет заказов для отображения."
@@ -334,7 +339,13 @@ def format_orders_list(orders: List[Dict], show_buttons: bool = True) -> Tuple[s
             status_emoji = "❌"
             
         message += f"{status_emoji} Заказ #{order.order_id} - {order.status_to_russian()}\n"
-        message += f"👤 {order.client_name} | 📱 {order.client_phone}\n"
+        
+        # Скрываем номер телефона для мастеров
+        if user_role == 'technician':
+            message += f"👤 {order.client_name}\n"
+        else:
+            message += f"👤 {order.client_name} | 📱 {order.client_phone}\n"
+            
         message += f"🏠 {order.client_address}\n"
         
         if show_buttons:
