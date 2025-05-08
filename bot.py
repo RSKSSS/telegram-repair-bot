@@ -622,6 +622,17 @@ def handle_callback_query(call):
     elif callback_data.startswith("set_description_"):
         order_id = int(callback_data.split("_")[2])
         handle_set_description_callback(user_id, message_id, order_id)
+    elif callback_data.startswith("ai_analyze_problem"):
+        handle_ai_analyze_problem_callback(user_id, message_id)
+    elif callback_data.startswith("ai_suggest_cost"):
+        handle_ai_suggest_cost_callback(user_id, message_id)
+    elif callback_data.startswith("ai_generate_description"):
+        handle_ai_generate_description_callback(user_id, message_id)
+    elif callback_data.startswith("ai_technician_help"):
+        handle_ai_technician_help_callback(user_id, message_id)
+    elif callback_data.startswith("ai_order_help_"):
+        order_id = int(callback_data.split("_")[3])
+        handle_ai_order_help_callback(user_id, message_id, order_id)
     else:
         bot.answer_callback_query(call.id, "Неизвестная команда")
 
