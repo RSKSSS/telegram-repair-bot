@@ -5,7 +5,7 @@
 import json
 from telebot.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
-from bot import bot, clear_user_state, set_user_state, get_user_state, get_current_order_id
+from shared_state import clear_user_state, set_user_state, get_user_state, get_current_order_id, bot
 from database import get_user_role, get_order, get_activity_logs, update_order, add_activity_log
 from logger import get_component_logger
 from ui_constants import EMOJI, format_success_message, format_error_message

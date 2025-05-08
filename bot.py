@@ -28,20 +28,16 @@ from utils import (
     get_role_name, get_user_list_for_deletion, get_order_list_for_deletion
 )
 from logger import get_component_logger, DEBUG, INFO, WARNING, ERROR, CRITICAL, log_function_call
+
+# Импорт модуля shared_state будет использоваться для общих функций управления состоянием
+from shared_state import set_user_state, clear_user_state, get_user_state, get_current_order_id
 from ui_constants import EMOJI, format_error_message, format_success_message, format_info_message
 
 # Настройка логирования с использованием новой системы
 logger = get_component_logger('bot', level=INFO)
 
-# Создаем бота
-TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-bot = telebot.TeleBot(TOKEN)
-
 # Словарь для хранения временных данных пользователей
 user_data = {}
-
-# Создаем отдельный атрибут для хранения данных AI модуля
-bot.user_data = {}
 
 # Состояния для работы с шаблонами проблем
 TEMPLATE_TITLE_INPUT = "template_title_input"
@@ -49,44 +45,16 @@ TEMPLATE_DESCRIPTION_INPUT = "template_description_input"
 TEMPLATE_EDIT_TITLE_INPUT = "template_edit_title_input"
 TEMPLATE_EDIT_DESCRIPTION_INPUT = "template_edit_description_input"
 
-# Обработчики состояний пользователей
-@log_function_call(logger)
-def set_user_state(user_id: int, state: str, order_id: Optional[int] = None) -> None:
-    """
-    Устанавливает состояние пользователя
-    """
-    from database import set_user_state as db_set_user_state
-    logger.debug(f"Установка состояния для пользователя {user_id}: {state}, order_id={order_id}")
-    db_set_user_state(user_id, state, order_id)
-
-@log_function_call(logger)
-def clear_user_state(user_id: int) -> None:
-    """
-    Очищает состояние пользователя
-    """
-    from database import clear_user_state as db_clear_user_state
-    logger.debug(f"Очистка состояния для пользователя {user_id}")
-    db_clear_user_state(user_id)
-
-@log_function_call(logger)
-def get_user_state(user_id: int) -> Optional[str]:
-    """
-    Возвращает текущее состояние пользователя
-    """
-    from database import get_user_state as db_get_user_state
-    state = db_get_user_state(user_id)
-    logger.debug(f"Получено состояние пользователя {user_id}: {state}")
-    return state
-
-@log_function_call(logger)
-def get_current_order_id(user_id: int) -> Optional[int]:
-    """
-    Возвращает ID текущего заказа пользователя
-    """
-    from database import get_current_order_id as db_get_current_order_id
-    order_id = db_get_current_order_id(user_id)
-    logger.debug(f"Получен текущий order_id для пользователя {user_id}: {order_id}")
-    return order_id
+# Используем bot из shared_state и импортируем обработчики AI-колбеков
+from shared_state import bot
+from ai_commands import (
+    handle_ai_analyze_problem_callback,
+    handle_ai_suggest_cost_callback, 
+    handle_ai_generate_description_callback,
+    handle_ai_technician_help_callback,
+    handle_set_cost_callback,
+    handle_set_description_callback
+)
 
 # Обработчик команды /start
 @bot.message_handler(commands=['start'])
@@ -636,6 +604,23 @@ def handle_callback_query(call):
     elif callback_data.startswith("logs_filter_"):
         filter_type = callback_data.split("_")[2]
         handle_logs_filter_callback(user_id, message_id, filter_type)
+    # Обработка AI-колбэков
+    elif callback_data == "ai_analyze_problem":
+        handle_ai_analyze_problem_callback(user_id, message_id)
+    elif callback_data == "ai_suggest_cost":
+        handle_ai_suggest_cost_callback(user_id, message_id)
+    elif callback_data == "ai_generate_description":
+        handle_ai_generate_description_callback(user_id, message_id)
+    elif callback_data == "ai_technician_help":
+        handle_ai_technician_help_callback(user_id, message_id)
+    elif callback_data.startswith("set_cost_"):
+        parts = callback_data.split("_")
+        order_id = int(parts[2])
+        cost = float(parts[3])
+        handle_set_cost_callback(user_id, message_id, order_id, cost)
+    elif callback_data.startswith("set_description_"):
+        order_id = int(callback_data.split("_")[2])
+        handle_set_description_callback(user_id, message_id, order_id)
     else:
         bot.answer_callback_query(call.id, "Неизвестная команда")
 

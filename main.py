@@ -7,7 +7,15 @@ import logging
 import os
 from flask import Flask, render_template, redirect, url_for
 from database import initialize_database
-from bot import bot
+
+# Импортируем бота из shared_state
+from shared_state import bot
+
+# Импортируем bot.py для регистрации всех обработчиков
+import bot
+
+# Этот импорт необходим для регистрации обработчиков команд AI
+import ai_commands
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -126,7 +134,11 @@ def main():
     
     # Запускаем бота в отдельном потоке
     import threading
-    bot_thread = threading.Thread(target=bot.infinity_polling)
+    
+    def bot_polling():
+        bot.polling(none_stop=True, interval=0)
+    
+    bot_thread = threading.Thread(target=bot_polling)
     bot_thread.daemon = True
     bot_thread.start()
     
