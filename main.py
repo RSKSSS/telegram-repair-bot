@@ -112,6 +112,18 @@ def main():
         logger.error("Ошибка: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
         return
     
+    # Проверяем наличие ключа API от OpenAI
+    if not os.environ.get('OPENAI_API_KEY'):
+        logger.warning("Внимание: Ключ API OpenAI не найден. Функции ИИ-ассистента будут недоступны.")
+    else:
+        # Регистрируем обработчики AI команд
+        try:
+            from ai_commands import register_ai_commands
+            register_ai_commands(bot)
+            logger.info("AI функции успешно зарегистрированы")
+        except Exception as e:
+            logger.error(f"Ошибка при регистрации AI функций: {e}")
+    
     # Запускаем бота в отдельном потоке
     import threading
     bot_thread = threading.Thread(target=bot.infinity_polling)

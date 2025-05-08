@@ -89,30 +89,41 @@ def format_order_card(order, include_cost=True, include_description=True):
     Returns:
         Отформатированная строка с информацией о заказе
     """
-    status_emoji = EMOJI.get(order.get('status', 'new'), '')
+    status = order.get('status', 'new')
+    status_emoji = EMOJI.get(status, '')
     
     # Формируем заголовок с ID и статусом
-    result = f"{BOLD.format(f'Заказ #{order.get('order_id')}')} {status_emoji} {ITALIC.format(STATUS_DESCRIPTIONS.get(order.get('status', 'new'), 'Статус неизвестен'))}\n\n"
+    order_id = order.get('order_id', '')
+    status = order.get('status', 'new')
+    status_descr = STATUS_DESCRIPTIONS.get(status, 'Статус неизвестен')
+    result = f"{BOLD.format('Заказ #' + str(order_id))} {status_emoji} {ITALIC.format(status_descr)}\n\n"
     
     # Информация о клиенте
-    result += f"{EMOJI['phone']} *Клиент:* {order.get('client_name', 'Н/Д')}\n"
-    result += f"{EMOJI['phone']} *Телефон:* {order.get('client_phone', 'Н/Д')}\n"
-    result += f"{EMOJI['address']} *Адрес:* {order.get('client_address', 'Н/Д')}\n"
+    client_name = order.get('client_name', 'Н/Д')
+    client_phone = order.get('client_phone', 'Н/Д')
+    client_address = order.get('client_address', 'Н/Д')
+    result += f"{EMOJI['phone']} *Клиент:* {client_name}\n"
+    result += f"{EMOJI['phone']} *Телефон:* {client_phone}\n"
+    result += f"{EMOJI['address']} *Адрес:* {client_address}\n"
     
     # Дата и время
     if order.get('scheduled_datetime'):
-        result += f"{EMOJI['date']} *Дата визита:* {order.get('scheduled_datetime').strftime('%d.%m.%Y %H:%M')}\n"
+        scheduled_time = order.get('scheduled_datetime').strftime('%d.%m.%Y %H:%M')
+        result += f"{EMOJI['date']} *Дата визита:* {scheduled_time}\n"
     
     # Проблема
-    result += f"\n{EMOJI['description']} *Описание проблемы:*\n{order.get('problem_description', 'Не указано')}\n"
+    problem_descr = order.get('problem_description', 'Не указано')
+    result += f"\n{EMOJI['description']} *Описание проблемы:*\n{problem_descr}\n"
     
     # Стоимость (если запрошена и есть)
     if include_cost and order.get('service_cost'):
-        result += f"\n{EMOJI['cost']} *Стоимость услуг:* {order.get('service_cost')} руб.\n"
+        service_cost = order.get('service_cost')
+        result += f"\n{EMOJI['cost']} *Стоимость услуг:* {service_cost} руб.\n"
     
     # Описание выполненных работ (если запрошено и есть)
     if include_description and order.get('service_description'):
-        result += f"\n{EMOJI['description']} *Выполненные работы:*\n{order.get('service_description')}\n"
+        service_descr = order.get('service_description')
+        result += f"\n{EMOJI['description']} *Выполненные работы:*\n{service_descr}\n"
     
     return result
 

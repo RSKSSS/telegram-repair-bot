@@ -28,6 +28,7 @@ from utils import (
     get_role_name, get_user_list_for_deletion, get_order_list_for_deletion
 )
 from logger import get_component_logger, DEBUG, INFO, WARNING, ERROR, CRITICAL, log_function_call
+from ui_constants import EMOJI, format_error_message, format_success_message, format_info_message
 
 # Настройка логирования с использованием новой системы
 logger = get_component_logger('bot', level=INFO)
@@ -38,6 +39,9 @@ bot = telebot.TeleBot(TOKEN)
 
 # Словарь для хранения временных данных пользователей
 user_data = {}
+
+# Создаем отдельный атрибут для хранения данных AI модуля
+bot.user_data = {}
 
 # Состояния для работы с шаблонами проблем
 TEMPLATE_TITLE_INPUT = "template_title_input"
@@ -2263,6 +2267,17 @@ def handle_message(message):
             "Ваша учетная запись не найдена. Пожалуйста, используйте команду /start для регистрации."
         )
         return
+    
+    # Сначала проверяем, относится ли сообщение к AI функциям
+    try:
+        # Импортируем обработчик AI сообщений
+        from ai_commands import handle_ai_message_input
+        
+        # Если сообщение обработано AI модулем, завершаем обработку
+        if handle_ai_message_input(message):
+            return
+    except Exception as e:
+        logger.error(f"Ошибка при обработке AI сообщения: {e}")
     
     # Получаем текущее состояние пользователя
     state = get_user_state(user_id)
