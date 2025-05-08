@@ -867,8 +867,8 @@ def handle_list_users_callback(user_id, message_id):
         message_text += "\n"
     
     # Добавляем кнопку возврата к управлению пользователями
-    keyboard = telebot.types.InlineKeyboardMarkup()
-    keyboard.add(telebot.types.InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
     
     # Редактируем сообщение со списком пользователей
     bot.edit_message_text(
