@@ -7,6 +7,7 @@ import os
 import datetime
 import psycopg2
 from psycopg2 import sql
+from psycopg2.pool import ThreadedConnectionPool
 from typing import Optional, List, Dict
 
 from models import User, Order, Assignment
@@ -15,11 +16,36 @@ from models import User, Order, Assignment
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Создаем пул соединений
+connection_pool = None
+
+def initialize_connection_pool():
+    """Инициализация пула соединений с базой данных"""
+    global connection_pool
+    if connection_pool is None:
+        try:
+            connection_pool = ThreadedConnectionPool(
+                minconn=2,
+                maxconn=20,
+                dsn=os.environ.get('DATABASE_URL')
+            )
+            logger.info("Пул соединений с базой данных успешно инициализирован")
+        except Exception as e:
+            logger.error(f"Ошибка при инициализации пула соединений: {e}")
+            raise
+
 def get_connection():
-    """Получение соединения с PostgreSQL базой данных"""
-    return psycopg2.connect(
-        os.environ.get('DATABASE_URL')
-    )
+    """Получение соединения с PostgreSQL базой данных из пула"""
+    global connection_pool
+    if connection_pool is None:
+        initialize_connection_pool()
+    return connection_pool.getconn()
+
+def release_connection(conn):
+    """Возвращает соединение обратно в пул"""
+    global connection_pool
+    if connection_pool is not None:
+        connection_pool.putconn(conn)
 
 def initialize_database():
     """Инициализация базы данных - создание таблиц если они не существуют"""
