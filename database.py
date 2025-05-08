@@ -257,6 +257,20 @@ def initialize_database():
             )
         ''')
         
+        # Создаем таблицу логов активности
+        logger.debug("Создание таблицы activity_logs...")
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS activity_logs (
+                log_id SERIAL PRIMARY KEY,
+                user_id BIGINT REFERENCES users(user_id),
+                action_type TEXT NOT NULL,
+                action_description TEXT NOT NULL,
+                related_order_id INTEGER REFERENCES orders(order_id) ON DELETE SET NULL,
+                related_user_id BIGINT REFERENCES users(user_id) ON DELETE SET NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         # Добавляем индексы для ускорения запросов
         logger.debug("Создание индексов для таблиц...")
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)')
