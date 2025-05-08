@@ -47,9 +47,47 @@ def release_connection(conn):
     if connection_pool is not None:
         connection_pool.putconn(conn)
 
+def with_db_connection(func):
+    """Декоратор для автоматического управления соединениями с базой данных"""
+    def wrapper(*args, **kwargs):
+        conn = get_connection()
+        try:
+            # Заменяем conn.close() на release_connection(conn) во всех функциях
+            result = func(*args, **kwargs, conn=conn)
+            return result
+        finally:
+            release_connection(conn)
+    return wrapper
+
+def with_db_transaction(func):
+    """Декоратор для автоматического управления транзакциями базы данных"""
+    def wrapper(*args, **kwargs):
+        conn = get_connection()
+        try:
+            # Запускаем функцию с передачей соединения
+            result = func(*args, **kwargs, conn=conn)
+            # Если функция выполнилась успешно, фиксируем изменения
+            conn.commit()
+            return result
+        except Exception as e:
+            # В случае ошибки откатываем изменения
+            conn.rollback()
+            logger.error(f"Ошибка в транзакции: {e}")
+            raise
+        finally:
+            release_connection(conn)
+    return wrapper
+
 def initialize_database():
     """Инициализация базы данных - создание таблиц если они не существуют"""
     logger.info("Инициализация базы данных...")
+    # Инициализируем пул соединений
+    try:
+        initialize_connection_pool()
+    except Exception as e:
+        logger.error(f"Ошибка при инициализации пула соединений: {e}")
+        return
+        
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -106,6 +144,14 @@ def initialize_database():
             )
         ''')
         
+        # Добавляем индексы для ускорения запросов
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_users_is_approved ON users(is_approved)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_orders_dispatcher_id ON orders(dispatcher_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_assignments_order_id ON assignments(order_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_assignments_technician_id ON assignments(technician_id)')
+        
         conn.commit()
         logger.info("Инициализация базы данных успешно завершена.")
     except Exception as e:
@@ -113,7 +159,7 @@ def initialize_database():
         logger.error(f"Ошибка при инициализации базы данных: {e}")
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def save_user(user_id, first_name, last_name=None, username=None, role='technician', is_approved=False):
     """Сохранение информации о пользователе в базу данных"""
@@ -154,7 +200,7 @@ def save_user(user_id, first_name, last_name=None, username=None, role='technici
         logger.error(f"Ошибка при сохранении пользователя: {e}")
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def get_user(user_id):
     """Получение информации о пользователе из базы данных"""
@@ -180,11 +226,11 @@ def get_user(user_id):
         return None
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
-def get_user_role(user_id):
+@with_db_connection
+def get_user_role(user_id, conn=None):
     """Получение роли пользователя из базы данных"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -197,11 +243,10 @@ def get_user_role(user_id):
         return None
     finally:
         cursor.close()
-        conn.close()
 
-def get_all_users():
+@with_db_connection
+def get_all_users(conn=None):
     """Получение всех пользователей из базы данных"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -223,11 +268,10 @@ def get_all_users():
         return []
     finally:
         cursor.close()
-        conn.close()
 
-def get_technicians():
+@with_db_connection
+def get_technicians(conn=None):
     """Получение всех мастеров из базы данных"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -249,7 +293,6 @@ def get_technicians():
         return []
     finally:
         cursor.close()
-        conn.close()
 
 def update_user_role(user_id, role):
     """Обновление роли пользователя в базе данных"""
