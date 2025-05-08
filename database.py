@@ -39,11 +39,36 @@ def initialize_connection_pool():
 def get_connection():
     """Получение соединения с PostgreSQL базой данных из пула"""
     global connection_pool
-    if connection_pool is None:
-        initialize_connection_pool()
-    conn = connection_pool.getconn()
-    logger.debug(f"Получено соединение с БД: {id(conn)}")
-    return conn
+    max_attempts = 3
+    attempt = 0
+    
+    while attempt < max_attempts:
+        attempt += 1
+        try:
+            if connection_pool is None:
+                initialize_connection_pool()
+            conn = connection_pool.getconn()
+            
+            # Проверяем соединение
+            cursor = conn.cursor()
+            cursor.execute('SELECT 1')
+            cursor.close()
+            
+            logger.debug(f"Получено соединение с БД: {id(conn)}")
+            return conn
+        except psycopg2.OperationalError as e:
+            logger.warning(f"Ошибка соединения с БД (попытка {attempt}/{max_attempts}): {e}")
+            if attempt >= max_attempts:
+                logger.error("Все попытки соединения с БД исчерпаны", exc_info=True)
+                raise
+            
+            # Пересоздаем пул соединений
+            if connection_pool is not None:
+                try:
+                    connection_pool.closeall()
+                except:
+                    pass
+                connection_pool = None
 
 @log_function_call(logger)
 def release_connection(conn):
@@ -57,34 +82,94 @@ def with_db_connection(func):
     """Декоратор для автоматического управления соединениями с базой данных"""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        conn = get_connection()
-        try:
-            # Заменяем conn.close() на release_connection(conn) во всех функциях
-            result = func(*args, **kwargs, conn=conn)
-            return result
-        finally:
-            release_connection(conn)
+        max_attempts = 3
+        attempt = 0
+        last_error = None
+        
+        while attempt < max_attempts:
+            attempt += 1
+            try:
+                conn = get_connection()
+                try:
+                    # Проверяем соединение
+                    cursor = conn.cursor()
+                    cursor.execute('SELECT 1')
+                    cursor.close()
+                    
+                    # Выполняем функцию
+                    result = func(*args, **kwargs, conn=conn)
+                    return result
+                finally:
+                    release_connection(conn)
+            except psycopg2.OperationalError as e:
+                last_error = e
+                logger.warning(f"Ошибка соединения в декораторе with_db_connection (попытка {attempt}/{max_attempts}): {e}")
+                if attempt >= max_attempts:
+                    logger.error("Все попытки соединения с БД исчерпаны", exc_info=True)
+                    if last_error:
+                        raise last_error
+                    raise e
+        
+        # Этот код не должен быть достигнут, но на всякий случай
+        if last_error:
+            raise last_error
+        raise Exception("Неизвестная ошибка соединения с базой данных")
     return wrapper
 
 def with_db_transaction(func):
     """Декоратор для автоматического управления транзакциями базы данных"""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        conn = get_connection()
-        try:
-            # Запускаем функцию с передачей соединения
-            result = func(*args, **kwargs, conn=conn)
-            # Если функция выполнилась успешно, фиксируем изменения
-            conn.commit()
-            logger.debug(f"Транзакция для функции {func.__name__} успешно завершена")
-            return result
-        except Exception as e:
-            # В случае ошибки откатываем изменения
-            conn.rollback()
-            logger.error(f"Ошибка в транзакции функции {func.__name__}: {e}", exc_info=True)
-            raise
-        finally:
-            release_connection(conn)
+        max_attempts = 3
+        attempt = 0
+        last_error = None
+        
+        while attempt < max_attempts:
+            attempt += 1
+            try:
+                conn = get_connection()
+                try:
+                    # Проверяем соединение
+                    cursor = conn.cursor()
+                    cursor.execute('SELECT 1')
+                    cursor.close()
+                    
+                    # Запускаем функцию с передачей соединения
+                    result = func(*args, **kwargs, conn=conn)
+                    # Если функция выполнилась успешно, фиксируем изменения
+                    conn.commit()
+                    logger.debug(f"Транзакция для функции {func.__name__} успешно завершена")
+                    return result
+                except psycopg2.DatabaseError as e:
+                    # В случае ошибки базы данных откатываем изменения
+                    try:
+                        conn.rollback()
+                    except:
+                        pass
+                    raise e
+                except Exception as e:
+                    # В случае других ошибок также откатываем изменения
+                    try:
+                        conn.rollback()
+                    except:
+                        pass
+                    logger.error(f"Ошибка в транзакции функции {func.__name__}: {e}", exc_info=True)
+                    raise
+                finally:
+                    release_connection(conn)
+            except psycopg2.OperationalError as e:
+                last_error = e
+                logger.warning(f"Ошибка соединения в декораторе with_db_transaction (попытка {attempt}/{max_attempts}): {e}")
+                if attempt >= max_attempts:
+                    logger.error("Все попытки соединения с БД исчерпаны", exc_info=True)
+                    if last_error:
+                        raise last_error
+                    raise e
+        
+        # Этот код не должен быть достигнут, но на всякий случай
+        if last_error:
+            raise last_error
+        raise Exception("Неизвестная ошибка соединения с базой данных")
     return wrapper
 
 @log_function_call(logger)
@@ -848,6 +933,139 @@ def clear_user_state(user_id, conn=None):
         return True
     except Exception as e:
         logger.error(f"Ошибка при очистке состояния пользователя: {e}")
+        return False
+    finally:
+        cursor.close()
+
+@with_db_transaction
+def save_problem_template(title, description, created_by, conn=None):
+    """Сохранение шаблона проблемы в базу данных"""
+    cursor = conn.cursor()
+    
+    try:
+        # Вставляем новый шаблон
+        cursor.execute(
+            "INSERT INTO problem_templates (title, description, created_by) VALUES (%s, %s, %s) RETURNING template_id",
+            (title, description, created_by)
+        )
+        template_id = cursor.fetchone()[0]
+        return template_id
+    except Exception as e:
+        logger.error(f"Ошибка при сохранении шаблона проблемы: {e}")
+        return None
+    finally:
+        cursor.close()
+
+@with_db_transaction
+def update_problem_template(template_id, title=None, description=None, is_active=None, conn=None):
+    """Обновление шаблона проблемы в базе данных"""
+    cursor = conn.cursor()
+    
+    try:
+        update_values = []
+        update_fields = []
+        
+        if title is not None:
+            update_fields.append("title = %s")
+            update_values.append(title)
+        
+        if description is not None:
+            update_fields.append("description = %s")
+            update_values.append(description)
+        
+        if is_active is not None:
+            update_fields.append("is_active = %s")
+            update_values.append(is_active)
+        
+        if update_fields:
+            sql_query = f"UPDATE problem_templates SET {', '.join(update_fields)} WHERE template_id = %s"
+            update_values.append(template_id)
+            cursor.execute(sql_query, tuple(update_values))
+            return True
+        return False
+    except Exception as e:
+        logger.error(f"Ошибка при обновлении шаблона проблемы: {e}")
+        return False
+    finally:
+        cursor.close()
+
+@with_db_connection
+def get_problem_template(template_id, conn=None):
+    """Получение шаблона проблемы из базы данных"""
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("SELECT * FROM problem_templates WHERE template_id = %s", (template_id,))
+        template_data = cursor.fetchone()
+        
+        if not template_data:
+            return None
+            
+        # Получаем имена столбцов
+        column_names = [desc[0] for desc in cursor.description]
+        
+        # Создаем словарь с данными шаблона
+        template_dict = {column_names[i]: template_data[i] for i in range(len(column_names))}
+        
+        from models import ProblemTemplate
+        return ProblemTemplate.from_dict(template_dict)
+    except Exception as e:
+        logger.error(f"Ошибка при получении шаблона проблемы: {e}")
+        return None
+    finally:
+        cursor.close()
+
+@with_db_connection
+def get_problem_templates(created_by=None, active_only=True, conn=None):
+    """Получение шаблонов проблем из базы данных"""
+    cursor = conn.cursor()
+    
+    try:
+        query = "SELECT * FROM problem_templates"
+        params = []
+        conditions = []
+        
+        if created_by is not None:
+            conditions.append("created_by = %s")
+            params.append(created_by)
+        
+        if active_only:
+            conditions.append("is_active = TRUE")
+        
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+            
+        query += " ORDER BY title ASC"
+        cursor.execute(query, tuple(params))
+        templates_data = cursor.fetchall()
+        
+        # Получаем имена столбцов
+        column_names = [desc[0] for desc in cursor.description]
+        
+        templates = []
+        for template_data in templates_data:
+            # Создаем словарь с данными шаблона
+            template_dict = {column_names[i]: template_data[i] for i in range(len(column_names))}
+            from models import ProblemTemplate
+            templates.append(ProblemTemplate.from_dict(template_dict))
+        
+        return templates
+    except Exception as e:
+        logger.error(f"Ошибка при получении шаблонов проблем: {e}")
+        return []
+    finally:
+        cursor.close()
+
+@with_db_transaction
+def delete_problem_template(template_id, conn=None):
+    """Удаление шаблона проблемы из базы данных"""
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("DELETE FROM problem_templates WHERE template_id = %s", (template_id,))
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка при удалении шаблона проблемы: {e}")
         return False
     finally:
         cursor.close()
