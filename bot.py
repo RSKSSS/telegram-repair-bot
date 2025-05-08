@@ -15,7 +15,9 @@ from database import (
     get_unapproved_users, approve_user, reject_user, update_user_role,
     save_order, update_order, get_order, get_orders_by_user, get_all_orders,
     get_assigned_orders, assign_order, get_technicians, get_order_technicians,
-    set_user_state, get_user_state, get_current_order_id, clear_user_state
+    set_user_state, get_user_state, get_current_order_id, clear_user_state,
+    save_problem_template, update_problem_template, get_problem_template,
+    get_problem_templates, delete_problem_template
 )
 from utils import (
     get_main_menu_keyboard, get_order_status_keyboard, get_order_management_keyboard,
@@ -34,6 +36,12 @@ bot = telebot.TeleBot(TOKEN)
 
 # Словарь для хранения временных данных пользователей
 user_data = {}
+
+# Состояния для работы с шаблонами проблем
+TEMPLATE_TITLE_INPUT = "template_title_input"
+TEMPLATE_DESCRIPTION_INPUT = "template_description_input"
+TEMPLATE_EDIT_TITLE_INPUT = "template_edit_title_input"
+TEMPLATE_EDIT_DESCRIPTION_INPUT = "template_edit_description_input"
 
 # Обработчики состояний пользователей
 @log_function_call(logger)
@@ -534,6 +542,21 @@ def handle_callback_query(call):
         handle_add_dispatcher_callback(user_id, message_id)
     elif callback_data == "add_technician":
         handle_add_technician_callback(user_id, message_id)
+    elif callback_data == "manage_templates":
+        handle_manage_templates_callback(user_id, message_id)
+    elif callback_data == "view_templates":
+        handle_view_templates_callback(user_id, message_id)
+    elif callback_data == "add_template":
+        handle_add_template_callback(user_id, message_id)
+    elif callback_data.startswith("use_template_"):
+        template_id = int(callback_data.split("_")[2])
+        handle_use_template_callback(user_id, message_id, template_id)
+    elif callback_data.startswith("edit_template_"):
+        template_id = int(callback_data.split("_")[2])
+        handle_edit_template_callback(user_id, message_id, template_id)
+    elif callback_data.startswith("delete_template_"):
+        template_id = int(callback_data.split("_")[2])
+        handle_delete_template_callback(user_id, message_id, template_id)
     elif callback_data.startswith("order_"):
         order_id = int(callback_data.split("_")[1])
         handle_order_detail_callback(user_id, message_id, order_id)
@@ -592,6 +615,219 @@ def handle_main_menu_callback(user_id, message_id):
         text=message_text,
         reply_markup=get_main_menu_keyboard(user_id),
         parse_mode="Markdown"
+    )
+
+def handle_manage_templates_callback(user_id, message_id):
+    """
+    Обработчик callback-запроса manage_templates
+    """
+    user = get_user(user_id)
+    
+    if not user or not user.is_admin():
+        return
+    
+    # Создаем клавиатуру для управления шаблонами
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton("Просмотреть шаблоны", callback_data="view_templates"),
+        InlineKeyboardButton("Добавить шаблон", callback_data="add_template"),
+        InlineKeyboardButton("« Назад в главное меню", callback_data="main_menu")
+    )
+    
+    # Отправляем сообщение с клавиатурой
+    bot.edit_message_text(
+        chat_id=user_id,
+        message_id=message_id,
+        text="🛠️ *Управление шаблонами проблем*\n\n"
+        "Вы можете просматривать, добавлять, редактировать и удалять шаблоны типичных проблем для быстрого создания заказов.",
+        parse_mode="Markdown",
+        reply_markup=keyboard
+    )
+
+def handle_view_templates_callback(user_id, message_id):
+    """
+    Обработчик callback-запроса view_templates
+    """
+    user = get_user(user_id)
+    
+    if not user or not (user.is_admin() or user.is_dispatcher()):
+        return
+    
+    # Получаем шаблоны проблем
+    templates = get_problem_templates()
+    
+    # Создаем сообщение со списком шаблонов
+    message_text = "📋 *Шаблоны проблем*\n\n"
+    
+    if not templates:
+        message_text += "В системе нет шаблонов проблем. Добавьте первый шаблон!"
+    else:
+        for i, template in enumerate(templates):
+            message_text += f"*{i+1}. {template.title}*\n"
+            message_text += f"{template.description}\n\n"
+    
+    # Создаем клавиатуру с кнопками действий для шаблонов
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    
+    if templates:
+        # Добавляем кнопки для каждого шаблона
+        for template in templates:
+            keyboard.add(
+                InlineKeyboardButton(f"📝 Ред: {template.title[:15]}...", callback_data=f"edit_template_{template.template_id}"),
+                InlineKeyboardButton(f"❌ Удалить", callback_data=f"delete_template_{template.template_id}")
+            )
+            keyboard.add(
+                InlineKeyboardButton(f"✅ Использовать: {template.title[:15]}...", callback_data=f"use_template_{template.template_id}")
+            )
+    
+    if user.is_admin():
+        keyboard.add(InlineKeyboardButton("➕ Добавить шаблон", callback_data="add_template"))
+        keyboard.add(InlineKeyboardButton("« Управление шаблонами", callback_data="manage_templates"))
+    else:
+        keyboard.add(InlineKeyboardButton("« Главное меню", callback_data="main_menu"))
+    
+    # Отправляем сообщение с клавиатурой
+    bot.edit_message_text(
+        chat_id=user_id,
+        message_id=message_id,
+        text=message_text,
+        parse_mode="Markdown",
+        reply_markup=keyboard
+    )
+
+def handle_add_template_callback(user_id, message_id):
+    """
+    Обработчик callback-запроса add_template
+    """
+    user = get_user(user_id)
+    
+    if not user or not user.is_admin():
+        return
+    
+    # Отправляем сообщение с запросом названия шаблона
+    bot.edit_message_text(
+        chat_id=user_id,
+        message_id=message_id,
+        text="📝 *Добавление нового шаблона проблемы*\n\n"
+        "Введите название шаблона (например, 'Не включается компьютер'):",
+        parse_mode="Markdown"
+    )
+    
+    # Устанавливаем состояние пользователя
+    set_user_state(user_id, TEMPLATE_TITLE_INPUT)
+
+def handle_use_template_callback(user_id, message_id, template_id):
+    """
+    Обработчик callback-запроса use_template_<template_id>
+    """
+    user = get_user(user_id)
+    
+    if not user or not (user.is_admin() or user.is_dispatcher()):
+        return
+    
+    # Получаем шаблон проблемы
+    template = get_problem_template(template_id)
+    
+    if not template:
+        bot.answer_callback_query(
+            callback_query_id=message_id,
+            text="Шаблон не найден."
+        )
+        return
+    
+    # Запрашиваем номер телефона клиента
+    bot.edit_message_text(
+        chat_id=user_id,
+        message_id=message_id,
+        text="📝 *Создание нового заказа по шаблону*\n\n"
+        f"*Шаблон:* {template.title}\n"
+        f"*Описание:* {template.description}\n\n"
+        "Введите номер телефона клиента:",
+        parse_mode="Markdown"
+    )
+    
+    # Сохраняем описание проблемы в user_data
+    if user_id not in user_data:
+        user_data[user_id] = {}
+    user_data[user_id]['problem_description'] = template.description
+    
+    # Устанавливаем состояние пользователя
+    set_user_state(user_id, "waiting_for_phone")
+
+def handle_edit_template_callback(user_id, message_id, template_id):
+    """
+    Обработчик callback-запроса edit_template_<template_id>
+    """
+    user = get_user(user_id)
+    
+    if not user or not user.is_admin():
+        return
+    
+    # Получаем шаблон проблемы
+    template = get_problem_template(template_id)
+    
+    if not template:
+        bot.answer_callback_query(
+            callback_query_id=message_id,
+            text="Шаблон не найден."
+        )
+        return
+    
+    # Создаем клавиатуру для выбора, что редактировать
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard.add(
+        InlineKeyboardButton("Редактировать название", callback_data=f"edit_template_title_{template_id}"),
+        InlineKeyboardButton("Редактировать описание", callback_data=f"edit_template_description_{template_id}"),
+        InlineKeyboardButton("« Назад к шаблонам", callback_data="view_templates")
+    )
+    
+    # Отправляем сообщение с информацией о шаблоне
+    bot.edit_message_text(
+        chat_id=user_id,
+        message_id=message_id,
+        text=f"✏️ *Редактирование шаблона*\n\n"
+        f"*Название:* {template.title}\n"
+        f"*Описание:* {template.description}\n\n"
+        "Выберите, что хотите изменить:",
+        parse_mode="Markdown",
+        reply_markup=keyboard
+    )
+
+def handle_delete_template_callback(user_id, message_id, template_id):
+    """
+    Обработчик callback-запроса delete_template_<template_id>
+    """
+    user = get_user(user_id)
+    
+    if not user or not user.is_admin():
+        return
+    
+    # Получаем шаблон проблемы
+    template = get_problem_template(template_id)
+    
+    if not template:
+        bot.answer_callback_query(
+            callback_query_id=message_id,
+            text="Шаблон не найден."
+        )
+        return
+    
+    # Создаем клавиатуру для подтверждения удаления
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard.add(
+        InlineKeyboardButton("Да, удалить", callback_data=f"confirm_delete_template_{template_id}"),
+        InlineKeyboardButton("Нет, отмена", callback_data="view_templates")
+    )
+    
+    # Отправляем сообщение с запросом подтверждения
+    bot.edit_message_text(
+        chat_id=user_id,
+        message_id=message_id,
+        text=f"❓ *Подтверждение удаления*\n\n"
+        f"Вы действительно хотите удалить шаблон *{template.title}*?\n\n"
+        "Это действие нельзя будет отменить.",
+        parse_mode="Markdown",
+        reply_markup=keyboard
     )
 
 def handle_help_callback(user_id, message_id):
