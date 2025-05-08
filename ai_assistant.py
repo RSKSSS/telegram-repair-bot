@@ -159,7 +159,7 @@ def generate_service_description(problem_description: str,
     Исходная проблема: {problem_description}
     
     Выполненные действия:
-    {'\n'.join([f'- {action}' for action in fix_actions])}
+    """ + '\n'.join([f'- {action}' for action in fix_actions]) + """
     
     Сгенерируй профессиональное описание выполненных работ для отчета.
     """
