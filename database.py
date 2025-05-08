@@ -210,6 +210,7 @@ def initialize_database():
                 client_name TEXT NOT NULL,
                 client_address TEXT NOT NULL,
                 problem_description TEXT NOT NULL,
+                scheduled_datetime TEXT,
                 dispatcher_id BIGINT REFERENCES users(user_id),
                 status TEXT NOT NULL DEFAULT 'new',
                 service_cost NUMERIC,

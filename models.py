@@ -91,9 +91,10 @@ class Order:
     def __init__(self, order_id: int, client_phone: str, client_name: str,
                  client_address: str, problem_description: str, dispatcher_id: Optional[int] = None,
                  status: str = 'new', service_cost: Optional[float] = None,
-                 service_description: Optional[str] = None, created_at: Optional[str] = None,
-                 updated_at: Optional[str] = None, dispatcher_first_name: Optional[str] = None,
-                 dispatcher_last_name: Optional[str] = None, technicians: Optional[list] = None):
+                 service_description: Optional[str] = None, scheduled_datetime: Optional[str] = None,
+                 created_at: Optional[str] = None, updated_at: Optional[str] = None, 
+                 dispatcher_first_name: Optional[str] = None, dispatcher_last_name: Optional[str] = None, 
+                 technicians: Optional[list] = None):
         self.order_id = order_id
         self.client_phone = client_phone
         self.client_name = client_name
@@ -103,6 +104,7 @@ class Order:
         self.status = status
         self.service_cost = service_cost
         self.service_description = service_description
+        self.scheduled_datetime = scheduled_datetime
         self.created_at = created_at
         self.updated_at = updated_at
         self.dispatcher_first_name = dispatcher_first_name
@@ -134,6 +136,7 @@ class Order:
             status=data.get('status', 'new'),
             service_cost=data.get('service_cost'),
             service_description=data.get('service_description'),
+            scheduled_datetime=data.get('scheduled_datetime'),
             created_at=data.get('created_at'),
             updated_at=data.get('updated_at'),
             dispatcher_first_name=data.get('dispatcher_first_name'),
@@ -155,6 +158,7 @@ class Order:
             'status': self.status,
             'service_cost': self.service_cost,
             'service_description': self.service_description,
+            'scheduled_datetime': self.scheduled_datetime,
             'created_at': self.created_at,
             'updated_at': self.updated_at,
             'dispatcher_first_name': self.dispatcher_first_name,
@@ -174,6 +178,10 @@ class Order:
             f"🏠 Адрес: {self.client_address}\n"
             f"🔧 Проблема: {self.problem_description}\n"
         )
+        
+        # Добавляем информацию о запланированной дате и времени
+        if self.scheduled_datetime:
+            result += f"📅 Запланировано на: {self.scheduled_datetime}\n"
 
         # Добавляем информацию о диспетчере
         if self.dispatcher_first_name:
