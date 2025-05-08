@@ -254,170 +254,17 @@ def get_ai_help_menu_keyboard():
 # This function is now defined above with a decorator
 # We're removing it to avoid duplication
 
-def handle_analyze_problem_command(message: Message):
-    """
-    Обработчик команды /analyze_problem
-    Запрашивает описание проблемы для анализа с помощью ИИ
-    """
-    user_id = message.from_user.id
-    user_role = get_user_role(user_id)
-    
-    # Проверяем права доступа (может использовать любой зарегистрированный пользователь)
-    if not user_role:
-        bot.send_message(user_id, "Вы должны быть зарегистрированы для использования этой функции.")
-        return
-    
-    # Устанавливаем состояние пользователя
-    set_user_state(user_id, AI_STATES['waiting_for_problem_analysis'])
-    
-    # Отправляем инструкции
-    bot.send_message(
-        user_id,
-        f"{EMOJI['info']} Введите описание проблемы для анализа.\n\n"
-        f"Я проанализирую описание и предоставлю рекомендации по:\n"
-        f"• Категории проблемы\n"
-        f"• Сложности и серьезности\n"
-        f"• Оценке времени на решение\n"
-        f"• Возможным решениям\n\n"
-        f"Чтобы отменить, отправьте /cancel",
-        parse_mode="Markdown"
-    )
+# Функция перенесена выше с использованием декоратора
 
-def handle_suggest_cost_command(message: Message):
-    """
-    Обработчик команды /suggest_cost
-    Запрашивает описание проблемы и выполненных работ для предложения стоимости
-    """
-    user_id = message.from_user.id
-    user_role = get_user_role(user_id)
-    
-    # Проверяем права доступа (может использовать диспетчер, мастер или админ)
-    if not user_role or user_role not in ['admin', 'dispatcher', 'technician']:
-        bot.send_message(user_id, "У вас нет прав для использования этой функции.")
-        return
-    
-    # Устанавливаем состояние пользователя
-    set_user_state(user_id, AI_STATES['waiting_for_cost_suggestion'])
-    
-    # Отправляем инструкции
-    bot.send_message(
-        user_id,
-        f"{EMOJI['info']} Введите описание проблемы и выполненных работ для предложения стоимости.\n\n"
-        f"Формат:\n"
-        f"Проблема: [описание проблемы]\n"
-        f"Выполненные работы: [описание работ]\n\n"
-        f"Я проанализирую информацию и предложу диапазон стоимости услуг.\n\n"
-        f"Чтобы отменить, отправьте /cancel",
-        parse_mode="Markdown"
-    )
+# Функция перенесена выше с использованием декоратора
 
-def handle_generate_description_command(message: Message):
-    """
-    Обработчик команды /generate_description
-    Запрашивает описание проблемы и выполненных действий для генерации профессионального отчета
-    """
-    user_id = message.from_user.id
-    user_role = get_user_role(user_id)
-    
-    # Проверяем права доступа (может использовать только мастер или админ)
-    if not user_role or user_role not in ['admin', 'technician']:
-        bot.send_message(user_id, "У вас нет прав для использования этой функции.")
-        return
-    
-    # Устанавливаем состояние пользователя
-    set_user_state(user_id, AI_STATES['waiting_for_description_generation'])
-    
-    # Отправляем инструкции
-    bot.send_message(
-        user_id,
-        f"{EMOJI['info']} Введите описание проблемы и список выполненных действий.\n\n"
-        f"Формат: \n"
-        f"Проблема: [описание проблемы]\n"
-        f"Действия: \n"
-        f"- [действие 1]\n"
-        f"- [действие 2]\n"
-        f"...\n\n"
-        f"Я сгенерирую профессиональное описание выполненных работ.\n\n"
-        f"Чтобы отменить, отправьте /cancel",
-        parse_mode="Markdown"
-    )
+# Функция перенесена выше с использованием декоратора
 
-def handle_technician_help_command(message: Message):
-    """
-    Обработчик команды /technician_help
-    Запрашивает описание проблемы для помощи мастеру
-    """
-    user_id = message.from_user.id
-    user_role = get_user_role(user_id)
-    
-    # Проверяем права доступа (может использовать мастер или админ)
-    if not user_role or user_role not in ['admin', 'technician']:
-        bot.send_message(user_id, "У вас нет прав для использования этой функции.")
-        return
-    
-    # Устанавливаем состояние пользователя
-    set_user_state(user_id, AI_STATES['waiting_for_technician_question'])
-    
-    # Отправляем инструкции
-    bot.send_message(
-        user_id,
-        f"{EMOJI['info']} Опишите проблему, с которой вы столкнулись, или задайте вопрос.\n\n"
-        f"Я предоставлю рекомендации по диагностике и решению проблемы.\n\n"
-        f"Чтобы отменить, отправьте /cancel",
-        parse_mode="Markdown"
-    )
+# Функция перенесена выше с использованием декоратора
 
-def handle_answer_customer_command(message: Message):
-    """
-    Обработчик команды /answer_customer
-    Запрашивает вопрос клиента для генерации ответа
-    """
-    user_id = message.from_user.id
-    user_role = get_user_role(user_id)
-    
-    # Проверяем права доступа (может использовать диспетчер или админ)
-    if not user_role or user_role not in ['admin', 'dispatcher']:
-        bot.send_message(user_id, "У вас нет прав для использования этой функции.")
-        return
-    
-    # Проверяем, есть ли текущий заказ
-    order_id = get_current_order_id(user_id)
-    if not order_id:
-        bot.send_message(
-            user_id,
-            format_error_message("Сначала выберите заказ, используя команду /my_orders или соответствующую кнопку в меню."),
-            parse_mode="Markdown"
-        )
-        return
-    
-    # Устанавливаем состояние пользователя
-    set_user_state(user_id, AI_STATES['waiting_for_customer_question'])
-    
-    # Отправляем инструкции
-    bot.send_message(
-        user_id,
-        f"{EMOJI['info']} Введите вопрос клиента, на который вы хотите получить ответ.\n\n"
-        f"Я сгенерирую вежливый и информативный ответ на основе данных о заказе #{order_id}.\n\n"
-        f"Чтобы отменить, отправьте /cancel",
-        parse_mode="Markdown"
-    )
+# Функция перенесена выше с использованием декоратора
 
-def handle_cancel_command(message: Message):
-    """
-    Обработчик команды /cancel
-    Отменяет текущую ИИ операцию
-    """
-    user_id = message.from_user.id
-    
-    # Очищаем состояние пользователя
-    clear_user_state(user_id)
-    
-    # Отправляем уведомление об отмене
-    bot.send_message(
-        user_id,
-        format_success_message("Операция отменена"),
-        parse_mode="Markdown"
-    )
+# Функция перенесена выше с использованием декоратора
 
 # Обработчики состояний
 def handle_problem_analysis_input(user_id: int, text: str):

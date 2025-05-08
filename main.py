@@ -143,12 +143,9 @@ def main():
     def bot_polling():
         # Используем объект bot из shared_state, а не модуль bot
         try:
-            # Проверяем, что это телебот
-            from telebot import TeleBot
-            if isinstance(bot, TeleBot):
-                bot.polling(none_stop=True, interval=0)
-            else:
-                logger.error(f"Ошибка: bot не является экземпляром TeleBot: {type(bot)}")
+            # Используем бота напрямую из shared_state, так как это действительно экземпляр TeleBot
+            from shared_state import bot as telebot_instance
+            telebot_instance.polling(none_stop=True, interval=0)
         except Exception as e:
             logger.error(f"Ошибка при запуске бота: {e}")
     
