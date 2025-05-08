@@ -494,15 +494,15 @@ def get_unapproved_users(conn=None):
         cursor.close()
 
 @with_db_transaction
-def save_order(dispatcher_id, client_phone, client_name, client_address, problem_description, conn=None):
+def save_order(dispatcher_id, client_phone, client_name, client_address, problem_description, scheduled_datetime=None, conn=None):
     """Сохранение заказа в базу данных"""
     cursor = conn.cursor()
     
     try:
         # Вставляем новый заказ
         cursor.execute(
-            "INSERT INTO orders (dispatcher_id, client_phone, client_name, client_address, problem_description) VALUES (%s, %s, %s, %s, %s) RETURNING order_id",
-            (dispatcher_id, client_phone, client_name, client_address, problem_description)
+            "INSERT INTO orders (dispatcher_id, client_phone, client_name, client_address, problem_description, scheduled_datetime) VALUES (%s, %s, %s, %s, %s, %s) RETURNING order_id",
+            (dispatcher_id, client_phone, client_name, client_address, problem_description, scheduled_datetime)
         )
         order_id = cursor.fetchone()[0]
         return order_id
@@ -513,7 +513,7 @@ def save_order(dispatcher_id, client_phone, client_name, client_address, problem
         cursor.close()
 
 @with_db_transaction
-def update_order(order_id, status=None, service_cost=None, service_description=None, conn=None):
+def update_order(order_id, status=None, service_cost=None, service_description=None, scheduled_datetime=None, conn=None):
     """Обновление заказа в базе данных"""
     cursor = conn.cursor()
     
@@ -532,6 +532,10 @@ def update_order(order_id, status=None, service_cost=None, service_description=N
         if service_description is not None:
             update_fields.append("service_description = %s")
             update_values.append(service_description)
+            
+        if scheduled_datetime is not None:
+            update_fields.append("scheduled_datetime = %s")
+            update_values.append(scheduled_datetime)
         
         if update_fields:
             update_fields.append("updated_at = CURRENT_TIMESTAMP")
