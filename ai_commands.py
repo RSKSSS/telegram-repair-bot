@@ -677,6 +677,122 @@ def handle_ai_technician_help_callback(user_id: int, message_id: int):
     
     # Устанавливаем состояние пользователя
     set_user_state(user_id, AI_STATES['waiting_for_technician_question'])
+    
+def handle_ai_order_help_callback(user_id: int, message_id: int, order_id: int):
+    """
+    Обработчик callback-запроса ai_order_help_{order_id}
+    Помощь мастеру по конкретному заказу с использованием описания проблемы из заказа
+    """
+    try:
+        # Получаем информацию о заказе
+        order = get_order(order_id)
+        if not order:
+            bot.edit_message_text(
+                chat_id=user_id,
+                message_id=message_id,
+                text=format_error_message(f"Не удалось получить информацию о заказе #{order_id}."),
+                parse_mode="Markdown"
+            )
+            return
+            
+        # Получаем описание проблемы из заказа
+        problem_description = order.problem_description
+        
+        # Если описание слишком короткое, запрашиваем дополнительную информацию
+        if len(problem_description) < 20:
+            bot.edit_message_text(
+                chat_id=user_id,
+                message_id=message_id,
+                text=f"{EMOJI['info']} Описание проблемы в заказе слишком краткое.\n\n"
+                f"Пожалуйста, предоставьте дополнительную информацию о проблеме:\n\n"
+                f"Текущее описание: \"{problem_description}\"\n\n"
+                f"Чтобы отменить, отправьте /cancel",
+                parse_mode="Markdown"
+            )
+            # Устанавливаем состояние пользователя и сохраняем ID заказа
+            set_user_state(user_id, AI_STATES['waiting_for_technician_question'])
+            return
+            
+        # Генерируем рекомендации с помощью ИИ
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text=f"{EMOJI['loading']} Анализирую проблему и формирую рекомендации...",
+            parse_mode="Markdown"
+        )
+        
+        # Используем AI для анализа проблемы
+        ai_response = assist_technician(problem_description)
+        
+        # Форматируем ответ для отображения
+        diagnostic_steps = "\n".join([f"• {step}" for step in ai_response.get("diagnostic_steps", [])])
+        possible_causes = "\n".join([f"• {cause}" for cause in ai_response.get("possible_causes", [])])
+        solution_steps = "\n".join([f"• {step}" for step in ai_response.get("solution_steps", [])])
+        required_tools = "\n".join([f"• {tool}" for tool in ai_response.get("required_tools", [])])
+        precautions = "\n".join([f"• {precaution}" for precaution in ai_response.get("precautions", [])])
+        
+        response_text = f"{EMOJI['ai']} *ИИ-рекомендации по заказу #{order_id}*\n\n"
+        response_text += f"*Проблема:*\n{problem_description}\n\n"
+        
+        response_text += f"*Возможные причины:*\n{possible_causes}\n\n"
+        response_text += f"*Шаги диагностики:*\n{diagnostic_steps}\n\n"
+        response_text += f"*Решение:*\n{solution_steps}\n\n"
+        
+        if required_tools:
+            response_text += f"*Необходимые инструменты:*\n{required_tools}\n\n"
+            
+        if precautions:
+            response_text += f"*Меры предосторожности:*\n{precautions}\n\n"
+        
+        # Создаем клавиатуру для возврата к заказу
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(
+            InlineKeyboardButton("🔄 Обновить рекомендации", callback_data=f"ai_order_help_{order_id}"),
+            InlineKeyboardButton("📋 Вернуться к заказу", callback_data=f"order_{order_id}")
+        )
+        
+        # Отправляем ответ
+        try:
+            bot.edit_message_text(
+                chat_id=user_id,
+                message_id=message_id,
+                text=response_text,
+                reply_markup=keyboard,
+                parse_mode="Markdown"
+            )
+        except Exception as e:
+            # Если текст слишком длинный или проблемы с форматированием
+            bot.edit_message_text(
+                chat_id=user_id,
+                message_id=message_id,
+                text=f"{EMOJI['ai']} ИИ-рекомендации по заказу #{order_id}\n\n"
+                f"Анализ проблемы завершен, но текст слишком большой.\n"
+                f"Отправляю результат отдельным сообщением...",
+                reply_markup=keyboard
+            )
+            bot.send_message(
+                chat_id=user_id,
+                text=response_text,
+                parse_mode="Markdown"
+            )
+        
+        # Добавляем запись в лог активности
+        add_activity_log(
+            user_id=user_id,
+            action_type='ai_help',
+            action_description=f'Получены ИИ-рекомендации по заказу #{order_id}',
+            related_order_id=order_id
+        )
+        
+    except Exception as e:
+        logger.error(f"Ошибка при обработке AI-помощи для заказа: {e}")
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text=format_error_message(f"Произошла ошибка при обработке запроса: {e}"),
+            reply_markup=get_back_to_main_menu_keyboard(),
+            parse_mode="Markdown"
+        )
 
 def handle_set_cost_callback(user_id: int, message_id: int, order_id: int, cost: float):
     """

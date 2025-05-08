@@ -52,6 +52,7 @@ from ai_commands import (
     handle_ai_suggest_cost_callback, 
     handle_ai_generate_description_callback,
     handle_ai_technician_help_callback,
+    handle_ai_order_help_callback,
     handle_set_cost_callback,
     handle_set_description_callback
 )
