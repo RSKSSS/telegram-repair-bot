@@ -294,60 +294,51 @@ def get_technicians(conn=None):
     finally:
         cursor.close()
 
-def update_user_role(user_id, role):
+@with_db_transaction
+def update_user_role(user_id, role, conn=None):
     """Обновление роли пользователя в базе данных"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
         cursor.execute("UPDATE users SET role = %s WHERE user_id = %s", (role, user_id))
-        conn.commit()
         return True
     except Exception as e:
-        conn.rollback()
         logger.error(f"Ошибка при обновлении роли пользователя: {e}")
         return False
     finally:
         cursor.close()
-        conn.close()
 
-def approve_user(user_id):
+@with_db_transaction
+def approve_user(user_id, conn=None):
     """Подтверждение пользователя администратором"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
         cursor.execute("UPDATE users SET is_approved = TRUE WHERE user_id = %s", (user_id,))
-        conn.commit()
         return True
     except Exception as e:
-        conn.rollback()
         logger.error(f"Ошибка при подтверждении пользователя: {e}")
         return False
     finally:
         cursor.close()
-        conn.close()
 
-def reject_user(user_id):
+@with_db_transaction
+def reject_user(user_id, conn=None):
     """Отклонение пользователя администратором"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
         cursor.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
-        conn.commit()
         return True
     except Exception as e:
-        conn.rollback()
         logger.error(f"Ошибка при отклонении пользователя: {e}")
         return False
     finally:
         cursor.close()
-        conn.close()
 
-def is_user_approved(user_id):
+@with_db_connection
+def is_user_approved(user_id, conn=None):
     """Проверка, подтвержден ли пользователь администратором"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -360,11 +351,10 @@ def is_user_approved(user_id):
         return False
     finally:
         cursor.close()
-        conn.close()
 
-def get_unapproved_users():
+@with_db_connection
+def get_unapproved_users(conn=None):
     """Получение всех неподтвержденных пользователей"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -386,11 +376,10 @@ def get_unapproved_users():
         return []
     finally:
         cursor.close()
-        conn.close()
 
-def save_order(dispatcher_id, client_phone, client_name, client_address, problem_description):
+@with_db_transaction
+def save_order(dispatcher_id, client_phone, client_name, client_address, problem_description, conn=None):
     """Сохранение заказа в базу данных"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -400,19 +389,16 @@ def save_order(dispatcher_id, client_phone, client_name, client_address, problem
             (dispatcher_id, client_phone, client_name, client_address, problem_description)
         )
         order_id = cursor.fetchone()[0]
-        conn.commit()
         return order_id
     except Exception as e:
-        conn.rollback()
         logger.error(f"Ошибка при сохранении заказа: {e}")
         return None
     finally:
         cursor.close()
-        conn.close()
 
-def update_order(order_id, status=None, service_cost=None, service_description=None):
+@with_db_transaction
+def update_order(order_id, status=None, service_cost=None, service_description=None, conn=None):
     """Обновление заказа в базе данных"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -435,21 +421,18 @@ def update_order(order_id, status=None, service_cost=None, service_description=N
             update_fields.append("updated_at = CURRENT_TIMESTAMP")
             update_query = f"UPDATE orders SET {', '.join(update_fields)} WHERE order_id = %s"
             cursor.execute(update_query, update_values + [order_id])
-            conn.commit()
             return True
         
         return False
     except Exception as e:
-        conn.rollback()
         logger.error(f"Ошибка при обновлении заказа: {e}")
         return False
     finally:
         cursor.close()
-        conn.close()
 
-def get_order(order_id):
+@with_db_connection
+def get_order(order_id, conn=None):
     """Получение заказа из базы данных"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -500,11 +483,10 @@ def get_order(order_id):
         return None
     finally:
         cursor.close()
-        conn.close()
 
-def get_orders_by_user(user_id):
+@with_db_connection
+def get_orders_by_user(user_id, conn=None):
     """Получение всех заказов созданных пользователем (для диспетчера)"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -556,11 +538,10 @@ def get_orders_by_user(user_id):
         return []
     finally:
         cursor.close()
-        conn.close()
 
-def get_assigned_orders(technician_id):
+@with_db_connection
+def get_assigned_orders(technician_id, conn=None):
     """Получение заказов, назначенных мастеру"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -613,7 +594,6 @@ def get_assigned_orders(technician_id):
         return []
     finally:
         cursor.close()
-        conn.close()
 
 def get_all_orders(status=None):
     """Получение всех заказов из базы данных"""
