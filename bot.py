@@ -2703,3 +2703,130 @@ def handle_description_input(user_id, text):
     finally:
         # Очищаем состояние пользователя
         clear_user_state(user_id)
+
+
+def handle_activity_logs_callback(user_id, message_id):
+    """
+    Обработчик callback-запроса activity_logs
+    Отображает логи активности пользователей
+    """
+    # Проверяем, что пользователь - администратор
+    user_role = get_user_role(user_id)
+    if user_role != 'admin':
+        bot.send_message(user_id, "У вас нет прав для просмотра логов активности.")
+        return handle_main_menu_callback(user_id, message_id)
+    
+    # Получаем первую страницу логов
+    return handle_logs_page_callback(user_id, message_id, 1)
+
+
+def handle_logs_page_callback(user_id, message_id, page):
+    """
+    Обработчик callback-запроса logs_page_{page}
+    Отображает определенную страницу логов активности
+    """
+    # Проверяем, что пользователь - администратор
+    user_role = get_user_role(user_id)
+    if user_role != 'admin':
+        bot.send_message(user_id, "У вас нет прав для просмотра логов активности.")
+        return handle_main_menu_callback(user_id, message_id)
+    
+    # Получаем логи с пагинацией
+    page_size = 10
+    offset = (page - 1) * page_size
+    logs = get_activity_logs(limit=page_size, offset=offset)
+    
+    # Формируем сообщение с логами
+    if not logs:
+        if page == 1:
+            message_text = "📋 Логи активности пусты."
+        else:
+            message_text = "📋 Больше записей нет."
+    else:
+        message_text = "📋 <b>Логи активности:</b>\n\n"
+        for log in logs:
+            # Форматируем дату и время
+            timestamp = log['created_at'].strftime("%d.%m.%Y %H:%M:%S")
+            
+            # Добавляем запись в лог
+            message_text += f"<b>{timestamp}</b>\n"
+            message_text += f"👤 <b>{log['first_name'] or ''} {log['last_name'] or ''}</b>"
+            if log['username']:
+                message_text += f" (@{log['username']})"
+            message_text += f" - {ROLES.get(log['role'], log['role'])}\n"
+            message_text += f"🔸 {log['action_description']}\n\n"
+    
+    # Создаем клавиатуру с кнопками навигации
+    keyboard = InlineKeyboardMarkup()
+    
+    # Кнопки навигации
+    nav_row = []
+    if page > 1:
+        nav_row.append(InlineKeyboardButton("◀️ Назад", callback_data=f"logs_page_{page-1}"))
+    
+    if len(logs) == page_size:  # Если текущая страница полностью заполнена, значит есть еще записи
+        nav_row.append(InlineKeyboardButton("Вперед ▶️", callback_data=f"logs_page_{page+1}"))
+    
+    if nav_row:
+        keyboard.row(*nav_row)
+    
+    # Добавляем кнопки фильтрации
+    filter_row = [
+        InlineKeyboardButton("🔍 Фильтры", callback_data="logs_filter_menu")
+    ]
+    keyboard.row(*filter_row)
+    
+    # Кнопка возврата в главное меню
+    keyboard.row(InlineKeyboardButton("🔙 Назад в меню", callback_data="manage_users"))
+    
+    # Отправляем сообщение
+    bot.edit_message_text(
+        message_text,
+        user_id, message_id,
+        reply_markup=keyboard,
+        parse_mode="HTML"
+    )
+
+
+def handle_logs_filter_callback(user_id, message_id, filter_type):
+    """
+    Обработчик callback-запроса logs_filter_{filter_type}
+    Для установки фильтров по логам активности
+    """
+    # Проверяем, что пользователь - администратор
+    user_role = get_user_role(user_id)
+    if user_role != 'admin':
+        bot.send_message(user_id, "У вас нет прав для просмотра логов активности.")
+        return handle_main_menu_callback(user_id, message_id)
+    
+    if filter_type == "menu":
+        # Отображаем меню фильтров
+        keyboard = InlineKeyboardMarkup()
+        keyboard.row(
+            InlineKeyboardButton("👥 По пользователям", callback_data="logs_filter_users"),
+            InlineKeyboardButton("📝 По типу действия", callback_data="logs_filter_actions")
+        )
+        keyboard.row(
+            InlineKeyboardButton("📊 По заказам", callback_data="logs_filter_orders"),
+            InlineKeyboardButton("🔄 Сбросить фильтры", callback_data="logs_filter_reset")
+        )
+        keyboard.row(InlineKeyboardButton("🔙 Назад к логам", callback_data="activity_logs"))
+        
+        bot.edit_message_text(
+            "🔍 <b>Выберите фильтр для логов активности:</b>",
+            user_id, message_id,
+            reply_markup=keyboard,
+            parse_mode="HTML"
+        )
+    elif filter_type == "reset":
+        # Сбрасываем все фильтры и возвращаемся к логам
+        handle_activity_logs_callback(user_id, message_id)
+    else:
+        # Для других типов фильтров (пользователи, действия, заказы) 
+        # будет нужна дополнительная реализация
+        if message_id:
+            bot.answer_callback_query(
+                callback_query_id=message_id,
+                text="Эта функция находится в разработке."
+            )
+        handle_activity_logs_callback(user_id, message_id)
