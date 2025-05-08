@@ -1756,6 +1756,8 @@ def handle_message(message):
         handle_name_input(user_id, text)
     elif state == "waiting_for_address":
         handle_address_input(user_id, text)
+    elif state == "waiting_for_datetime":
+        handle_datetime_input(user_id, text)
     elif state == "waiting_for_problem":
         handle_problem_input(user_id, text)
     elif state == "waiting_for_admin_id":
@@ -1843,6 +1845,39 @@ def handle_address_input(user_id, text):
     # Обновляем состояние пользователя
     set_user_state(user_id, "waiting_for_datetime")
 
+def handle_datetime_input(user_id, text):
+    """
+    Обработка ввода даты и времени выполнения заказа
+    """
+    # Проверяем формат даты и времени
+    try:
+        # Пытаемся распарсить введенную дату и время
+        # Примеры форматов: "15.05.2025 14:30", "15/05/2025 14:30", "15-05-2025 14:30", 
+        # а также обработка случаев только с датой "15.05.2025" или только со временем "14:30"
+        text = text.strip()
+        
+        # Сохраняем дату и время
+        if user_id not in user_data:
+            user_data[user_id] = {}
+        
+        user_data[user_id]['scheduled_datetime'] = text
+        
+        # Запрашиваем описание проблемы
+        bot.send_message(
+            user_id,
+            "🔧 Введите описание проблемы:"
+        )
+        
+        # Обновляем состояние пользователя
+        set_user_state(user_id, "waiting_for_problem")
+        
+    except Exception as e:
+        logger.error(f"Ошибка при обработке даты и времени: {e}")
+        bot.send_message(
+            user_id,
+            "❌ Неверный формат даты и времени. Пожалуйста, введите дату и время в формате 'ДД.ММ.ГГГГ ЧЧ:ММ'."
+        )
+
 def handle_problem_input(user_id, text):
     """
     Обработка ввода описания проблемы
@@ -1855,12 +1890,14 @@ def handle_problem_input(user_id, text):
     
     # Создаем заказ
     try:
+        scheduled_datetime = user_data[user_id].get('scheduled_datetime')
         order_id = save_order(
             user_id,
             user_data[user_id]['phone'],
             user_data[user_id]['name'],
             user_data[user_id]['address'],
-            user_data[user_id]['problem']
+            user_data[user_id]['problem'],
+            scheduled_datetime=scheduled_datetime
         )
         
         if order_id:
