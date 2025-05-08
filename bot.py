@@ -543,6 +543,15 @@ def handle_callback_query(call):
         handle_add_dispatcher_callback(user_id, message_id)
     elif callback_data == "add_technician":
         handle_add_technician_callback(user_id, message_id)
+    elif callback_data.startswith("set_admin_"):
+        user_to_set = int(callback_data.split("_")[2])
+        handle_set_role_callback(user_id, message_id, user_to_set, "admin")
+    elif callback_data.startswith("set_dispatcher_"):
+        user_to_set = int(callback_data.split("_")[2])
+        handle_set_role_callback(user_id, message_id, user_to_set, "dispatcher")
+    elif callback_data.startswith("set_technician_"):
+        user_to_set = int(callback_data.split("_")[2])
+        handle_set_role_callback(user_id, message_id, user_to_set, "technician")
     elif callback_data == "manage_templates":
         handle_manage_templates_callback(user_id, message_id)
     elif callback_data == "view_templates":
@@ -1274,17 +1283,53 @@ def handle_add_admin_callback(user_id, message_id):
         )
         return
     
-    # Редактируем сообщение с инструкцией
+    # Получаем всех пользователей
+    all_users = get_all_users()
+    non_admin_users = [u for u in all_users if not u.is_admin()]
+    
+    if not non_admin_users:
+        # Редактируем сообщение с инструкцией если нет пользователей
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text="👤 *Добавление администратора*\n\n"
+            "Нет пользователей, которых можно назначить администраторами.\n"
+            "Новые пользователи появятся здесь после их регистрации в боте.",
+            parse_mode="Markdown",
+            reply_markup=get_back_to_user_management_keyboard()
+        )
+        return
+    
+    # Формируем клавиатуру с пользователями
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    
+    for u in non_admin_users:
+        username_info = f" (@{u.username})" if u.username else ""
+        status = "✅" if u.is_approved else "⌛"
+        button_text = f"{status} {u.get_full_name()}{username_info}"
+        
+        if u.is_dispatcher():
+            role_text = "Диспетчер"
+        elif u.is_technician():
+            role_text = "Мастер"
+        else:
+            role_text = "Пользователь"
+            
+        button_text = f"{button_text} [{role_text}]"
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_admin_{u.user_id}"))
+    
+    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
+    
+    # Редактируем сообщение со списком пользователей
     bot.edit_message_text(
         chat_id=user_id,
         message_id=message_id,
-        text="👤 *Добавление администратора*\n\n"
-        "Введите ID пользователя для назначения администратором:",
-        parse_mode="Markdown"
+        text="👤 *Выберите пользователя для назначения администратором:*\n\n"
+             "⌛ - не подтвержденный пользователь\n"
+             "✅ - подтвержденный пользователь",
+        parse_mode="Markdown",
+        reply_markup=keyboard
     )
-    
-    # Устанавливаем состояние пользователя
-    set_user_state(user_id, "waiting_for_admin_id")
 
 def handle_add_dispatcher_callback(user_id, message_id):
     """
@@ -1303,17 +1348,61 @@ def handle_add_dispatcher_callback(user_id, message_id):
         )
         return
     
-    # Редактируем сообщение с инструкцией
+    # Получаем всех пользователей
+    all_users = get_all_users()
+    non_dispatcher_users = [u for u in all_users if not u.is_dispatcher()]
+    
+    if not non_dispatcher_users:
+        # Редактируем сообщение с инструкцией если нет пользователей
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text="👤 *Добавление диспетчера*\n\n"
+            "Нет пользователей, которых можно назначить диспетчерами.\n"
+            "Новые пользователи появятся здесь после их регистрации в боте.",
+            parse_mode="Markdown",
+            reply_markup=get_back_to_user_management_keyboard()
+        )
+        return
+    
+    # Формируем клавиатуру с пользователями
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    
+    for u in non_dispatcher_users:
+        username_info = f" (@{u.username})" if u.username else ""
+        status = "✅" if u.is_approved else "⌛"
+        button_text = f"{status} {u.get_full_name()}{username_info}"
+        
+        if u.is_admin():
+            role_text = "Администратор"
+        elif u.is_technician():
+            role_text = "Мастер"
+        else:
+            role_text = "Пользователь"
+            
+        button_text = f"{button_text} [{role_text}]"
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_dispatcher_{u.user_id}"))
+    
+    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
+    
+    # Редактируем сообщение со списком пользователей
     bot.edit_message_text(
         chat_id=user_id,
         message_id=message_id,
-        text="👤 *Добавление диспетчера*\n\n"
-        "Введите ID пользователя для назначения диспетчером:",
-        parse_mode="Markdown"
+        text="👤 *Выберите пользователя для назначения диспетчером:*\n\n"
+             "⌛ - не подтвержденный пользователь\n"
+             "✅ - подтвержденный пользователь",
+        parse_mode="Markdown",
+        reply_markup=keyboard
     )
-    
-    # Устанавливаем состояние пользователя
-    set_user_state(user_id, "waiting_for_dispatcher_id")
+
+def get_back_to_user_management_keyboard():
+    """
+    Возвращает клавиатуру с кнопкой назад для меню управления пользователями
+    """
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
+    return keyboard
 
 def handle_add_technician_callback(user_id, message_id):
     """
@@ -1332,17 +1421,53 @@ def handle_add_technician_callback(user_id, message_id):
         )
         return
     
-    # Редактируем сообщение с инструкцией
+    # Получаем всех пользователей
+    all_users = get_all_users()
+    non_technician_users = [u for u in all_users if not u.is_technician()]
+    
+    if not non_technician_users:
+        # Редактируем сообщение с инструкцией если нет пользователей
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text="👤 *Добавление мастера*\n\n"
+            "Нет пользователей, которых можно назначить мастерами.\n"
+            "Новые пользователи появятся здесь после их регистрации в боте.",
+            parse_mode="Markdown",
+            reply_markup=get_back_to_user_management_keyboard()
+        )
+        return
+    
+    # Формируем клавиатуру с пользователями
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    
+    for u in non_technician_users:
+        username_info = f" (@{u.username})" if u.username else ""
+        status = "✅" if u.is_approved else "⌛"
+        button_text = f"{status} {u.get_full_name()}{username_info}"
+        
+        if u.is_admin():
+            role_text = "Администратор"
+        elif u.is_dispatcher():
+            role_text = "Диспетчер"
+        else:
+            role_text = "Пользователь"
+            
+        button_text = f"{button_text} [{role_text}]"
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_technician_{u.user_id}"))
+    
+    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
+    
+    # Редактируем сообщение со списком пользователей
     bot.edit_message_text(
         chat_id=user_id,
         message_id=message_id,
-        text="👤 *Добавление мастера*\n\n"
-        "Введите ID пользователя для назначения мастером:",
-        parse_mode="Markdown"
+        text="👤 *Выберите пользователя для назначения мастером:*\n\n"
+             "⌛ - не подтвержденный пользователь\n"
+             "✅ - подтвержденный пользователь",
+        parse_mode="Markdown",
+        reply_markup=keyboard
     )
-    
-    # Устанавливаем состояние пользователя
-    set_user_state(user_id, "waiting_for_technician_id")
 
 def handle_order_detail_callback(user_id, message_id, order_id):
     """
