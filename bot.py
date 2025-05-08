@@ -605,6 +605,17 @@ def handle_callback_query(call):
     elif callback_data.startswith("add_description_"):
         order_id = int(callback_data.split("_")[2])
         handle_add_description_callback(user_id, message_id, order_id)
+    # Обработка удаления пользователей и заказов
+    elif callback_data == "delete_user_menu":
+        handle_delete_user_menu_callback(user_id, message_id)
+    elif callback_data.startswith("delete_user_"):
+        user_to_delete = int(callback_data.split("_")[2])
+        handle_delete_user_callback(user_id, message_id, user_to_delete)
+    elif callback_data == "manage_orders":
+        handle_manage_orders_callback(user_id, message_id)
+    elif callback_data.startswith("delete_order_"):
+        order_id = int(callback_data.split("_")[2])
+        handle_delete_order_callback(user_id, message_id, order_id)
     else:
         bot.answer_callback_query(call.id, "Неизвестная команда")
 

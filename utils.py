@@ -89,7 +89,8 @@ def get_main_menu_keyboard(user_id: int) -> InlineKeyboardMarkup:
         # Кнопки для администраторов
         keyboard.add(
             InlineKeyboardButton("📝 Все заказы", callback_data="all_orders"),
-            InlineKeyboardButton("👥 Управление пользователями", callback_data="manage_users")
+            InlineKeyboardButton("👥 Управление пользователями", callback_data="manage_users"),
+            InlineKeyboardButton("❌ Удаление заказов", callback_data="manage_orders")
         )
     elif is_dispatcher(user_id):
         # Кнопки для диспетчеров
@@ -364,5 +365,80 @@ def format_orders_list(orders: List[Dict], show_buttons: bool = True, user_role:
     
     if show_buttons:
         keyboard.add(InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu"))
+    
+    return message, keyboard
+    
+def get_user_list_for_deletion() -> Tuple[str, InlineKeyboardMarkup]:
+    """
+    Возвращает клавиатуру со списком пользователей для удаления
+    """
+    users = get_all_users()
+    
+    # Формируем сообщение со списком пользователей
+    message = "❌ *Выберите пользователя для удаления*\n\n"
+    message += "⚠️ **Внимание!** При удалении пользователя также будут удалены все его заказы, назначения и шаблоны.\n\n"
+    
+    # Сортируем пользователей по ролям
+    admins = []
+    dispatchers = []
+    technicians = []
+    
+    for user in users:
+        if user.is_admin():
+            admins.append(user)
+        elif user.is_dispatcher():
+            dispatchers.append(user)
+        elif user.is_technician():
+            technicians.append(user)
+    
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    
+    for user in admins + dispatchers + technicians:
+        username_info = f" (@{user.username})" if user.username else ""
+        name = f"{user.get_full_name()}{username_info} - {get_role_name(user.role)}"
+        keyboard.add(InlineKeyboardButton(name, callback_data=f"delete_user_{user.user_id}"))
+    
+    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
+    
+    return message, keyboard
+    
+def get_order_list_for_deletion() -> Tuple[str, InlineKeyboardMarkup]:
+    """
+    Возвращает клавиатуру со списком заказов для удаления
+    """
+    from database import get_all_orders
+    orders = get_all_orders()
+    
+    if not orders:
+        message = "❌ *Удаление заказов*\n\nНет заказов для удаления."
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_orders"))
+        return message, keyboard
+    
+    message = "❌ *Выберите заказ для удаления*\n\n"
+    message += "⚠️ **Внимание!** При удалении заказа также будут удалены все его назначения мастерам.\n\n"
+    
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    
+    # Сортируем заказы по статусам и дате создания (от новых к старым)
+    for order in sorted(orders, key=lambda x: (x.status != 'new', x.status != 'assigned', 
+                                               x.status != 'in_progress', x.status != 'completed', 
+                                               x.status != 'cancelled', -int(x.order_id))):
+        status_emoji = "🔄"
+        if order.status == "new":
+            status_emoji = "🆕"
+        elif order.status == "assigned":
+            status_emoji = "📌"
+        elif order.status == "in_progress":
+            status_emoji = "🔧"
+        elif order.status == "completed":
+            status_emoji = "✅"
+        elif order.status == "cancelled":
+            status_emoji = "❌"
+            
+        button_text = f"{status_emoji} Заказ #{order.order_id} - {order.client_name}"
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"delete_order_{order.order_id}"))
+    
+    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_orders"))
     
     return message, keyboard
