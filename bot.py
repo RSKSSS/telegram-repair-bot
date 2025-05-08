@@ -3,12 +3,11 @@ Telegram бот для управления заказами сервиса ре
 """
 
 import os
-import logging
 import re
 from typing import Optional, Dict, List
 
 import telebot
-from telebot.types import Message, CallbackQuery
+from telebot.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, ForceReply
 
 from config import ROLES, ORDER_STATUSES
 from database import (
@@ -24,10 +23,10 @@ from utils import (
     get_user_management_keyboard, is_admin, is_dispatcher, is_technician,
     send_order_notification_to_admins, validate_phone, format_orders_list, get_technician_list_keyboard
 )
+from logger import get_component_logger, DEBUG, INFO, WARNING, ERROR, CRITICAL, log_function_call
 
-# Конфигурация логирования
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Настройка логирования с использованием новой системы
+logger = get_component_logger('bot', level=INFO)
 
 # Создаем бота
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
@@ -37,33 +36,43 @@ bot = telebot.TeleBot(TOKEN)
 user_data = {}
 
 # Обработчики состояний пользователей
+@log_function_call(logger)
 def set_user_state(user_id: int, state: str, order_id: Optional[int] = None) -> None:
     """
     Устанавливает состояние пользователя
     """
     from database import set_user_state as db_set_user_state
+    logger.debug(f"Установка состояния для пользователя {user_id}: {state}, order_id={order_id}")
     db_set_user_state(user_id, state, order_id)
 
+@log_function_call(logger)
 def clear_user_state(user_id: int) -> None:
     """
     Очищает состояние пользователя
     """
     from database import clear_user_state as db_clear_user_state
+    logger.debug(f"Очистка состояния для пользователя {user_id}")
     db_clear_user_state(user_id)
 
+@log_function_call(logger)
 def get_user_state(user_id: int) -> Optional[str]:
     """
     Возвращает текущее состояние пользователя
     """
     from database import get_user_state as db_get_user_state
-    return db_get_user_state(user_id)
+    state = db_get_user_state(user_id)
+    logger.debug(f"Получено состояние пользователя {user_id}: {state}")
+    return state
 
+@log_function_call(logger)
 def get_current_order_id(user_id: int) -> Optional[int]:
     """
     Возвращает ID текущего заказа пользователя
     """
     from database import get_current_order_id as db_get_current_order_id
-    return db_get_current_order_id(user_id)
+    order_id = db_get_current_order_id(user_id)
+    logger.debug(f"Получен текущий order_id для пользователя {user_id}: {order_id}")
+    return order_id
 
 # Обработчик команды /start
 @bot.message_handler(commands=['start'])
@@ -155,11 +164,11 @@ def handle_start_command(message):
             )
             
             # Создаем инлайн клавиатуру с кнопками принять/отказать
-            keyboard = types.InlineKeyboardMarkup(row_width=2)
-            approve_button = types.InlineKeyboardButton(text="✅ Принять", callback_data=f"approve_{user_id}")
-            reject_button = types.InlineKeyboardButton(text="❌ Отказать", callback_data=f"reject_{user_id}")
+            keyboard = InlineKeyboardMarkup(row_width=2)
+            approve_button = InlineKeyboardButton(text="✅ Принять", callback_data=f"approve_{user_id}")
+            reject_button = InlineKeyboardButton(text="❌ Отказать", callback_data=f"reject_{user_id}")
             keyboard.add(approve_button, reject_button)
-            keyboard.add(types.InlineKeyboardButton(text="👥 Управление пользователями", callback_data="manage_users"))
+            keyboard.add(InlineKeyboardButton(text="👥 Управление пользователями", callback_data="manage_users"))
             
             for admin in admins:
                 try:
