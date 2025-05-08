@@ -1628,7 +1628,7 @@ def handle_change_status_callback(user_id, message_id, order_id):
         text=f"🔄 *Изменение статуса заказа #{order_id}*\n\n"
         f"Текущий статус: *{order.status_to_russian()}*\n\n"
         "Выберите новый статус:",
-        reply_markup=get_order_status_keyboard(order_id),
+        reply_markup=get_order_status_keyboard(order_id, user_id),
         parse_mode="Markdown"
     )
 
@@ -1827,12 +1827,17 @@ def handle_assign_order_callback(user_id, message_id, order_id, technician_id):
         
         # Отправляем уведомление мастеру о назначении
         try:
+            # Создаем клавиатуру с кнопками перехода к заказу и к списку всех заказов
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(InlineKeyboardButton(f"👁️ Посмотреть заказ #{order_id}", callback_data=f"order_{order_id}"))
+            keyboard.add(InlineKeyboardButton("🔧 Мои заказы", callback_data="my_assigned_orders"))
+            
             bot.send_message(
                 technician_id,
                 f"📋 *Новый заказ назначен*\n\n"
-                f"Вы были назначены на заказ #{order_id}.\n\n"
-                "Используйте команду /my_assigned_orders для просмотра ваших заказов.",
-                parse_mode="Markdown"
+                f"Вы были назначены на заказ #{order_id}.",
+                parse_mode="Markdown",
+                reply_markup=keyboard
             )
         except Exception as e:
             logger.error(f"Ошибка при отправке уведомления мастеру {technician_id}: {e}")

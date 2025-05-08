@@ -183,8 +183,17 @@ class Order:
                 f"🔧 Проблема: {self.problem_description}\n"
                 f"🏠 Адрес: {self.client_address}\n"
             )
+        elif user_role == 'technician':
+            # Для мастера: не показываем номер телефона
+            result = (
+                f"📝 *Заказ #{self.order_id}*\n\n"
+                f"🔄 Статус: *{self.status_to_russian()}*\n"
+                f"👤 Клиент: {self.client_name}\n"
+                f"🔧 Проблема: {self.problem_description}\n"
+                f"🏠 Адрес: {self.client_address}\n"
+            )
         else:
-            # Для админа и мастера также обновляем порядок отображения
+            # Для админа отображаем полную информацию
             result = (
                 f"📝 *Заказ #{self.order_id}*\n\n"
                 f"🔄 Статус: *{self.status_to_russian()}*\n"
@@ -222,11 +231,12 @@ class Order:
         if self.service_description:
             result += f"📋 Описание работ: {self.service_description}\n"
 
-        # Добавляем информацию о дате создания и обновления
-        if self.created_at:
-            result += f"📅 Создан: {self.created_at}\n"
-        if self.updated_at:
-            result += f"🔄 Обновлен: {self.updated_at}\n"
+        # Добавляем информацию о дате создания и обновления (только для админа и диспетчера)
+        if user_role != 'technician':
+            if self.created_at:
+                result += f"📅 Создан: {self.created_at}\n"
+            if self.updated_at:
+                result += f"🔄 Обновлен: {self.updated_at}\n"
 
         return result
 

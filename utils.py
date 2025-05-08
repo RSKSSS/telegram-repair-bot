@@ -133,18 +133,31 @@ def get_reply_keyboard(user_id: int) -> ReplyKeyboardMarkup:
     
     return keyboard
 
-def get_order_status_keyboard(order_id: int) -> InlineKeyboardMarkup:
+def get_order_status_keyboard(order_id: int, user_id: int = None) -> InlineKeyboardMarkup:
     """
     Возвращает клавиатуру для изменения статуса заказа
+    
+    Args:
+        order_id (int): ID заказа
+        user_id (int, optional): ID пользователя для проверки роли
     """
     keyboard = InlineKeyboardMarkup(row_width=1)
     
+    # Проверяем роль пользователя
+    is_technician_user = user_id and is_technician(user_id)
+    
+    # Кнопки статусов
     keyboard.add(
         InlineKeyboardButton("🔄 В работе", callback_data=f"status_{order_id}_in_progress"),
-        InlineKeyboardButton("✅ Завершен", callback_data=f"status_{order_id}_completed"),
-        InlineKeyboardButton("❌ Отменен", callback_data=f"status_{order_id}_cancelled"),
-        InlineKeyboardButton("◀️ Назад к заказу", callback_data=f"order_{order_id}")
+        InlineKeyboardButton("✅ Завершен", callback_data=f"status_{order_id}_completed")
     )
+    
+    # Кнопка "Отменен" только для админов и диспетчеров
+    if not is_technician_user:
+        keyboard.add(InlineKeyboardButton("❌ Отменен", callback_data=f"status_{order_id}_cancelled"))
+    
+    # Кнопка "Назад"
+    keyboard.add(InlineKeyboardButton("◀️ Назад к заказу", callback_data=f"order_{order_id}"))
     
     return keyboard
 
