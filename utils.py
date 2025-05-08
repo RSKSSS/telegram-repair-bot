@@ -95,7 +95,7 @@ def get_main_menu_keyboard(user_id: int) -> InlineKeyboardMarkup:
         # Кнопки для диспетчеров
         keyboard.add(
             InlineKeyboardButton("➕ Новый заказ", callback_data="new_order"),
-            InlineKeyboardButton("📋 Мои заказы", callback_data="my_orders")
+            InlineKeyboardButton("📋 Все заказы", callback_data="all_orders")
         )
     elif is_technician(user_id):
         # Кнопки для мастеров
@@ -125,7 +125,7 @@ def get_reply_keyboard(user_id: int) -> ReplyKeyboardMarkup:
         # Кнопки для диспетчеров
         keyboard.add(
             KeyboardButton("/new_order"),
-            KeyboardButton("/my_orders")
+            KeyboardButton("/all_orders")
         )
     elif is_technician(user_id):
         # Кнопки для мастеров
