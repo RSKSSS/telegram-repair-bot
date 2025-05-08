@@ -62,7 +62,7 @@ def main():
     print(f'Описание услуг: {order.service_description}')
     
     print('\n--- Детали заказа ---')
-    print(order.format_for_display())
+    print(order.format_for_display(user_role='admin'))
     
 if __name__ == '__main__':
     main()
