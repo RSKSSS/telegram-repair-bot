@@ -595,9 +595,9 @@ def get_assigned_orders(technician_id, conn=None):
     finally:
         cursor.close()
 
-def get_all_orders(status=None):
+@with_db_connection
+def get_all_orders(status=None, conn=None):
     """Получение всех заказов из базы данных"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -658,11 +658,10 @@ def get_all_orders(status=None):
         return []
     finally:
         cursor.close()
-        conn.close()
 
-def assign_order(order_id, technician_id, assigned_by):
+@with_db_transaction
+def assign_order(order_id, technician_id, assigned_by, conn=None):
     """Назначение заказа мастеру"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -679,19 +678,16 @@ def assign_order(order_id, technician_id, assigned_by):
             (order_id,)
         )
         
-        conn.commit()
         return assignment_id
     except Exception as e:
-        conn.rollback()
         logger.error(f"Ошибка при назначении заказа мастеру: {e}")
         return None
     finally:
         cursor.close()
-        conn.close()
 
-def get_order_technicians(order_id):
+@with_db_connection
+def get_order_technicians(order_id, conn=None):
     """Получение списка мастеров, назначенных на заказ"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -719,11 +715,10 @@ def get_order_technicians(order_id):
         return []
     finally:
         cursor.close()
-        conn.close()
 
-def unassign_order(order_id, technician_id):
+@with_db_transaction
+def unassign_order(order_id, technician_id, conn=None):
     """Отмена назначения заказа мастеру"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -744,19 +739,16 @@ def unassign_order(order_id, technician_id):
                 (order_id,)
             )
         
-        conn.commit()
         return rows_deleted > 0
     except Exception as e:
-        conn.rollback()
         logger.error(f"Ошибка при отмене назначения заказа: {e}")
         return False
     finally:
         cursor.close()
-        conn.close()
 
-def set_user_state(user_id, state, order_id=None):
+@with_db_transaction
+def set_user_state(user_id, state, order_id=None, conn=None):
     """Устанавливает состояние пользователя"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -777,19 +769,16 @@ def set_user_state(user_id, state, order_id=None):
                 (user_id, state, order_id)
             )
         
-        conn.commit()
         return True
     except Exception as e:
-        conn.rollback()
         logger.error(f"Ошибка при установке состояния пользователя: {e}")
         return False
     finally:
         cursor.close()
-        conn.close()
 
-def get_user_state(user_id):
+@with_db_connection
+def get_user_state(user_id, conn=None):
     """Возвращает текущее состояние пользователя"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -802,11 +791,10 @@ def get_user_state(user_id):
         return None
     finally:
         cursor.close()
-        conn.close()
 
-def get_current_order_id(user_id):
+@with_db_connection
+def get_current_order_id(user_id, conn=None):
     """Возвращает ID текущего заказа пользователя"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
@@ -819,21 +807,17 @@ def get_current_order_id(user_id):
         return None
     finally:
         cursor.close()
-        conn.close()
 
-def clear_user_state(user_id):
+@with_db_transaction
+def clear_user_state(user_id, conn=None):
     """Очищает состояние пользователя"""
-    conn = get_connection()
     cursor = conn.cursor()
     
     try:
         cursor.execute("DELETE FROM user_states WHERE user_id = %s", (user_id,))
-        conn.commit()
         return True
     except Exception as e:
-        conn.rollback()
         logger.error(f"Ошибка при очистке состояния пользователя: {e}")
         return False
     finally:
         cursor.close()
-        conn.close()
