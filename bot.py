@@ -1745,11 +1745,11 @@ def handle_assign_technician_callback(user_id, message_id, order_id):
     if not user:
         return
     
-    # Проверяем, является ли пользователь администратором или диспетчером
-    if not (user.is_admin() or user.is_dispatcher()):
+    # Проверяем, является ли пользователь администратором (убрана проверка на диспетчера)
+    if not user.is_admin():
         bot.send_message(
             user_id,
-            "Эта функция доступна только для администраторов и диспетчеров."
+            "Эта функция доступна только для администраторов."
         )
         return
     
@@ -1787,11 +1787,11 @@ def handle_assign_order_callback(user_id, message_id, order_id, technician_id):
     if not user:
         return
     
-    # Проверяем, является ли пользователь администратором или диспетчером
-    if not (user.is_admin() or user.is_dispatcher()):
+    # Проверяем, является ли пользователь администратором (убрана проверка на диспетчера)
+    if not user.is_admin():
         bot.send_message(
             user_id,
-            "Эта функция доступна только для администраторов и диспетчеров."
+            "Эта функция доступна только для администраторов."
         )
         return
     
@@ -1830,8 +1830,8 @@ def handle_assign_order_callback(user_id, message_id, order_id, technician_id):
         role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
         message_text = updated_order.format_for_display(user_role=role) if updated_order else "❌ Ошибка при получении информации о заказе."
         
-        # Получаем клавиатуру для управления заказом
-        keyboard = get_order_management_keyboard(order_id)
+        # Получаем клавиатуру для управления заказом с учетом роли пользователя
+        keyboard = get_order_management_keyboard(order_id, user_role=role)
         
         # Редактируем сообщение
         bot.edit_message_text(
@@ -2075,6 +2075,23 @@ def handle_datetime_input(user_id, text):
             user_data[user_id] = {}
         
         user_data[user_id]['scheduled_datetime'] = text
+        
+        # Проверяем, есть ли все необходимые данные для заказа
+        required_fields = ['phone', 'name', 'address', 'problem']
+        missing_fields = [field for field in required_fields if field not in user_data[user_id]]
+        
+        if missing_fields:
+            logger.error(f"Не хватает полей для создания заказа: {missing_fields}")
+            bot.send_message(
+                user_id,
+                "❌ Отсутствуют некоторые данные для создания заказа. Пожалуйста, начните процесс создания заказа заново.",
+                reply_markup=get_main_menu_keyboard(user_id)
+            )
+            # Очищаем данные пользователя и состояние
+            if user_id in user_data:
+                del user_data[user_id]
+            clear_user_state(user_id)
+            return
         
         # Создаем заказ
         try:

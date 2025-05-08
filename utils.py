@@ -161,17 +161,25 @@ def get_order_status_keyboard(order_id: int, user_id: int = None) -> InlineKeybo
     
     return keyboard
 
-def get_order_management_keyboard(order_id: int) -> InlineKeyboardMarkup:
+def get_order_management_keyboard(order_id: int, user_role: str = 'admin') -> InlineKeyboardMarkup:
     """
     Возвращает клавиатуру для управления заказом
+    
+    Args:
+        order_id (int): ID заказа
+        user_role (str): Роль пользователя ('admin', 'dispatcher', 'technician')
     """
     keyboard = InlineKeyboardMarkup(row_width=1)
     
-    keyboard.add(
-        InlineKeyboardButton("🔄 Изменить статус", callback_data=f"change_status_{order_id}"),
-        InlineKeyboardButton("👤 Назначить мастера", callback_data=f"assign_technician_{order_id}"),
-        InlineKeyboardButton("◀️ Назад к списку", callback_data="all_orders")
-    )
+    # Добавляем кнопку изменения статуса
+    keyboard.add(InlineKeyboardButton("🔄 Изменить статус", callback_data=f"change_status_{order_id}"))
+    
+    # Кнопка назначения мастера только для администраторов
+    if user_role == 'admin':
+        keyboard.add(InlineKeyboardButton("👤 Назначить мастера", callback_data=f"assign_technician_{order_id}"))
+    
+    # Кнопка возврата к списку заказов
+    keyboard.add(InlineKeyboardButton("◀️ Назад к списку", callback_data="all_orders"))
     
     return keyboard
 
