@@ -1470,8 +1470,9 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
         # Получаем обновленную информацию о заказе
         updated_order = get_order(order_id)
         
-        # Формируем сообщение с информацией о заказе
-        message_text = updated_order.format_for_display() if updated_order else "❌ Ошибка при получении информации о заказе."
+        # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
+        role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+        message_text = updated_order.format_for_display(user_role=role) if updated_order else "❌ Ошибка при получении информации о заказе."
         
         # Определяем тип клавиатуры в зависимости от роли пользователя
         keyboard = None
@@ -1620,8 +1621,9 @@ def handle_assign_order_callback(user_id, message_id, order_id, technician_id):
         # Получаем обновленную информацию о заказе
         updated_order = get_order(order_id)
         
-        # Формируем сообщение с информацией о заказе
-        message_text = updated_order.format_for_display() if updated_order else "❌ Ошибка при получении информации о заказе."
+        # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
+        role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+        message_text = updated_order.format_for_display(user_role=role) if updated_order else "❌ Ошибка при получении информации о заказе."
         
         # Получаем клавиатуру для управления заказом
         keyboard = get_order_management_keyboard(order_id)
@@ -1912,7 +1914,7 @@ def handle_problem_input(user_id, text):
                     user_id,
                     f"✅ *Заказ успешно создан*\n\n"
                     f"Номер заказа: *#{order_id}*\n\n"
-                    f"{order.format_for_display()}",
+                    f"{order.format_for_display(user_role='dispatcher')}",
                     reply_markup=get_main_menu_keyboard(user_id),
                     parse_mode="Markdown"
                 )
@@ -2049,7 +2051,7 @@ def handle_cost_input(user_id, text):
                 bot.send_message(
                     user_id,
                     f"✅ Стоимость услуг для заказа #{order_id} успешно обновлена.\n\n"
-                    f"{order.format_for_display()}",
+                    f"{order.format_for_display(user_role='technician')}",
                     reply_markup=get_technician_order_keyboard(order_id),
                     parse_mode="Markdown"
                 )
@@ -2122,7 +2124,7 @@ def handle_description_input(user_id, text):
                 bot.send_message(
                     user_id,
                     f"✅ Описание выполненных работ для заказа #{order_id} успешно обновлено.\n\n"
-                    f"{order.format_for_display()}",
+                    f"{order.format_for_display(user_role='technician')}",
                     reply_markup=get_technician_order_keyboard(order_id),
                     parse_mode="Markdown"
                 )
