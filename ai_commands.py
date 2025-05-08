@@ -35,12 +35,203 @@ def register_ai_commands(bot_instance):
     """
     Регистрирует команды для работы с ИИ функциями
     """
-    bot_instance.register_message_handler(handle_analyze_problem_command, commands=['analyze_problem'])
-    bot_instance.register_message_handler(handle_suggest_cost_command, commands=['suggest_cost'])
-    bot_instance.register_message_handler(handle_generate_description_command, commands=['generate_description'])
-    bot_instance.register_message_handler(handle_ai_help_command, commands=['ai_help'])
-    bot_instance.register_message_handler(handle_technician_help_command, commands=['technician_help'])
-    bot_instance.register_message_handler(handle_answer_customer_command, commands=['answer_customer'])
+    logger.info("Регистрация AI команд с использованием декораторов...")
+    # Ничего не делаем здесь, так как обработчики уже оформлены как декораторы ниже
+    pass
+
+# Регистрируем команды через декораторы
+@bot.message_handler(commands=['analyze_problem'])
+def handle_analyze_problem_command(message: Message):
+    """
+    Обработчик команды /analyze_problem
+    Запрашивает описание проблемы для анализа с помощью ИИ
+    """
+    user_id = message.from_user.id
+    
+    # Проверяем роль пользователя - должен быть диспетчером или админом
+    role = get_user_role(user_id)
+    if role not in ['admin', 'dispatcher']:
+        bot.reply_to(message, format_error_message("Эта команда доступна только для диспетчеров и админов."))
+        return
+    
+    # Запрашиваем информацию для анализа
+    bot.reply_to(
+        message,
+        f"{EMOJI['ai']} *Анализ проблемы клиента*\n\n"
+        "Опишите проблему клиента, и я помогу вам проанализировать её, "
+        "предложить возможные причины и решения.\n\n"
+        "Пример: _Компьютер перезагружается каждые 15-20 минут, особенно при запуске игр. "
+        "При этом слышны странные звуки из системного блока._\n\n"
+        "Напишите /cancel для отмены.",
+        parse_mode="Markdown"
+    )
+    
+    # Устанавливаем состояние ожидания ввода описания проблемы
+    set_user_state(user_id, 'waiting_for_problem_analysis')
+
+@bot.message_handler(commands=['suggest_cost'])
+def handle_suggest_cost_command(message: Message):
+    """
+    Обработчик команды /suggest_cost
+    Запрашивает описание проблемы и выполненных работ для предложения стоимости
+    """
+    user_id = message.from_user.id
+    
+    # Проверяем роль пользователя - должен быть диспетчером, техником или админом
+    role = get_user_role(user_id)
+    if role not in ['admin', 'dispatcher', 'technician']:
+        bot.reply_to(message, format_error_message("Эта команда доступна только для диспетчеров, мастеров и админов."))
+        return
+    
+    # Запрашиваем информацию для предложения стоимости
+    bot.reply_to(
+        message,
+        f"{EMOJI['ai']} *Предложение стоимости услуг*\n\n"
+        "Опишите проблему клиента и выполненные работы, и я помогу вам "
+        "предложить справедливую стоимость услуг.\n\n"
+        "Пример: _Не загружается Windows. Произведена замена жесткого диска, "
+        "установка операционной системы и драйверов, настройка BIOS, перенос данных пользователя._\n\n"
+        "Напишите /cancel для отмены.",
+        parse_mode="Markdown"
+    )
+    
+    # Устанавливаем состояние ожидания ввода данных для предложения стоимости
+    set_user_state(user_id, 'waiting_for_cost_suggestion')
+
+@bot.message_handler(commands=['generate_description'])
+def handle_generate_description_command(message: Message):
+    """
+    Обработчик команды /generate_description
+    Запрашивает описание проблемы и выполненных действий для генерации профессионального отчета
+    """
+    user_id = message.from_user.id
+    
+    # Проверяем роль пользователя - должен быть диспетчером, техником или админом
+    role = get_user_role(user_id)
+    if role not in ['admin', 'dispatcher', 'technician']:
+        bot.reply_to(message, format_error_message("Эта команда доступна только для диспетчеров, мастеров и админов."))
+        return
+    
+    # Запрашиваем информацию для генерации отчета
+    bot.reply_to(
+        message,
+        f"{EMOJI['ai']} *Генерация описания выполненных работ*\n\n"
+        "Опишите проблему клиента и выполненные работы простыми словами, и я помогу вам "
+        "составить профессиональное описание для отчета.\n\n"
+        "Пример: _Клиент жаловался на медленную работу ноута. Почистил от пыли, "
+        "заменил термопасту, удалил вирусы и ненужные программы, дефрагментировал диск._\n\n"
+        "Напишите /cancel для отмены.",
+        parse_mode="Markdown"
+    )
+    
+    # Устанавливаем состояние ожидания ввода данных для генерации описания
+    set_user_state(user_id, 'waiting_for_description_generation')
+
+@bot.message_handler(commands=['ai_help'])
+def handle_ai_help_command(message: Message):
+    """
+    Обработчик команды /ai_help
+    Показывает меню с доступными ИИ функциями
+    """
+    user_id = message.from_user.id
+    
+    # Проверяем роль пользователя
+    role = get_user_role(user_id)
+    if role not in ['admin', 'dispatcher', 'technician']:
+        bot.reply_to(message, format_error_message("Эта команда доступна только для диспетчеров, мастеров и админов."))
+        return
+    
+    # Отправляем меню с доступными ИИ функциями
+    bot.send_message(
+        user_id,
+        f"{EMOJI['ai']} *ИИ-помощник сервиса*\n\n"
+        "Выберите одну из доступных функций ИИ-помощника:",
+        parse_mode="Markdown",
+        reply_markup=get_ai_help_menu_keyboard()
+    )
+
+@bot.message_handler(commands=['technician_help'])
+def handle_technician_help_command(message: Message):
+    """
+    Обработчик команды /technician_help
+    Запрашивает описание проблемы для помощи мастеру
+    """
+    user_id = message.from_user.id
+    
+    # Проверяем роль пользователя - должен быть техником или админом
+    role = get_user_role(user_id)
+    if role not in ['admin', 'technician']:
+        bot.reply_to(message, format_error_message("Эта команда доступна только для мастеров и админов."))
+        return
+    
+    # Запрашиваем информацию о технической проблеме
+    bot.reply_to(
+        message,
+        f"{EMOJI['ai']} *Помощь мастеру*\n\n"
+        "Задайте любой технический вопрос, связанный с ремонтом компьютеров, "
+        "и я постараюсь помочь вам с решением.\n\n"
+        "Пример: _Как проверить, неисправна ли оперативная память? Какие инструменты использовать?_\n\n"
+        "Напишите /cancel для отмены.",
+        parse_mode="Markdown"
+    )
+    
+    # Устанавливаем состояние ожидания ввода технического вопроса
+    set_user_state(user_id, 'waiting_for_technician_question')
+
+@bot.message_handler(commands=['answer_customer'])
+def handle_answer_customer_command(message: Message):
+    """
+    Обработчик команды /answer_customer
+    Запрашивает вопрос клиента для генерации ответа
+    """
+    user_id = message.from_user.id
+    
+    # Проверяем роль пользователя - должен быть диспетчером, техником или админом
+    role = get_user_role(user_id)
+    if role not in ['admin', 'dispatcher', 'technician']:
+        bot.reply_to(message, format_error_message("Эта команда доступна только для диспетчеров, мастеров и админов."))
+        return
+    
+    # Запрашиваем информацию о вопросе клиента
+    bot.reply_to(
+        message,
+        f"{EMOJI['ai']} *Помощь с ответом клиенту*\n\n"
+        "Опишите вопрос клиента, и я помогу вам составить профессиональный и понятный ответ.\n\n"
+        "Пример: _Клиент спрашивает, почему его компьютер быстро разряжается и как это исправить._\n\n"
+        "Напишите /cancel для отмены.",
+        parse_mode="Markdown"
+    )
+    
+    # Устанавливаем состояние ожидания ввода вопроса клиента
+    set_user_state(user_id, 'waiting_for_customer_question')
+
+@bot.message_handler(commands=['cancel'])
+def handle_cancel_command(message: Message):
+    """
+    Обработчик команды /cancel
+    Отменяет текущую ИИ операцию
+    """
+    user_id = message.from_user.id
+    
+    # Получаем текущее состояние пользователя
+    current_state = get_user_state(user_id)
+    
+    # Проверяем, находится ли пользователь в одном из состояний ИИ-функций
+    if current_state in AI_STATES:
+        # Очищаем состояние пользователя
+        clear_user_state(user_id)
+        
+        # Отправляем сообщение об успешной отмене
+        bot.reply_to(
+            message,
+            format_success_message("Операция отменена. Чем еще я могу помочь?")
+        )
+    else:
+        # Если пользователь не находится в состоянии ИИ-функции, отправляем сообщение об этом
+        bot.reply_to(
+            message,
+            "У вас нет активных операций ИИ для отмены."
+        )
 
 def get_ai_help_menu_keyboard():
     """
@@ -60,32 +251,8 @@ def get_ai_help_menu_keyboard():
     )
     return keyboard
 
-def handle_ai_help_command(message: Message):
-    """
-    Обработчик команды /ai_help
-    Показывает меню с доступными ИИ функциями
-    """
-    user_id = message.from_user.id
-    user_role = get_user_role(user_id)
-    
-    # Проверяем права доступа
-    if not user_role:
-        bot.send_message(user_id, "Вы должны быть зарегистрированы для использования этой функции.")
-        return
-    
-    # Отправляем меню с ИИ функциями
-    bot.send_message(
-        user_id,
-        f"{EMOJI['info']} *Доступные ИИ функции:*\n\n"
-        f"Выберите функцию из меню ниже или используйте соответствующую команду:\n"
-        f"`/analyze_problem` - Анализ описания проблемы\n"
-        f"`/suggest_cost` - Предложение стоимости услуг\n"
-        f"`/generate_description` - Генерация описания выполненных работ\n"
-        f"`/technician_help` - Помощь мастеру в решении проблемы\n"
-        f"`/answer_customer` - Помощь в ответе на вопрос клиента\n",
-        parse_mode="Markdown",
-        reply_markup=get_ai_help_menu_keyboard()
-    )
+# This function is now defined above with a decorator
+# We're removing it to avoid duplication
 
 def handle_analyze_problem_command(message: Message):
     """

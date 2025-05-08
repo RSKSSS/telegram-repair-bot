@@ -8,18 +8,23 @@ import os
 from flask import Flask, render_template, redirect, url_for
 from database import initialize_database
 
-# Импортируем бота из shared_state
-from shared_state import bot
-
-# Импортируем bot.py для регистрации всех обработчиков
-import bot
-
-# Этот импорт необходим для регистрации обработчиков команд AI
-import ai_commands
-
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Импортируем бота из shared_state
+from shared_state import bot
+
+# Импортируем bot.py для регистрации всех обработчиков (импортируем только для запуска всех декораторов)
+import bot
+
+# Импортируем AI команды 
+try:
+    # Только импортируем модуль ai_commands, регистрация происходит через декораторы внутри модуля
+    import ai_commands
+    logger.info("AI функции импортированы успешно")
+except Exception as e:
+    logger.error(f"Ошибка при импорте AI команд: {e}")
 
 # Создаем Flask-приложение
 app = Flask(__name__)
@@ -136,7 +141,16 @@ def main():
     import threading
     
     def bot_polling():
-        bot.polling(none_stop=True, interval=0)
+        # Используем объект bot из shared_state, а не модуль bot
+        try:
+            # Проверяем, что это телебот
+            from telebot import TeleBot
+            if isinstance(bot, TeleBot):
+                bot.polling(none_stop=True, interval=0)
+            else:
+                logger.error(f"Ошибка: bot не является экземпляром TeleBot: {type(bot)}")
+        except Exception as e:
+            logger.error(f"Ошибка при запуске бота: {e}")
     
     bot_thread = threading.Thread(target=bot_polling)
     bot_thread.daemon = True
