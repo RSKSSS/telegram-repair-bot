@@ -218,6 +218,7 @@ def get_user_management_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton("➕ Добавить администратора", callback_data="add_admin"),
         InlineKeyboardButton("➕ Добавить диспетчера", callback_data="add_dispatcher"),
         InlineKeyboardButton("➕ Добавить мастера", callback_data="add_technician"),
+        InlineKeyboardButton("❌ Удалить пользователя", callback_data="delete_user_menu"),
         InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
     )
     

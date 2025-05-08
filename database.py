@@ -1074,3 +1074,62 @@ def delete_problem_template(template_id, conn=None):
         return False
     finally:
         cursor.close()
+
+@with_db_transaction
+def delete_user(user_id, conn=None):
+    """Удаление пользователя из базы данных (только для администраторов)"""
+    cursor = conn.cursor()
+    
+    try:
+        # Сначала удаляем состояние пользователя, если оно есть
+        cursor.execute("DELETE FROM user_states WHERE user_id = %s", (user_id,))
+        
+        # Удаляем все назначения заказов для этого пользователя
+        cursor.execute("DELETE FROM assignments WHERE technician_id = %s", (user_id,))
+        
+        # Проверяем, есть ли заказы, созданные этим пользователем
+        cursor.execute("SELECT COUNT(*) FROM orders WHERE dispatcher_id = %s", (user_id,))
+        order_count = cursor.fetchone()[0]
+        
+        if order_count > 0:
+            logger.warning(f"При удалении пользователя {user_id} также будет удалено {order_count} созданных им заказов")
+        
+        # Удаляем заказы, созданные этим пользователем
+        cursor.execute("DELETE FROM orders WHERE dispatcher_id = %s", (user_id,))
+        
+        # Удаляем шаблоны проблем, созданные этим пользователем
+        cursor.execute("DELETE FROM problem_templates WHERE created_by = %s", (user_id,))
+        
+        # Наконец, удаляем самого пользователя
+        cursor.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
+        
+        rows_deleted = cursor.rowcount
+        return rows_deleted > 0
+    except Exception as e:
+        logger.error(f"Ошибка при удалении пользователя: {e}")
+        return False
+    finally:
+        cursor.close()
+
+@with_db_transaction
+def delete_order(order_id, conn=None):
+    """Удаление заказа из базы данных (только для администраторов)"""
+    cursor = conn.cursor()
+    
+    try:
+        # Сначала удаляем все назначения для этого заказа
+        cursor.execute("DELETE FROM assignments WHERE order_id = %s", (order_id,))
+        
+        # Удаляем состояния пользователей, связанные с этим заказом
+        cursor.execute("UPDATE user_states SET order_id = NULL WHERE order_id = %s", (order_id,))
+        
+        # Наконец, удаляем сам заказ
+        cursor.execute("DELETE FROM orders WHERE order_id = %s", (order_id,))
+        
+        rows_deleted = cursor.rowcount
+        return rows_deleted > 0
+    except Exception as e:
+        logger.error(f"Ошибка при удалении заказа: {e}")
+        return False
+    finally:
+        cursor.close()

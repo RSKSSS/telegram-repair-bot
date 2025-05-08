@@ -17,7 +17,7 @@ from database import (
     get_assigned_orders, assign_order, get_technicians, get_order_technicians,
     set_user_state, get_user_state, get_current_order_id, clear_user_state,
     save_problem_template, update_problem_template, get_problem_template,
-    get_problem_templates, delete_problem_template
+    get_problem_templates, delete_problem_template, delete_user, delete_order
 )
 from utils import (
     get_main_menu_keyboard, get_order_status_keyboard, get_order_management_keyboard,
