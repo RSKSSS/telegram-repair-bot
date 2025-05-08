@@ -166,9 +166,13 @@ class Order:
             'technicians': self.technicians
         }
 
-    def format_for_display(self) -> str:
+    def format_for_display(self, user_role='admin') -> str:
         """
         Форматирование заказа для отображения пользователям
+        
+        Args:
+            user_role (str): Роль пользователя, для которого форматируется заказ
+                            ('admin', 'dispatcher', 'technician')
         """
         result = (
             f"📝 *Заказ #{self.order_id}*\n\n"
@@ -183,8 +187,8 @@ class Order:
         if self.scheduled_datetime:
             result += f"📅 Запланировано на: {self.scheduled_datetime}\n"
 
-        # Добавляем информацию о диспетчере
-        if self.dispatcher_first_name:
+        # Добавляем информацию о диспетчере (только для админа и диспетчера)
+        if self.dispatcher_first_name and user_role != 'technician':
             dispatcher_name = self.dispatcher_first_name
             if self.dispatcher_last_name:
                 dispatcher_name += f" {self.dispatcher_last_name}"

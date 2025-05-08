@@ -459,8 +459,9 @@ def handle_order_command(message):
             bot.reply_to(message, "Заказ с указанным номером не найден.")
             return
         
-        # Формируем сообщение с информацией о заказе
-        message_text = order.format_for_display()
+        # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
+        role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+        message_text = order.format_for_display(user_role=role)
         
         # Определяем тип клавиатуры в зависимости от роли пользователя
         keyboard = None
@@ -1364,8 +1365,9 @@ def handle_order_detail_callback(user_id, message_id, order_id):
         )
         return
     
-    # Формируем сообщение с информацией о заказе
-    message_text = order.format_for_display()
+    # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
+    role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+    message_text = order.format_for_display(user_role=role)
     
     # Определяем тип клавиатуры в зависимости от роли пользователя
     keyboard = None
