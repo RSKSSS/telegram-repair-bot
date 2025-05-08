@@ -90,6 +90,7 @@ def get_main_menu_keyboard(user_id: int) -> InlineKeyboardMarkup:
         keyboard.add(
             InlineKeyboardButton("📝 Все заказы", callback_data="all_orders"),
             InlineKeyboardButton("👥 Управление пользователями", callback_data="manage_users"),
+            InlineKeyboardButton("📊 Логи активности", callback_data="activity_logs"),
             InlineKeyboardButton("❌ Удаление заказов", callback_data="manage_orders")
         )
     elif is_dispatcher(user_id):
@@ -473,6 +474,131 @@ def get_order_list_for_deletion() -> Tuple[str, InlineKeyboardMarkup]:
     message += "⚠️ **Внимание!** При удалении заказа также будут удалены все его назначения мастерам.\n\n"
     
     keyboard = InlineKeyboardMarkup(row_width=1)
+    
+    # Сортируем заказы по статусам и дате создания (от новых к старым)
+    for order in sorted(orders, key=lambda x: (x.status != 'new', x.status != 'assigned', 
+                                              x.status != 'in_progress', x.status != 'completed', 
+                                              x.status != 'cancelled', -int(x.order_id))):
+        status_emoji = "🔄"
+        if order.status == "new":
+            status_emoji = "🆕"
+        elif order.status == "assigned":
+            status_emoji = "📌"
+        elif order.status == "in_progress":
+            status_emoji = "🔧"
+        elif order.status == "completed":
+            status_emoji = "✅"
+        elif order.status == "cancelled":
+            status_emoji = "❌"
+            
+        button_text = f"{status_emoji} Заказ #{order.order_id} - {order.client_name}"
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"delete_order_{order.order_id}"))
+    
+    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_orders"))
+    
+    return message, keyboard
+
+def get_activity_logs_keyboard(page=0, filter_type=None) -> InlineKeyboardMarkup:
+    """
+    Возвращает клавиатуру для просмотра логов активности
+    
+    Args:
+        page (int): Номер страницы для пагинации
+        filter_type (str, optional): Тип фильтра для логов
+    """
+    keyboard = InlineKeyboardMarkup(row_width=3)
+    
+    # Кнопки типов фильтров
+    filter_buttons = [
+        InlineKeyboardButton("📝 Все", callback_data="logs_filter_all"),
+        InlineKeyboardButton("➕ Заказы", callback_data="logs_filter_orders"),
+        InlineKeyboardButton("👤 Пользователи", callback_data="logs_filter_users"),
+        InlineKeyboardButton("🔄 Статусы", callback_data="logs_filter_statuses")
+    ]
+    
+    # Добавляем кнопки фильтров
+    keyboard.add(*filter_buttons[:2])
+    keyboard.add(*filter_buttons[2:])
+    
+    # Кнопки навигации
+    nav_buttons = []
+    if page > 0:
+        nav_buttons.append(InlineKeyboardButton("⬅️ Пред", callback_data=f"logs_page_{page-1}"))
+    
+    nav_buttons.append(InlineKeyboardButton("🔄 Обновить", callback_data=f"logs_page_{page}"))
+    nav_buttons.append(InlineKeyboardButton("➡️ След", callback_data=f"logs_page_{page+1}"))
+    
+    # Добавляем кнопки навигации
+    if len(nav_buttons) == 3:
+        keyboard.add(*nav_buttons)
+    elif len(nav_buttons) == 2:
+        keyboard.add(*nav_buttons)
+    else:
+        keyboard.add(nav_buttons[0])
+    
+    # Кнопка возврата
+    keyboard.add(InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu"))
+    
+    return keyboard
+
+def format_activity_log_entry(log_entry) -> str:
+    """
+    Форматирует запись лога для отображения
+    
+    Args:
+        log_entry (dict): Запись лога
+    
+    Returns:
+        str: Форматированная запись лога
+    """
+    # Форматирование даты
+    created_at = log_entry.get('created_at')
+    if created_at:
+        date_str = created_at.strftime("%d.%m.%Y %H:%M:%S")
+    else:
+        date_str = "Неизвестная дата"
+    
+    # Имя пользователя
+    user_name = "Неизвестный пользователь"
+    if log_entry.get('first_name'):
+        user_name = log_entry.get('first_name')
+        if log_entry.get('last_name'):
+            user_name += f" {log_entry.get('last_name')}"
+        if log_entry.get('username'):
+            user_name += f" (@{log_entry.get('username')})"
+    
+    # Тип действия
+    action_type = log_entry.get('action_type', 'unknown')
+    action_type_display = {
+        'order_create': 'Создание заказа',
+        'order_update': 'Обновление заказа',
+        'order_delete': 'Удаление заказа',
+        'user_create': 'Добавление пользователя',
+        'user_update': 'Обновление пользователя',
+        'user_delete': 'Удаление пользователя',
+        'user_approve': 'Подтверждение пользователя',
+        'user_reject': 'Отклонение пользователя',
+        'status_update': 'Изменение статуса заказа',
+        'technician_assign': 'Назначение мастера',
+        'login': 'Вход в систему',
+        'unknown': 'Неизвестное действие'
+    }.get(action_type, action_type)
+    
+    # Форматируем запись
+    formatted = f"*{date_str}*\n👤 *{user_name}* ({log_entry.get('role', 'Неизвестная роль')})\n"
+    formatted += f"✏️ *{action_type_display}*: {log_entry.get('action_description', 'Нет описания')}\n"
+    
+    # Дополнительная информация о заказе или пользователе, если есть
+    if log_entry.get('client_name') and log_entry.get('related_order_id'):
+        formatted += f"📝 Заказ #{log_entry.get('related_order_id')} - {log_entry.get('client_name')}\n"
+    
+    if log_entry.get('related_first_name') and log_entry.get('related_user_id'):
+        related_user = f"{log_entry.get('related_first_name')} {log_entry.get('related_last_name') or ''}"
+        if log_entry.get('related_username'):
+            related_user += f" (@{log_entry.get('related_username')})"
+        formatted += f"👤 Связанный пользователь: {related_user}\n"
+    
+    return formatted + "―――――――――――――――"
     
     # Сортируем заказы по статусам и дате создания (от новых к старым)
     for order in sorted(orders, key=lambda x: (x.status != 'new', x.status != 'assigned', 

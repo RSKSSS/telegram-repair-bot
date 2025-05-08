@@ -1146,7 +1146,7 @@ def delete_order(order_id, conn=None):
         logger.error(f"Ошибка при удалении заказа: {e}")
         return False
     finally:
-        cursor.close()@with_db_transaction
+        cursor.close()
 def add_activity_log(user_id, action_type, action_description, related_order_id=None, related_user_id=None, conn=None):
     """Добавление записи в лог активности
     
