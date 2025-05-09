@@ -65,14 +65,21 @@ def handle_start_command(message):
     """
     user_id = message.from_user.id
     first_name = message.from_user.first_name
-    last_name = message.from_user.last_name
+    last_name = message.from_user.last_name or ""
     username = message.from_user.username
     
-    # Сохраняем информацию о пользователе в БД
-    save_user(user_id, first_name, last_name, username)
-    
-    # Получаем актуальную информацию о пользователе
-    user = get_user(user_id)
+    try:
+        # Сохраняем информацию о пользователе в БД
+        save_user(user_id, first_name, last_name, username)
+        
+        # Получаем актуальную информацию о пользователе
+        user = get_user(user_id)
+        
+        if not user:
+            bot.reply_to(message, "Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.")
+            return
+            
+        greeting = f"Здравствуйте, {first_name}!"
     
     if not user:
         bot.reply_to(message, "Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.")
