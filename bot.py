@@ -1615,8 +1615,7 @@ def handle_order_detail_callback(user_id, message_id, order_id):
     if user.is_admin():
         keyboard = get_order_management_keyboard(order_id)
     elif user.is_dispatcher() and order.dispatcher_id == user_id:
-        keyboard =```python
-get_order_management_keyboard(order_id)
+        keyboard = get_order_management_keyboard(order_id)
     elif user.is_technician():
         # Проверяем, назначен ли заказ этому мастеру
         technicians = get_order_technicians(order_id)
