@@ -12,8 +12,8 @@ from logger import get_component_logger
 # Настройка логгера
 logger = get_component_logger('ai_assistant')
 
-# Инициализация клиента OpenAI
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# AI функции отключены
+client = None
 
 # Константы для моделей
 DEFAULT_MODEL = "gpt-4o"  # Используем последнюю модель
@@ -21,6 +21,7 @@ EMBEDDING_MODEL = "text-embedding-3-small"
 
 def generate_response(prompt: str, system_message: Optional[str] = None, 
                       temperature: float = 0.7, max_tokens: int = 500) -> str:
+    return "AI функции временно отключены"
     """
     Генерирует ответ на основе промпта с использованием GPT модели
     
@@ -57,6 +58,7 @@ def generate_response(prompt: str, system_message: Optional[str] = None,
 
 def generate_json_response(prompt: str, system_message: str, 
                            temperature: float = 0.2) -> Dict[str, Any]:
+    return {"message": "AI функции временно отключены"}
     """
     Генерирует структурированный JSON ответ
     
