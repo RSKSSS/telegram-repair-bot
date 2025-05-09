@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 Главный файл для запуска Telegram бота для управления заказами на ремонт компьютеров
@@ -9,14 +10,18 @@ from flask import Flask, render_template, redirect, url_for
 from database import initialize_database
 
 # Настройка логирования
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
+print("Запуск бота...")
 
 # Импортируем бота из shared_state
 from shared_state import bot
 
-# Импортируем bot.py для регистрации всех обработчиков (импортируем только для запуска всех декораторов)
+# Импортируем bot.py для регистрации всех обработчиков
 import bot
 
 # AI функции отключены
@@ -95,15 +100,15 @@ def index():
     """)
 
 def template_folder():
-    """Create templates folder if it doesn't exist"""
+    """Создание папки templates если она не существует"""
     if not os.path.exists('templates'):
         os.makedirs('templates')
 
 def render_template_string(template_string):
-    """Render a template string"""
+    """Отображение шаблона из строки"""
     template_folder()
     
-    # Create a temporary template file
+    # Создаем временный файл шаблона
     with open('templates/temp.html', 'w') as f:
         f.write(template_string)
     
@@ -128,9 +133,7 @@ def main():
     import threading
     
     def bot_polling():
-        # Используем объект bot из shared_state, а не модуль bot
         try:
-            # Используем бота напрямую из shared_state, так как это действительно экземпляр TeleBot
             from shared_state import bot as telebot_instance
             telebot_instance.polling(none_stop=True, interval=0)
         except Exception as e:
