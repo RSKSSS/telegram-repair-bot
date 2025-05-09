@@ -17,9 +17,10 @@ def add_activity_log(user_id, action_type, action_description, related_order_id=
     
     try:
         cursor.execute(
-            "INSERT INTO activity_logs (user_id, action_type, action_description, related_order_id, related_user_id) VALUES (%s, %s, %s, %s, %s) RETURNING log_id",
+            "INSERT INTO activity_logs (user_id, action_type, action_description, related_order_id, related_user_id) VALUES (?, ?, ?, ?, ?)",
             (user_id, action_type, action_description, related_order_id, related_user_id)
         )
+        log_id = cursor.lastrowid
         log_id = cursor.fetchone()[0]
         return log_id
     except Exception as e:
