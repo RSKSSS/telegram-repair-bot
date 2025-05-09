@@ -85,12 +85,12 @@ def handle_start_command(message):
         bot.reply_to(message, "Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.")
         return
 
-    if user.is_approved:
+    if user['is_approved']:
         # Создаем постоянную клавиатуру с командами
         from utils import get_reply_keyboard
         reply_keyboard = get_reply_keyboard(user_id)
 
-        if user.is_admin():
+        if is_admin(user_id):
             bot.send_message(
                 user_id,
                 f"{greeting}\nВы вошли как *Администратор*.\n\nВыберите действие:",
@@ -104,7 +104,7 @@ def handle_start_command(message):
                 reply_markup=get_main_menu_keyboard(user_id),
                 parse_mode="Markdown"
             )
-        elif user.is_dispatcher():
+        elif is_dispatcher(user_id):
             bot.send_message(
                 user_id,
                 f"{greeting}\nВы вошли как *Диспетчер*.\n\nВыберите действие:",
@@ -118,7 +118,7 @@ def handle_start_command(message):
                 reply_markup=get_main_menu_keyboard(user_id),
                 parse_mode="Markdown"
             )
-        elif user.is_technician():
+        elif is_technician(user_id):
             bot.send_message(
                 user_id,
                 f"{greeting}\nВы вошли как *Мастер*.\n\nВыберите действие:",
@@ -141,7 +141,7 @@ def handle_start_command(message):
         )
 
         # Отправляем уведомление администраторам о новом пользователе
-        admins = [user for user in get_all_users() if user.is_admin()]
+        admins = [user for user in get_all_users() if user['role'] == 'admin']
 
         if admins:
             username_info = f" (@{username})" if username else ""
@@ -160,9 +160,9 @@ def handle_start_command(message):
 
             for admin in admins:
                 try:
-                    bot.send_message(admin.user_id, notification, parse_mode="Markdown", reply_markup=keyboard)
+                    bot.send_message(admin['user_id'], notification, parse_mode="Markdown", reply_markup=keyboard)
                 except Exception as e:
-                    logger.error(f"Ошибка при отправке уведомления администратору {admin.user_id}: {e}")
+                    logger.error(f"Ошибка при отправке уведомления администратору {admin['user_id']}: {e}")
 
 # Обработчик команды /help
 @bot.message_handler(commands=['help'])
@@ -175,7 +175,7 @@ def handle_help_command(message):
     # Получаем пользователя из БД
     user = get_user(user_id)
 
-    if not user or not user.is_approved:
+    if not user or not user['is_approved']:
         bot.reply_to(
             message,
             "Ваша учетная запись не подтверждена администратором. "
@@ -192,7 +192,7 @@ def handle_help_command(message):
     help_text += "/help - Показать эту справку\n\n"
 
     # Специфичные команды в зависимости от роли
-    if user.is_admin():
+    if is_admin(user_id):
         help_text += "Команды администратора:\n"
         help_text += "/all_orders - Просмотр всех заказов\n"
         help_text += "/manage_users - Управление пользователями\n"
@@ -202,14 +202,14 @@ def handle_help_command(message):
         help_text += "• Назначать мастеров на заказы\n"
         help_text += "• Изменять статусы заказов\n"
         help_text += "• Добавлять новых администраторов и диспетчеров\n"
-    elif user.is_dispatcher():
+    elif is_dispatcher(user_id):
         help_text += "Команды диспетчера:\n"
         help_text += "/new_order - Создать новый заказ\n"
         help_text += "/my_orders - Просмотр созданных вами заказов\n"
         help_text += "\nКак диспетчер, вы можете:\n"
         help_text += "• Создавать новые заказы\n"
         help_text += "• Просматривать и редактировать созданные вами заказы\n"
-    elif user.is_technician():
+    elif is_technician(user_id):
         help_text += "Команды мастера:\n"
         help_text += "/my_assigned_orders - Просмотр назначенных вам заказов\n"
         help_text += "\nКак мастер, вы можете:\n"
@@ -219,7 +219,7 @@ def handle_help_command(message):
         help_text += "• Добавлять описание выполненных работ\n"
 
     # Информация о работе с заказами только для администраторов и диспетчеров
-    if not user.is_technician():
+    if not is_technician(user_id):
         help_text += "\nРабота с заказами:\n"
         help_text += "• Создание заказа: указываются данные клиента и описание проблемы\n"
         help_text += "• Статусы заказов: новый > назначен > в работе > завершен\n"
@@ -239,7 +239,7 @@ def handle_new_order_command(message):
     # Получаем пользователя из БД
     user = get_user(user_id)
 
-    if not user or not user.is_approved:
+    if not user or not user['is_approved']:
         bot.reply_to(
             message,
             "Ваша учетная запись не подтверждена администратором. "
@@ -248,7 +248,7 @@ def handle_new_order_command(message):
         return
 
     # Проверяем, является ли пользователь диспетчером или администратором
-    if not (user.is_dispatcher() or user.is_admin()):
+    if not (is_dispatcher(user_id) or is_admin(user_id)):
         bot.reply_to(
             message,
             "Эта команда доступна только для диспетчеров и администраторов."
