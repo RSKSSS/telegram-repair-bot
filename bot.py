@@ -2283,6 +2283,8 @@ def handle_message(message):
             return
     except Exception as e:
         logger.error(f"Ошибка при обработке AI сообщения: {e}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке AI сообщения: {e}")
 
     # Получаем текущее состояние пользователя
     state = get_user_state(user_id)
