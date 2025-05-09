@@ -6,10 +6,10 @@ packages = ["openssl", "postgresql", "sqlite"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+run = ["sh", "-c", "python main.py"]
 
 [workflows]
-runButton = "Project"
+runButton = "Run Bot"
 
 [[workflows.workflow]]
 name = "Project"
@@ -36,6 +36,15 @@ waitForPort = 5000
 [[workflows.workflow]]
 name = "telegram_bot"
 author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+
+[[workflows.workflow]]
+name = "Run Bot"
+author = 42408076
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
