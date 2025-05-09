@@ -80,9 +80,10 @@ def handle_start_command(message):
             return
 
         greeting = f"Здравствуйте, {first_name}!"
-
-    if not user:
+    except Exception as e:
+        logger.error(f"Ошибка при регистрации пользователя: {e}")
         bot.reply_to(message, "Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.")
+        return
         return
 
     greeting = f"Здравствуйте, {first_name}!"
