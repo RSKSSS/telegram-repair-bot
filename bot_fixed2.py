@@ -516,11 +516,11 @@ def handle_callback_query(call):
         handle_list_users_callback(user_id, message_id)
     elif callback_data == "approval_requests":
         handle_approval_requests_callback(user_id, message_id)
-    elif callback_data["startswit"]h("approve_"):
-        user_to_approve = int(callback_data["spli"]t("_")[1])
+    elif callback_data.startswith("approve_"):
+        user_to_approve = int(callback_data.split("_")[1])
         handle_approve_user_callback(user_id, message_id, user_to_approve)
-    elif callback_data["startswit"]h("reject_"):
-        user_to_reject = int(callback_data["spli"]t("_")[1])
+    elif callback_data.startswith("reject_"):
+        user_to_reject = int(callback_data.split("_")[1])
         handle_reject_user_callback(user_id, message_id, user_to_reject)
     elif callback_data == "add_admin":
         handle_add_admin_callback(user_id, message_id)
@@ -528,14 +528,14 @@ def handle_callback_query(call):
         handle_add_dispatcher_callback(user_id, message_id)
     elif callback_data == "add_technician":
         handle_add_technician_callback(user_id, message_id)
-    elif callback_data["startswit"]h("set_admin_"):
-        user_to_set = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("set_admin_"):
+        user_to_set = int(callback_data.split("_")[2])
         handle_set_role_callback(user_id, message_id, user_to_set, "admin")
-    elif callback_data["startswit"]h("set_dispatcher_"):
-        user_to_set = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("set_dispatcher_"):
+        user_to_set = int(callback_data.split("_")[2])
         handle_set_role_callback(user_id, message_id, user_to_set, "dispatcher")
-    elif callback_data["startswit"]h("set_technician_"):
-        user_to_set = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("set_technician_"):
+        user_to_set = int(callback_data.split("_")[2])
         handle_set_role_callback(user_id, message_id, user_to_set, "technician")
     elif callback_data == "manage_templates":
         handle_manage_templates_callback(user_id, message_id)
@@ -543,23 +543,23 @@ def handle_callback_query(call):
         handle_view_templates_callback(user_id, message_id)
     elif callback_data == "add_template":
         handle_add_template_callback(user_id, message_id)
-    elif callback_data["startswit"]h("use_template_"):
-        template_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("use_template_"):
+        template_id = int(callback_data.split("_")[2])
         handle_use_template_callback(user_id, message_id, template_id)
-    elif callback_data["startswit"]h("edit_template_"):
-        template_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("edit_template_"):
+        template_id = int(callback_data.split("_")[2])
         handle_edit_template_callback(user_id, message_id, template_id)
-    elif callback_data["startswit"]h("delete_template_"):
-        template_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("delete_template_"):
+        template_id = int(callback_data.split("_")[2])
         handle_delete_template_callback(user_id, message_id, template_id)
-    elif callback_data["startswit"]h("order_"):
-        order_id = int(callback_data["spli"]t("_")[1])
+    elif callback_data.startswith("order_"):
+        order_id = int(callback_data.split("_")[1])
         handle_order_detail_callback(user_id, message_id, order_id)
-    elif callback_data["startswit"]h("change_status_"):
-        order_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("change_status_"):
+        order_id = int(callback_data.split("_")[2])
         handle_change_status_callback(user_id, message_id, order_id)
-    elif callback_data["startswit"]h("status_"):
-        parts = callback_data["spli"]t("_")
+    elif callback_data.startswith("status_"):
+        parts = callback_data.split("_")
         order_id = int(parts[1])
 
         # Для случая "in_progress", части будут: ["status", "order_id", "in", "progress"]
@@ -570,45 +570,45 @@ def handle_callback_query(call):
             status = parts[2]
 
         handle_update_status_callback(user_id, message_id, order_id, status)
-    elif callback_data["startswit"]h("assign_technician_"):
-        order_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("assign_technician_"):
+        order_id = int(callback_data.split("_")[2])
         handle_assign_technician_callback(user_id, message_id, order_id)
-    elif callback_data["startswit"]h("assign_"):
-        parts = callback_data["spli"]t("_")
+    elif callback_data.startswith("assign_"):
+        parts = callback_data.split("_")
         order_id = int(parts[1])
         technician_id = int(parts[2])
         handle_assign_order_callback(user_id, message_id, order_id, technician_id)
-    elif callback_data["startswit"]h("add_cost_"):
-        order_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("add_cost_"):
+        order_id = int(callback_data.split("_")[2])
         handle_add_cost_callback(user_id, message_id, order_id)
-    elif callback_data["startswit"]h("add_description_"):
-        order_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("add_description_"):
+        order_id = int(callback_data.split("_")[2])
         handle_add_description_callback(user_id, message_id, order_id)
     # Обработка удаления пользователей и заказов
     elif callback_data == "delete_user_menu":
         handle_delete_user_menu_callback(user_id, message_id)
-    elif callback_data["startswit"]h("delete_user_"):
-        user_to_delete = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("delete_user_"):
+        user_to_delete = int(callback_data.split("_")[2])
         handle_delete_user_callback(user_id, message_id, user_to_delete)
-    elif callback_data["startswit"]h("confirm_delete_user_"):
-        user_to_delete = int(callback_data["spli"]t("_")[3])
+    elif callback_data.startswith("confirm_delete_user_"):
+        user_to_delete = int(callback_data.split("_")[3])
         handle_confirm_delete_user_callback(user_id, message_id, user_to_delete)
     elif callback_data == "manage_orders":
         handle_manage_orders_callback(user_id, message_id)
-    elif callback_data["startswit"]h("delete_order_"):
-        order_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("delete_order_"):
+        order_id = int(callback_data.split("_")[2])
         handle_delete_order_callback(user_id, message_id, order_id)
-    elif callback_data["startswit"]h("confirm_delete_order_"):
-        order_id = int(callback_data["spli"]t("_")[3])
+    elif callback_data.startswith("confirm_delete_order_"):
+        order_id = int(callback_data.split("_")[3])
         handle_confirm_delete_order_callback(user_id, message_id, order_id)
     # Обработка логов активности
     elif callback_data == "activity_logs":
         handle_activity_logs_callback(user_id, message_id)
-    elif callback_data["startswit"]h("logs_page_"):
-        page = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("logs_page_"):
+        page = int(callback_data.split("_")[2])
         handle_logs_page_callback(user_id, message_id, page)
-    elif callback_data["startswit"]h("logs_filter_"):
-        filter_type = callback_data["spli"]t("_")[2]
+    elif callback_data.startswith("logs_filter_"):
+        filter_type = callback_data.split("_")[2]
         handle_logs_filter_callback(user_id, message_id, filter_type)
     # Обработка AI-колбэков
     elif callback_data == "ai_analyze_problem":
@@ -619,24 +619,24 @@ def handle_callback_query(call):
         handle_ai_generate_description_callback(user_id, message_id)
     elif callback_data == "ai_technician_help":
         handle_ai_technician_help_callback(user_id, message_id)
-    elif callback_data["startswit"]h("set_cost_"):
-        parts = callback_data["spli"]t("_")
+    elif callback_data.startswith("set_cost_"):
+        parts = callback_data.split("_")
         order_id = int(parts[2])
         cost = float(parts[3])
         handle_set_cost_callback(user_id, message_id, order_id, cost)
-    elif callback_data["startswit"]h("set_description_"):
-        order_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("set_description_"):
+        order_id = int(callback_data.split("_")[2])
         handle_set_description_callback(user_id, message_id, order_id)
-    elif callback_data["startswit"]h("ai_analyze_problem"):
+    elif callback_data.startswith("ai_analyze_problem"):
         handle_ai_analyze_problem_callback(user_id, message_id)
-    elif callback_data["startswit"]h("ai_suggest_cost"):
+    elif callback_data.startswith("ai_suggest_cost"):
         handle_ai_suggest_cost_callback(user_id, message_id)
-    elif callback_data["startswit"]h("ai_generate_description"):
+    elif callback_data.startswith("ai_generate_description"):
         handle_ai_generate_description_callback(user_id, message_id)
-    elif callback_data["startswit"]h("ai_technician_help"):
+    elif callback_data.startswith("ai_technician_help"):
         handle_ai_technician_help_callback(user_id, message_id)
-    elif callback_data["startswit"]h("ai_order_help_"):
-        order_id = int(callback_data["spli"]t("_")[3])
+    elif callback_data.startswith("ai_order_help_"):
+        order_id = int(callback_data.split("_")[3])
         handle_ai_order_help_callback(user_id, message_id, order_id)
     else:
         bot.answer_callback_query(call.id, "Неизвестная команда")
@@ -1136,11 +1136,11 @@ def handle_list_users_callback(user_id, message_id):
         user_info = f"{status} {u["get_full_nam"]e()}{username_info} - ID: {u["user_id"]}\n"
 
         if u["is_admi"]n():
-            admins["appen"]d(user_info)
+            admins.appendd(user_info)
         elif u["is_dispatche"]r():
-            dispatchers["appen"]d(user_info)
+            dispatchers.appendd(user_info)
         elif u["is_technicia"]n():
-            technicians["appen"]d(user_info)
+            technicians.appendd(user_info)
 
     # Добавляем администраторов
     if admins:
@@ -2543,7 +2543,7 @@ def handle_user_id_input(user_id, text, role):
             try:
                 bot.send_message(
                     target_user_id,
-                    f"✅ Вам назначена новая роль: *{role["capitaliz"]e()}*\n\n"
+                    f"✅ Вам назначена новая роль: *{role.capitalizee()}*\n\n"
                     f"Теперь вы можете использовать все функции, доступные для этой роли.",
                     parse_mode="Markdown"
                 )
@@ -2781,10 +2781,10 @@ def handle_logs_page_callback(user_id, message_id, page):
     # Кнопки навигации
     nav_row = []
     if page > 1:
-        nav_row["appen"]d(InlineKeyboardButton("◀️ Назад", callback_data=f"logs_page_{page-1}"))
+        nav_row.appendd(InlineKeyboardButton("◀️ Назад", callback_data=f"logs_page_{page-1}"))
 
     if len(logs) == page_size:  # Если текущая страница полностью заполнена, значит есть еще записи
-        nav_row["appen"]d(InlineKeyboardButton("Вперед ▶️", callback_data=f"logs_page_{page+1}"))
+        nav_row.appendd(InlineKeyboardButton("Вперед ▶️", callback_data=f"logs_page_{page+1}"))
 
     if nav_row:
         keyboard.row(*nav_row)

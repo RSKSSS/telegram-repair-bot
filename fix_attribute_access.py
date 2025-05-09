@@ -9,11 +9,30 @@ def fix_attribute_access(input_file, output_file):
     with open(input_file, 'r', encoding='utf-8') as f:
         content = f.read()
     
+    # Для начала заменим проблемные вызовы методов
+    replacements = [
+        ('user.is_admin()', 'is_admin(user)'),
+        ('user.is_dispatcher()', 'is_dispatcher(user)'),
+        ('user.is_technician()', 'is_technician(user)'),
+        ('order.format_for_display', 'format_orders_list([order])'),
+        ('user.get_full_name()', 'f"{user[\"first_name\"]} {user[\"last_name\"] or \"\"}".strip()'),
+        ('status_to_russian', 'ORDER_STATUSES.get'),
+        ('order["format_for_display"]', 'format_orders_list([order])'),
+        ('user["is_admin"]()', 'is_admin(user)'),
+        ('user["is_dispatcher"]()', 'is_dispatcher(user)'),
+        ('user["is_technician"]()', 'is_technician(user)'),
+        ('user["get_full_name"]()', 'f"{user[\"first_name\"]} {user[\"last_name\"] or \"\"}".strip()'),
+    ]
+    
+    for old, new in replacements:
+        content = content.replace(old, new)
+    
     # Замена обращений к атрибутам на обращения к элементам словаря
     # Паттерн для замены user.attribute на user["attribute"]
-    pattern1 = r'(\w+)\.(\w+)'
+    pattern1 = r'(\w+)\.(\w+)(?!\()'
     # Исключаем некоторые случаи, когда это может быть не обращение к атрибуту объекта
-    exclude_prefixes = ['bot.', 'message.', 'call.', 'os.', 'cursor.', 'conn.', 're.', 'logger.', 'telebot.']
+    exclude_prefixes = ['bot.', 'message.', 'call.', 'os.', 'cursor.', 'conn.', 're.', 'logger.', 'telebot.', 'keyboard.', 'markup.']
+    common_method_names = ['format', 'join', 'strip', 'replace', 'lower', 'upper', 'append', 'extend', 'pop', 'sort', 'copy', 'find', 'update', 'fetchall', 'fetchone', 'execute', 'commit', 'close']
     
     def replace_attribute(match):
         full_match = match.group(0)
@@ -25,8 +44,8 @@ def fix_attribute_access(input_file, output_file):
             if full_match.startswith(prefix):
                 return full_match
         
-        # Исключаем вызовы методов (например, user.is_admin())
-        if '(' in attr_name or attr_name in ['format', 'join', 'strip', 'replace', 'lower', 'upper', 'append', 'extend', 'pop', 'sort', 'copy', 'find', 'update']:
+        # Исключаем распространенные методы
+        if attr_name in common_method_names:
             return full_match
             
         return f'{obj_name}["{attr_name}"]'
@@ -34,16 +53,26 @@ def fix_attribute_access(input_file, output_file):
     # Замена паттернов
     modified_content = re.sub(pattern1, replace_attribute, content)
     
-    # Замена вызовов методов на обращения к функциям из utils
-    modified_content = modified_content.replace('user.is_admin()', 'is_admin(user)')
-    modified_content = modified_content.replace('user.is_dispatcher()', 'is_dispatcher(user)')
-    modified_content = modified_content.replace('user.is_technician()', 'is_technician(user)')
-    modified_content = modified_content.replace('order.format_for_display', 'format_orders_list([order])')
-    modified_content = modified_content.replace('user.get_full_name()', f'f"{{user[\\"first_name\\"]}} {{user[\\"last_name\\"] or \\"\\"}}".strip()')
+    # Ищем и заменяем вызовы методов у объекта, который уже был преобразован в словарь
+    pattern2 = r'(\w+)\["(\w+)"\]\(\)'
     
-    # Замена вызовов других методов на их эквиваленты или заглушки
-    modified_content = modified_content.replace('user.status_to_russian', 'ORDER_STATUSES.get')
-
+    def replace_method_call(match):
+        obj_name = match.group(1)
+        method_name = match.group(2)
+        
+        if method_name == 'is_admin':
+            return f'is_admin({obj_name})'
+        elif method_name == 'is_dispatcher':
+            return f'is_dispatcher({obj_name})'
+        elif method_name == 'is_technician':
+            return f'is_technician({obj_name})'
+        elif method_name == 'get_full_name':
+            return f'f"{{{obj_name}[\\"first_name\\"]}} {{{obj_name}[\\"last_name\\"] or \\"\\"}}".strip()'
+        else:
+            return f'{obj_name}["{method_name}"]'
+    
+    modified_content = re.sub(pattern2, replace_method_call, modified_content)
+    
     # Записываем результат в выходной файл
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(modified_content)
