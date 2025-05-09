@@ -9,8 +9,9 @@ from flask import Flask, render_template, redirect, url_for
 from database import initialize_database
 
 # Настройка логирования
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 # Импортируем бота из shared_state
 from shared_state import bot
