@@ -1,9 +1,10 @@
 import os
 import datetime
 import sqlite3
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any, Callable, Union
 import functools
 from logger import get_component_logger, log_function_call
+from cache import cached, invalidate_cache_on_update, cache_clear
 
 # Настройка логирования
 logger = get_component_logger('database')
@@ -129,8 +130,18 @@ def save_user(user_id: int, first_name: str, last_name: str = None, username: st
     finally:
         conn.close()
 
+@cached('users')
 def get_user(user_id: int) -> Optional[Dict]:
-    """Получение информации о пользователе"""
+    """
+    Получение информации о пользователе с использованием кэширования.
+    Кэш обновляется автоматически при изменении данных пользователя.
+    
+    Args:
+        user_id: ID пользователя в Telegram
+        
+    Returns:
+        Dict: Словарь с информацией о пользователе или None, если пользователь не найден
+    """
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -150,6 +161,9 @@ def get_user(user_id: int) -> Optional[Dict]:
                 'role': user[4],
                 'is_approved': bool(user[5])
             }
+        return None
+    except Exception as e:
+        logger.error(f"Ошибка при получении пользователя {user_id}: {e}")
         return None
     finally:
         conn.close()
@@ -178,8 +192,14 @@ def get_all_users():
     finally:
         conn.close()
 
+@cached('technicians')
 def get_technicians():
-    """Получение всех техников"""
+    """
+    Получение всех техников с использованием кэширования.
+    
+    Returns:
+        List[Dict]: Список словарей с информацией о техниках
+    """
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -197,16 +217,27 @@ def get_technicians():
     finally:
         conn.close()
 
+@invalidate_cache_on_update('users')
 def update_user_role(user_id: int, role: str) -> bool:
-    """Обновление роли пользователя"""
+    """
+    Обновление роли пользователя с автоматической инвалидацией кэша.
+    
+    Args:
+        user_id: ID пользователя
+        role: Новая роль пользователя
+        
+    Returns:
+        bool: True, если обновление успешно, иначе False
+    """
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("UPDATE users SET role = ? WHERE user_id = ?", (role, user_id))
         conn.commit()
+        logger.info(f"Роль пользователя {user_id} успешно обновлена на {role}")
         return True
     except Exception as e:
-        logger.error(f"Ошибка при обновлении роли пользователя: {e}")
+        logger.error(f"Ошибка при обновлении роли пользователя {user_id}: {e}")
         return False
     finally:
         conn.close()
@@ -273,7 +304,20 @@ def get_unapproved_users():
         conn.close()
 
 def save_order(dispatcher_id: int, client_phone: str, client_name: str, problem_description: str, client_address: str, scheduled_datetime: str = None) -> Optional[int]:
-    """Сохранение заказа"""
+    """
+    Сохранение заказа с инвалидацией кэша всех заказов
+    
+    Args:
+        dispatcher_id: ID диспетчера, создавшего заказ
+        client_phone: Телефон клиента
+        client_name: Имя клиента
+        problem_description: Описание проблемы
+        client_address: Адрес клиента
+        scheduled_datetime: Запланированное время выполнения
+        
+    Returns:
+        Optional[int]: ID созданного заказа или None в случае ошибки
+    """
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -282,15 +326,32 @@ def save_order(dispatcher_id: int, client_phone: str, client_name: str, problem_
         VALUES (?, ?, ?, ?, ?, ?)
         """, (dispatcher_id, client_phone, client_name, problem_description, client_address, scheduled_datetime))
         conn.commit()
-        return cursor.lastrowid
+        
+        order_id = cursor.lastrowid
+        # Инвалидируем кэш всех заказов
+        cache_clear('orders')
+        return order_id
     except Exception as e:
         logger.error(f"Ошибка при сохранении заказа: {e}")
         return None
     finally:
         conn.close()
 
+@invalidate_cache_on_update('orders')
 def update_order(order_id: int, status: str = None, service_cost: float = None, service_description: str = None, scheduled_datetime: str = None) -> bool:
-    """Обновление заказа"""
+    """
+    Обновление заказа с автоматической инвалидацией кэша.
+    
+    Args:
+        order_id: ID заказа
+        status: Новый статус заказа
+        service_cost: Новая стоимость услуг
+        service_description: Новое описание услуг
+        scheduled_datetime: Новое время исполнения заказа
+        
+    Returns:
+        bool: True, если обновление успешно, иначе False
+    """
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -315,16 +376,29 @@ def update_order(order_id: int, status: str = None, service_cost: float = None, 
             update_values.append(order_id)
             cursor.execute(sql, tuple(update_values))
             conn.commit()
+            
+            # Логируем информацию об обновлении для отладки
+            logger.info(f"Заказ {order_id} успешно обновлен: {', '.join(update_fields)}")
             return True
         return False
     except Exception as e:
-        logger.error(f"Ошибка при обновлении заказа: {e}")
+        logger.error(f"Ошибка при обновлении заказа {order_id}: {e}")
         return False
     finally:
         conn.close()
 
+@cached('orders')
 def get_order(order_id: int) -> Optional[Dict]:
-    """Получение заказа"""
+    """
+    Получение заказа с использованием кэширования.
+    Кэш обновляется автоматически при изменении заказа.
+    
+    Args:
+        order_id: ID заказа
+        
+    Returns:
+        Dict: Словарь с информацией о заказе или None, если заказ не найден
+    """
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -383,8 +457,17 @@ def get_assigned_orders(technician_id: int) -> List[Dict]:
     finally:
         conn.close()
 
+@cached('orders', lambda status=None: f'all_orders_{status or "all"}')
 def get_all_orders(status: str = None) -> List[Dict]:
-    """Получение всех заказов"""
+    """
+    Получение всех заказов с использованием кэширования.
+    
+    Args:
+        status: Опциональный фильтр по статусу заказа
+        
+    Returns:
+        List[Dict]: Список словарей с информацией о заказах
+    """
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -647,15 +730,29 @@ def delete_user(user_id: int) -> bool:
         conn.close()
 
 def delete_order(order_id: int) -> bool:
-    """Удаление заказа"""
+    """
+    Удаление заказа с инвалидацией кэша
+    
+    Args:
+        order_id: ID заказа для удаления
+        
+    Returns:
+        bool: True, если заказ успешно удален, иначе False
+    """
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("DELETE FROM orders WHERE order_id = ?", (order_id,))
         conn.commit()
+        
+        # Инвалидируем кэш заказа и списков заказов
+        cache_delete('orders', str(order_id))
+        cache_clear('orders')  # Очищаем весь кэш заказов
+        
+        logger.info(f"Заказ {order_id} успешно удален, кэш очищен")
         return True
     except Exception as e:
-        logger.error(f"Ошибка при удалении заказа: {e}")
+        logger.error(f"Ошибка при удалении заказа {order_id}: {e}")
         return False
     finally:
         conn.close()
