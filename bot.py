@@ -277,7 +277,7 @@ def handle_my_orders_command(message):
     # Получаем пользователя из БД
     user = get_user(user_id)
 
-    if not user or not user.is_approved:
+    if not user or not user["is_approved"]:
         bot.reply_to(
             message,
             "Ваша учетная запись не подтверждена администратором. "
@@ -286,7 +286,7 @@ def handle_my_orders_command(message):
         return
 
     # Проверяем, является ли пользователь диспетчером или администратором
-    if not (user.is_dispatcher() or user.is_admin()):
+    if not (is_dispatcher(user) or is_admin(user)):
         bot.reply_to(
             message,
             "Эта команда доступна только для диспетчеров и администраторов."
@@ -297,7 +297,7 @@ def handle_my_orders_command(message):
     orders = get_orders_by_user(user_id)
 
     # Форматируем список заказов и получаем клавиатуру
-    role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+    role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
     message_text, keyboard = format_orders_list(orders, user_role=role)
 
     # Отправляем сообщение с заказами
@@ -314,7 +314,7 @@ def handle_my_assigned_orders_command(message):
     # Получаем пользователя из БД
     user = get_user(user_id)
 
-    if not user or not user.is_approved:
+    if not user or not user["is_approved"]:
         bot.reply_to(
             message,
             "Ваша учетная запись не подтверждена администратором. "
@@ -323,7 +323,7 @@ def handle_my_assigned_orders_command(message):
         return
 
     # Проверяем, является ли пользователь мастером
-    if not user.is_technician():
+    if not is_technician(user):
         bot.reply_to(
             message,
             "Эта команда доступна только для мастеров."
@@ -351,7 +351,7 @@ def handle_all_orders_command(message):
     # Получаем пользователя из БД
     user = get_user(user_id)
 
-    if not user or not user.is_approved:
+    if not user or not user["is_approved"]:
         bot.reply_to(
             message,
             "Ваша учетная запись не подтверждена администратором. "
@@ -360,7 +360,7 @@ def handle_all_orders_command(message):
         return
 
     # Проверяем, является ли пользователь администратором или диспетчером
-    if not (user.is_admin() or user.is_dispatcher()):
+    if not (is_admin(user) or is_dispatcher(user)):
         bot.reply_to(
             message,
             "Эта команда доступна только для администраторов и диспетчеров."
@@ -371,7 +371,7 @@ def handle_all_orders_command(message):
     orders = get_all_orders()
 
     # Форматируем список заказов и получаем клавиатуру
-    role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+    role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
     message_text, keyboard = format_orders_list(orders, user_role=role)
 
     # Отправляем сообщение с заказами
@@ -388,7 +388,7 @@ def handle_manage_users_command(message):
     # Получаем пользователя из БД
     user = get_user(user_id)
 
-    if not user or not user.is_approved:
+    if not user or not user["is_approved"]:
         bot.reply_to(
             message,
             "Ваша учетная запись не подтверждена администратором. "
@@ -397,7 +397,7 @@ def handle_manage_users_command(message):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.reply_to(
             message,
             "Эта команда доступна только для администраторов."
@@ -424,7 +424,7 @@ def handle_order_command(message):
     # Получаем пользователя из БД
     user = get_user(user_id)
 
-    if not user or not user.is_approved:
+    if not user or not user["is_approved"]:
         bot.reply_to(
             message,
             "Ваша учетная запись не подтверждена администратором. "
@@ -445,19 +445,19 @@ def handle_order_command(message):
             return
 
         # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
-        role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
-        message_text = order.format_for_display(user_role=role)
+        role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
+        message_text = format_orders_list([order], user_role=role)
 
         # Определяем тип клавиатуры в зависимости от роли пользователя
         keyboard = None
-        if user.is_admin():
+        if is_admin(user):
             keyboard = get_order_management_keyboard(order_id)
-        elif user.is_dispatcher() and order.dispatcher_id == user_id:
+        elif is_dispatcher(user) and order["dispatcher_id"] == user_id:
             keyboard = get_order_management_keyboard(order_id)
-        elif user.is_technician():
+        elif is_technician(user):
             # Проверяем, назначен ли заказ этому мастеру
             technicians = get_order_technicians(order_id)
-            is_assigned = any(tech.technician_id == user_id for tech in technicians)
+            is_assigned = any(tech["technician_id"] == user_id for tech in technicians)
 
             if is_assigned:
                 keyboard = get_technician_order_keyboard(order_id)
@@ -490,7 +490,7 @@ def handle_callback_query(call):
         return
 
     # Проверяем подтверждение пользователя (кроме некоторых системных callback)
-    if not user.is_approved and callback_data != "main_menu" and not callback_data.startswith("approve_") and not callback_data.startswith("reject_"):
+    if not user["is_approved"] and callback_data != "main_menu" and not callback_data.startswith("approve_") and not callback_data.startswith("reject_"):
         bot.answer_callback_query(
             call.id,
             "Ваша учетная запись не подтверждена администратором. Пожалуйста, дождитесь подтверждения."
@@ -655,14 +655,17 @@ def handle_main_menu_callback(user_id, message_id):
     clear_user_state(user_id)
 
     # Формируем сообщение в зависимости от роли
-    if user.is_admin():
-        message_text = f"Здравствуйте, {user.get_full_name()}!\nВы вошли как *Администратор*.\n\nВыберите действие:"
-    elif user.is_dispatcher():
-        message_text = f"Здравствуйте, {user.get_full_name()}!\nВы вошли как *Диспетчер*.\n\nВыберите действие:"
-    elif user.is_technician():
-        message_text = f"Здравствуйте, {user.get_full_name()}!\nВы вошли как *Мастер*.\n\nВыберите действие:"
+    # Формируем имя пользователя
+    user_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+    
+    if is_admin(user):
+        message_text = f"Здравствуйте, {user_name}!\nВы вошли как *Администратор*.\n\nВыберите действие:"
+    elif is_dispatcher(user):
+        message_text = f"Здравствуйте, {user_name}!\nВы вошли как *Диспетчер*.\n\nВыберите действие:"
+    elif is_technician(user):
+        message_text = f"Здравствуйте, {user_name}!\nВы вошли как *Мастер*.\n\nВыберите действие:"
     else:
-        message_text = f"Здравствуйте, {user.get_full_name()}!\n\nВыберите действие:"
+        message_text = f"Здравствуйте, {user_name}!\n\nВыберите действие:"
 
     # Редактируем сообщение с новой клавиатурой
     bot.edit_message_text(
@@ -679,7 +682,7 @@ def handle_manage_templates_callback(user_id, message_id):
     """
     user = get_user(user_id)
 
-    if not user or not user.is_admin():
+    if not user or not is_admin(user):
         return
 
     # Создаем клавиатуру для управления шаблонами
@@ -706,7 +709,7 @@ def handle_view_templates_callback(user_id, message_id):
     """
     user = get_user(user_id)
 
-    if not user or not (user.is_admin() or user.is_dispatcher()):
+    if not user or not (is_admin(user) or is_dispatcher(user)):
         return
 
     # Получаем шаблоны проблем
@@ -719,8 +722,8 @@ def handle_view_templates_callback(user_id, message_id):
         message_text += "В системе нет шаблонов проблем. Добавьте первый шаблон!"
     else:
         for i, template in enumerate(templates):
-            message_text += f"*{i+1}. {template.title}*\n"
-            message_text += f"{template.description}\n\n"
+            message_text += f"*{i+1}. {template.get('title', '')}*\n"
+            message_text += f"{template.get('description', '')}\n\n"
 
     # Создаем клавиатуру с кнопками действий для шаблонов
     keyboard = InlineKeyboardMarkup(row_width=2)
@@ -728,15 +731,17 @@ def handle_view_templates_callback(user_id, message_id):
     if templates:
         # Добавляем кнопки для каждого шаблона
         for template in templates:
+            title = template.get('title', '')[:15]
+            template_id = template.get('template_id', '')
             keyboard.add(
-                InlineKeyboardButton(f"📝 Ред: {template.title[:15]}...", callback_data=f"edit_template_{template.template_id}"),
-                InlineKeyboardButton(f"❌ Удалить", callback_data=f"delete_template_{template.template_id}")
+                InlineKeyboardButton(f"📝 Ред: {title}...", callback_data=f"edit_template_{template_id}"),
+                InlineKeyboardButton("❌ Удалить", callback_data=f"delete_template_{template_id}")
             )
             keyboard.add(
-                InlineKeyboardButton(f"✅ Использовать: {template.title[:15]}...", callback_data=f"use_template_{template.template_id}")
+                InlineKeyboardButton(f"✅ Использовать: {title}...", callback_data=f"use_template_{template_id}")
             )
 
-    if user.is_admin():
+    if is_admin(user):
         keyboard.add(InlineKeyboardButton("➕ Добавить шаблон", callback_data="add_template"))
         keyboard.add(InlineKeyboardButton("« Управление шаблонами", callback_data="manage_templates"))
     else:
@@ -757,7 +762,7 @@ def handle_add_template_callback(user_id, message_id):
     """
     user = get_user(user_id)
 
-    if not user or not user.is_admin():
+    if not user or not is_admin(user):
         return
 
     # Отправляем сообщение с запросом названия шаблона
@@ -778,7 +783,7 @@ def handle_use_template_callback(user_id, message_id, template_id):
     """
     user = get_user(user_id)
 
-    if not user or not (user.is_admin() or user.is_dispatcher()):
+    if not user or not (is_admin(user) or is_dispatcher(user)):
         return
 
     # Получаем шаблон проблемы
@@ -792,12 +797,15 @@ def handle_use_template_callback(user_id, message_id, template_id):
         return
 
     # Запрашиваем номер телефона клиента
+    title = template.get('title', '')
+    description = template.get('description', '')
+    
     bot.edit_message_text(
         chat_id=user_id,
         message_id=message_id,
         text="📝 *Создание нового заказа по шаблону*\n\n"
-        f"*Шаблон:* {template.title}\n"
-        f"*Описание:* {template.description}\n\n"
+        f"*Шаблон:* {title}\n"
+        f"*Описание:* {description}\n\n"
         "Введите номер телефона клиента:",
         parse_mode="Markdown"
     )
@@ -805,7 +813,7 @@ def handle_use_template_callback(user_id, message_id, template_id):
     # Сохраняем описание проблемы в user_data
     if user_id not in user_data:
         user_data[user_id] = {}
-    user_data[user_id]['problem_description'] = template.description
+    user_data[user_id]['problem_description'] = description
 
     # Устанавливаем состояние пользователя
     set_user_state(user_id, "waiting_for_phone")
@@ -816,7 +824,7 @@ def handle_edit_template_callback(user_id, message_id, template_id):
     """
     user = get_user(user_id)
 
-    if not user or not user.is_admin():
+    if not user or not is_admin(user):
         return
 
     # Получаем шаблон проблемы
@@ -837,13 +845,17 @@ def handle_edit_template_callback(user_id, message_id, template_id):
         InlineKeyboardButton("« Назад к шаблонам", callback_data="view_templates")
     )
 
+    # Получаем данные шаблона
+    title = template.get('title', '')
+    description = template.get('description', '')
+    
     # Отправляем сообщение с информацией о шаблоне
     bot.edit_message_text(
         chat_id=user_id,
         message_id=message_id,
         text=f"✏️ *Редактирование шаблона*\n\n"
-        f"*Название:* {template.title}\n"
-        f"*Описание:* {template.description}\n\n"
+        f"*Название:* {title}\n"
+        f"*Описание:* {description}\n\n"
         "Выберите, что хотите изменить:",
         parse_mode="Markdown",
         reply_markup=keyboard
@@ -855,7 +867,7 @@ def handle_delete_template_callback(user_id, message_id, template_id):
     """
     user = get_user(user_id)
 
-    if not user or not user.is_admin():
+    if not user or not is_admin(user):
         return
 
     # Получаем шаблон проблемы
@@ -875,12 +887,15 @@ def handle_delete_template_callback(user_id, message_id, template_id):
         InlineKeyboardButton("Нет, отмена", callback_data="view_templates")
     )
 
+    # Получаем название шаблона
+    title = template.get('title', '')
+    
     # Отправляем сообщение с запросом подтверждения
     bot.edit_message_text(
         chat_id=user_id,
         message_id=message_id,
         text=f"❓ *Подтверждение удаления*\n\n"
-        f"Вы действительно хотите удалить шаблон *{template.title}*?\n\n"
+        f"Вы действительно хотите удалить шаблон *{title}*?\n\n"
         "Это действие нельзя будет отменить.",
         parse_mode="Markdown",
         reply_markup=keyboard
@@ -904,7 +919,7 @@ def handle_help_callback(user_id, message_id):
     help_text += "/help - Показать эту справку\n\n"
 
     # Специфичные команды в зависимости от роли
-    if user.is_admin():
+    if is_admin(user):
         help_text += "Команды администратора:\n"
         help_text += "/all_orders - Просмотр всех заказов\n"
         help_text += "/manage_users - Управление пользователями\n"
@@ -914,14 +929,14 @@ def handle_help_callback(user_id, message_id):
         help_text += "• Назначать мастеров на заказы\n"
         help_text += "• Изменять статусы заказов\n"
         help_text += "• Добавлять новых администраторов и диспетчеров\n"
-    elif user.is_dispatcher():
+    elif is_dispatcher(user):
         help_text += "Команды диспетчера:\n"
         help_text += "/new_order - Создать новый заказ\n"
         help_text += "/my_orders - Просмотр созданных вами заказов\n"
         help_text += "\nКак диспетчер, вы можете:\n"
         help_text += "• Создавать новые заказы\n"
         help_text += "• Просматривать и редактировать созданные вами заказы\n"
-    elif user.is_technician():
+    elif is_technician(user):
         help_text += "Команды мастера:\n"
         help_text += "/my_assigned_orders - Просмотр назначенных вам заказов\n"
         help_text += "\nКак мастер, вы можете:\n"
@@ -931,7 +946,7 @@ def handle_help_callback(user_id, message_id):
         help_text += "• Добавлять описание выполненных работ\n"
 
     # Информация о работе с заказами только для администраторов и диспетчеров
-    if not user.is_technician():
+    if not is_technician(user):
         help_text += "\nРабота с заказами:\n"
         help_text += "• Создание заказа: указываются данные клиента и описание проблемы\n"
         help_text += "• Статусы заказов: новый > назначен > в работе > завершен\n"
@@ -958,7 +973,7 @@ def handle_new_order_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь диспетчером или администратором
-    if not (user.is_dispatcher() or user.is_admin()):
+    if not (is_dispatcher(user) or is_admin(user)):
         bot.send_message(
             user_id,
             "Эта функция доступна только для диспетчеров и администраторов."
@@ -987,7 +1002,7 @@ def handle_my_orders_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь диспетчером или администратором
-    if not (user.is_dispatcher() or user.is_admin()):
+    if not (is_dispatcher(user) or is_admin(user)):
         bot.send_message(
             user_id,
             "Эта функция доступна только для диспетчеров и администраторов."
@@ -998,7 +1013,7 @@ def handle_my_orders_callback(user_id, message_id):
     orders = get_orders_by_user(user_id)
 
     # Форматируем список заказов и получаем клавиатуру
-    role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+    role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
     message_text, keyboard = format_orders_list(orders, user_role=role)
 
     # Редактируем сообщение со списком заказов
@@ -1020,7 +1035,7 @@ def handle_my_assigned_orders_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь мастером
-    if not user.is_technician():
+    if not is_technician(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для мастеров."
@@ -1053,7 +1068,7 @@ def handle_all_orders_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь администратором или диспетчером
-    if not (user.is_admin() or user.is_dispatcher()):
+    if not (is_admin(user) or is_dispatcher(user)):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов и диспетчеров."
@@ -1064,7 +1079,7 @@ def handle_all_orders_callback(user_id, message_id):
     orders = get_all_orders()
 
     # Форматируем список заказов и получаем клавиатуру
-    role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
+    role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
     message_text, keyboard = format_orders_list(orders, user_role=role)
 
     # Редактируем сообщение со списком заказов
@@ -1086,7 +1101,7 @@ def handle_manage_users_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов."
@@ -1113,7 +1128,7 @@ def handle_list_users_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов."
@@ -1131,15 +1146,24 @@ def handle_list_users_callback(user_id, message_id):
     technicians = []
 
     for u in users:
-        username_info = f" (@{u.username})" if u.username else ""
-        status = "✅" if u.is_approved else "⌛"
-        user_info = f"{status} {u.get_full_name()}{username_info} - ID: {u.user_id}\n"
+        username = u.get('username', '')
+        username_info = f" (@{username})" if username else ""
+        status = "✅" if u.get('is_approved', False) else "⌛"
+        
+        # Получаем полное имя пользователя
+        first_name = u.get('first_name', '')
+        last_name = u.get('last_name', '')
+        full_name = f"{first_name} {last_name}".strip()
+        
+        user_id = u.get('user_id', '')
+        user_info = f"{status} {full_name}{username_info} - ID: {user_id}\n"
 
-        if u.is_admin():
+        # Проверяем роли пользователя
+        if is_admin(u):
             admins.append(user_info)
-        elif u.is_dispatcher():
+        elif is_dispatcher(u):
             dispatchers.append(user_info)
-        elif u.is_technician():
+        elif is_technician(u):
             technicians.append(user_info)
 
     # Добавляем администраторов
@@ -1185,7 +1209,7 @@ def handle_approval_requests_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов."
@@ -1213,7 +1237,7 @@ def handle_approve_user_callback(user_id, message_id, user_to_approve):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов."
@@ -1227,10 +1251,12 @@ def handle_approve_user_callback(user_id, message_id, user_to_approve):
 
         if approved_user:
             # Отправляем уведомление пользователю о подтверждении
+            role = 'Администратор' if is_admin(approved_user) else 'Диспетчер' if is_dispatcher(approved_user) else 'Мастер'
+            
             bot.send_message(
                 user_to_approve,
                 f"✅ Ваша учетная запись подтверждена администратором.\n\n"
-                f"Вы зарегистрированы как: {approved_user.role.capitalize()}\n\n"
+                f"Вы зарегистрированы как: {role}\n\n"
                 f"Теперь вы можете использовать все функции бота."
             )
 
@@ -1246,9 +1272,14 @@ def handle_approve_user_callback(user_id, message_id, user_to_approve):
             )
 
             # Отправляем подтверждение администратору
+            # Получаем имя подтвержденного пользователя
+            approved_first_name = approved_user.get('first_name', '')
+            approved_last_name = approved_user.get('last_name', '')
+            approved_full_name = f"{approved_first_name} {approved_last_name}".strip()
+            
             bot.send_message(
                 user_id,
-                f"✅ Пользователь {approved_user.get_full_name()} успешно подтвержден."
+                f"✅ Пользователь {approved_full_name} успешно подтвержден."
             )
         else:
             bot.send_message(
@@ -1271,7 +1302,7 @@ def handle_reject_user_callback(user_id, message_id, user_to_reject):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов."
@@ -1306,7 +1337,13 @@ def handle_reject_user_callback(user_id, message_id, user_to_reject):
         )
 
         # Отправляем подтверждение администратору
-        user_name = rejected_user.get_full_name() if rejected_user else "Пользователь"
+        if rejected_user:
+            rejected_first_name = rejected_user.get('first_name', '')
+            rejected_last_name = rejected_user.get('last_name', '')
+            user_name = f"{rejected_first_name} {rejected_last_name}".strip()
+        else:
+            user_name = "Пользователь"
+            
         bot.send_message(
             user_id,
             f"❌ {user_name} был отклонен."
@@ -1327,7 +1364,7 @@ def handle_add_admin_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов."
@@ -1336,7 +1373,7 @@ def handle_add_admin_callback(user_id, message_id):
 
     # Получаем всех пользователей
     all_users = get_all_users()
-    non_admin_users = [u for u in all_users if not u.is_admin()]
+    non_admin_users = [u for u in all_users if not is_admin(u)]
 
     if not non_admin_users:
         # Редактируем сообщение с инструкцией если нет пользователей
@@ -1355,19 +1392,28 @@ def handle_add_admin_callback(user_id, message_id):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     for u in non_admin_users:
-        username_info = f" (@{u.username})" if u.username else ""
-        status = "✅" if u.is_approved else "⌛"
-        button_text = f"{status} {u.get_full_name()}{username_info}"
+        username = u.get('username', '')
+        username_info = f" (@{username})" if username else ""
+        status = "✅" if u.get('is_approved', False) else "⌛"
+        
+        # Получаем полное имя пользователя
+        first_name = u.get('first_name', '')
+        last_name = u.get('last_name', '')
+        full_name = f"{first_name} {last_name}".strip()
+        
+        button_text = f"{status} {full_name}{username_info}"
 
-        if u.is_dispatcher():
+        # Определяем роль пользователя
+        if is_dispatcher(u):
             role_text = "Диспетчер"
-        elif u.is_technician():
+        elif is_technician(u):
             role_text = "Мастер"
         else:
             role_text = "Пользователь"
 
         button_text = f"{button_text} [{role_text}]"
-        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_admin_{u.user_id}"))
+        user_id_val = u.get('user_id', '')
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_admin_{user_id_val}"))
 
     keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
 
@@ -1392,7 +1438,7 @@ def handle_add_dispatcher_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов."
@@ -1401,7 +1447,7 @@ def handle_add_dispatcher_callback(user_id, message_id):
 
     # Получаем всех пользователей
     all_users = get_all_users()
-    non_dispatcher_users = [u for u in all_users if not u.is_dispatcher()]
+    non_dispatcher_users = [u for u in all_users if not is_dispatcher(u)]
 
     if not non_dispatcher_users:
         # Редактируем сообщение с инструкцией если нет пользователей
@@ -1420,19 +1466,28 @@ def handle_add_dispatcher_callback(user_id, message_id):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     for u in non_dispatcher_users:
-        username_info = f" (@{u.username})" if u.username else ""
-        status = "✅" if u.is_approved else "⌛"
-        button_text = f"{status} {u.get_full_name()}{username_info}"
+        username = u.get('username', '')
+        username_info = f" (@{username})" if username else ""
+        status = "✅" if u.get('is_approved', False) else "⌛"
+        
+        # Получаем полное имя пользователя
+        first_name = u.get('first_name', '')
+        last_name = u.get('last_name', '')
+        full_name = f"{first_name} {last_name}".strip()
+        
+        button_text = f"{status} {full_name}{username_info}"
 
-        if u.is_admin():
+        # Определяем роль пользователя
+        if is_admin(u):
             role_text = "Администратор"
-        elif u.is_technician():
+        elif is_technician(u):
             role_text = "Мастер"
         else:
             role_text = "Пользователь"
 
         button_text = f"{button_text} [{role_text}]"
-        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_dispatcher_{u.user_id}"))
+        user_id_val = u.get('user_id', '')
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_dispatcher_{user_id_val}"))
 
     keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
 
@@ -1465,7 +1520,7 @@ def handle_add_technician_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов."
@@ -1474,7 +1529,7 @@ def handle_add_technician_callback(user_id, message_id):
 
     # Получаем всех пользователей
     all_users = get_all_users()
-    non_technician_users = [u for u in all_users if not u.is_technician()]
+    non_technician_users = [u for u in all_users if not is_technician(u)]
 
     if not non_technician_users:
         # Редактируем сообщение с инструкцией если нет пользователей
@@ -1493,19 +1548,28 @@ def handle_add_technician_callback(user_id, message_id):
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     for u in non_technician_users:
-        username_info = f" (@{u.username})" if u.username else ""
-        status = "✅" if u.is_approved else "⌛"
-        button_text = f"{status} {u.get_full_name()}{username_info}"
+        username = u.get('username', '')
+        username_info = f" (@{username})" if username else ""
+        status = "✅" if u.get('is_approved', False) else "⌛"
+        
+        # Получаем полное имя пользователя
+        first_name = u.get('first_name', '')
+        last_name = u.get('last_name', '')
+        full_name = f"{first_name} {last_name}".strip()
+        
+        button_text = f"{status} {full_name}{username_info}"
 
-        if u.is_admin():
+        # Определяем роль пользователя
+        if is_admin(u):
             role_text = "Администратор"
-        elif u.is_dispatcher():
+        elif is_dispatcher(u):
             role_text = "Диспетчер"
         else:
             role_text = "Пользователь"
 
         button_text = f"{button_text} [{role_text}]"
-        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_technician_{u.user_id}"))
+        user_id_val = u.get('user_id', '')
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_technician_{user_id_val}"))
 
     keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
 
@@ -1530,7 +1594,7 @@ def handle_set_role_callback(user_id, message_id, target_user_id, role):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов."
@@ -1552,7 +1616,7 @@ def handle_set_role_callback(user_id, message_id, target_user_id, role):
     # Обновляем роль пользователя
     if update_user_role(target_user_id, role):
         # Подтверждаем пользователя, если он не был подтвержден
-        if not target_user.is_approved:
+        if not target_user["is_approved"]:
             approve_user(target_user_id)
 
         # Отправляем подтверждение об обновлении роли
@@ -1560,7 +1624,7 @@ def handle_set_role_callback(user_id, message_id, target_user_id, role):
         bot.edit_message_text(
             chat_id=user_id,
             message_id=message_id,
-            text=f"✅ Пользователь {target_user.get_full_name()} успешно назначен на роль {role_name}.",
+            text=f"✅ Пользователь {target_user.get('first_name', '')} {target_user.get('last_name', '')} успешно назначен на роль {role_name}.",
             reply_markup=get_user_management_keyboard()
         )
 
@@ -1604,19 +1668,19 @@ def handle_order_detail_callback(user_id, message_id, order_id):
         return
 
     # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
-    role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
-    message_text = order.format_for_display(user_role=role)
+    role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
+    message_text = format_orders_list([order])(user_role=role)
 
     # Определяем тип клавиатуры в зависимости от роли пользователя
     keyboard = None
-    if user.is_admin():
+    if is_admin(user):
         keyboard = get_order_management_keyboard(order_id)
-    elif user.is_dispatcher() and order.dispatcher_id == user_id:
+    elif is_dispatcher(user) and order["dispatcher_id"] == user_id:
         keyboard = get_order_management_keyboard(order_id)
-    elif user.is_technician():
+    elif is_technician(user):
         # Проверяем, назначен ли заказ этому мастеру
         technicians = get_order_technicians(order_id)
-        is_assigned = any(tech.technician_id == user_id for tech in technicians)
+        is_assigned = any(tech["technician_id"] == user_id for tech in technicians)
 
         if is_assigned:
             keyboard = get_technician_order_keyboard(order_id)
@@ -1672,11 +1736,15 @@ def handle_change_status_callback(user_id, message_id, order_id):
         return
 
     # Редактируем сообщение с клавиатурой для изменения статуса
+    # Получаем текущий статус заказа
+    status_value = order.get('status', '')
+    status_text = get_status_text(status_value)  # Предполагается, что такая функция существует
+    
     bot.edit_message_text(
         chat_id=user_id,
         message_id=message_id,
         text=f"🔄 *Изменение статуса заказа #{order_id}*\n\n"
-        f"Текущий статус: *{order.status_to_russian()}*\n\n"
+        f"Текущий статус: *{status_text}*\n\n"
         "Выберите новый статус:",
         reply_markup=get_order_status_keyboard(order_id, user_id),
         parse_mode="Markdown"
@@ -1704,7 +1772,7 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
         return
 
     # Сохраняем текущий статус заказа перед обновлением
-    old_status = order.status
+    old_status = order["status"]
 
     # Обновляем статус заказа
     if update_order(order_id, status=status):
@@ -1712,16 +1780,16 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
         updated_order = get_order(order_id)
 
         # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
-        role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
-        message_text = updated_order.format_for_display(user_role=role) if updated_order else "❌ Ошибка при получении информации о заказе."
+        role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
+        message_text = updated_format_orders_list([order])(user_role=role) if updated_order else "❌ Ошибка при получении информации о заказе."
 
         # Определяем тип клавиатуры в зависимости от роли пользователя
         keyboard = None
-        if user.is_admin():
+        if is_admin(user):
             keyboard = get_order_management_keyboard(order_id)
-        elif user.is_dispatcher() and order.dispatcher_id == user_id:
+        elif is_dispatcher(user) and order["dispatcher_id"] == user_id:
             keyboard = get_order_management_keyboard(order_id)
-        elif user.is_technician():
+        elif is_technician(user):
             keyboard = get_technician_order_keyboard(order_id)
         else:
             keyboard = get_back_to_main_menu_keyboard()
@@ -1745,35 +1813,36 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
 
             # Отправляем уведомление мастерам
             for tech in technicians:
-                if tech.technician_id != user_id:  # Не отправляем уведомление тому, кто обновил статус
+                if tech["technician_id"] != user_id:  # Не отправляем уведомление тому, кто обновил статус
                     try:
                         bot.send_message(
-                            tech.technician_id,
+                            tech["technician_id"],
                             f"🔄 *Обновление статуса заказа #{order_id}*\n\n"
-                            f"Статус изменен на: *{updated_order.status_to_russian()}*\n\n"
+                            f"Статус изменен на: *{get_status_text(status)}*\n\n"
                             "Используйте команду /my_assigned_orders для просмотра ваших заказов.",
                             parse_mode="Markdown"
                         )
                     except Exception as e:
-                        logger.error(f"Ошибка при отправке уведомления мастеру {tech.technician_id}: {e}")
+                        logger.error(f"Ошибка при отправке уведомления мастеру {tech.get('technician_id', '')}: {e}")
 
             # Отправляем уведомление диспетчеру
-            if updated_order.dispatcher_id and updated_order.dispatcher_id != user_id:
+            dispatcher_id = updated_order.get('dispatcher_id', '')
+            if dispatcher_id and dispatcher_id != user_id:
                 try:
                     bot.send_message(
-                        updated_order.dispatcher_id,
+                        updated_order.get('dispatcher_id', ''),
                         f"🔄 *Обновление статуса заказа #{order_id}*\n\n"
-                        f"Статус изменен на: *{updated_order.status_to_russian()}*\n\n"
+                        f"Статус изменен на: *{get_status_text(status)}*\n\n"
                         "Используйте команду /my_orders для просмотра ваших заказов.",
                         parse_mode="Markdown"
                     )
                 except Exception as e:
-                    logger.error(f"Ошибка при отправке уведомления диспетчеру {updated_order.dispatcher_id}: {e}")
+                    logger.error(f"Ошибка при отправке уведомления диспетчеру {dispatcher_id}: {e}")
 
             # Отправляем уведомление главному администратору (всем администраторам)
             all_users = get_all_users()
             for admin_user in all_users:
-                if admin_user.is_admin() and admin_user.user_id != user_id:  # Не отправляем тому, кто сам изменил статус
+                if is_admin(admin_user) and admin_user.get("user_id", "") != user_id:  # Не отправляем тому, кто сам изменил статус
                     try:
                         # Создаем клавиатуру с кнопкой перехода к заказу
                         order_keyboard = InlineKeyboardMarkup()
@@ -1781,17 +1850,17 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
 
                         # Отправляем уведомление
                         bot.send_message(
-                            admin_user.user_id,
+                            admin_user["user_id"],
                             f"🔔 *Обновление статуса заказа #{order_id}*\n\n"
-                            f"Статус изменен на: *{updated_order.status_to_russian()}*\n"
-                            f"Клиент: {updated_order.client_name}\n"
-                            f"Телефон: {updated_order.client_phone}\n"
-                            f"Изменил: {user.get_full_name()} ({get_role_name(user.role)})",
+                            f"Статус изменен на: *{get_status_text(status)}*\n"
+                            f"Клиент: {updated_order.get('client_name', '')}\n"
+                            f"Телефон: {updated_order.get('client_phone', '')}\n"
+                            f"Изменил: {user.get('first_name', '')} {user.get('last_name', '')} ({get_role_name(user.get('role', ''))})",
                             parse_mode="Markdown",
                             reply_markup=order_keyboard
                         )
                     except Exception as e:
-                        logger.error(f"Ошибка при отправке уведомления администратору {admin_user.user_id}: {e}")
+                        logger.error(f"Ошибка при отправке уведомления администратору {admin_user.get('user_id', '')}: {e}")
     else:
         bot.send_message(
             user_id,
@@ -1808,7 +1877,7 @@ def handle_assign_technician_callback(user_id, message_id, order_id):
         return
 
     # Проверяем, является ли пользователь администратором (убрана проверка на диспетчера)
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов."
@@ -1850,7 +1919,7 @@ def handle_assign_order_callback(user_id, message_id, order_id, technician_id):
         return
 
     # Проверяем, является ли пользователь администратором (убрана проверка на диспетчера)
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "Эта функция доступна только для администраторов."
@@ -1889,8 +1958,8 @@ def handle_assign_order_callback(user_id, message_id, order_id, technician_id):
         updated_order = get_order(order_id)
 
         # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
-        role = 'admin' if user.is_admin() else 'dispatcher' if user.is_dispatcher() else 'technician'
-        message_text = updated_order.format_for_display(user_role=role) if updated_order else "❌ Ошибка при получении информации о заказе."
+        role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
+        message_text = updated_format_orders_list([order])(user_role=role) if updated_order else "❌ Ошибка при получении информации о заказе."
 
         # Получаем клавиатуру для управления заказом с учетом роли пользователя
         keyboard = get_order_management_keyboard(order_id, user_role=role)
@@ -1952,7 +2021,7 @@ def handle_add_cost_callback(user_id, message_id, order_id):
         chat_id=user_id,
         message_id=message_id,
         text=f"💰 *Добавление стоимости для заказа #{order_id}*\n\n"
-        f"Текущая стоимость: {order.service_cost if order.service_cost is not None else 'Не указана'}\n\n"
+        f"Текущая стоимость: {order.get('service_cost', 'Не указана')}\n\n"
         "Введите стоимость услуг (только число):",
         parse_mode="Markdown"
     )
@@ -1986,7 +2055,7 @@ def handle_add_description_callback(user_id, message_id, order_id):
         chat_id=user_id,
         message_id=message_id,
         text=f"📝 *Добавление описания для заказа #{order_id}*\n\n"
-        f"Текущее описание: {order.service_description if order.service_description else 'Не указано'}\n\n"
+        f"Текущее описание: {order.get('service_description', 'Не указано')}\n\n"
         "Введите описание выполненных работ:",
         parse_mode="Markdown"
     )
@@ -2004,7 +2073,7 @@ def handle_delete_user_menu_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "❌ Эта функция доступна только для администраторов."
@@ -2033,7 +2102,7 @@ def handle_delete_user_callback(user_id, message_id, user_to_delete):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "❌ Эта функция доступна только для администраторов."
@@ -2065,10 +2134,10 @@ def handle_delete_user_callback(user_id, message_id, user_to_delete):
         message_id=message_id,
         text=f"⚠️ *Подтверждение удаления пользователя*\n\n"
              f"Вы действительно хотите удалить пользователя:\n"
-             f"*ID:* {user_to_delete_info.user_id}\n"
-             f"*Имя:* {user_to_delete_info.get_full_name()}\n"
-             f"*Роль:* {get_role_name(user_to_delete_info.role)}\n\n"
-             "⚠️ Все связанные с этим пользователем данные (заказы, назначения) будут также удалены!",
+             f"*ID:* {user_to_delete_info.get('user_id', '')}\n"
+             f"*Имя:* {user_to_delete_info.get('first_name', '')} {user_to_delete_info.get('last_name', '')}\n"
+             f"*Роль:* {get_role_name(user_to_delete_info.get('role', ''))}\n\n"
+             f"⚠️ Все связанные с этим пользователем данные (заказы, назначения) будут также удалены!",
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
@@ -2083,7 +2152,7 @@ def handle_manage_orders_callback(user_id, message_id):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "❌ Эта функция доступна только для администраторов."
@@ -2112,7 +2181,7 @@ def handle_delete_order_callback(user_id, message_id, order_id):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "❌ Эта функция доступна только для администраторов."
@@ -2144,11 +2213,11 @@ def handle_delete_order_callback(user_id, message_id, order_id):
         message_id=message_id,
         text=f"⚠️ *Подтверждение удаления заказа*\n\n"
              f"Вы действительно хотите удалить заказ:\n"
-             f"*Номер:* {order.order_id}\n"
-             f"*Клиент:* {order.client_name}\n"
-             f"*Телефон:* {order.client_phone}\n"
-             f"*Статус:* {order.status_to_russian()}\n\n"
-             "⚠️ Все связанные с этим заказом данные (назначения мастеров, комментарии) будут также удалены!",
+             f"*Номер:* {order.get('order_id', '')}\n"
+             f"*Клиент:* {order.get('client_name', '')}\n"
+             f"*Телефон:* {order.get('client_phone', '')}\n"
+             f"*Статус:* {get_status_text(order.get('status', ''))}\n\n"
+             f"⚠️ Все связанные с этим заказом данные (назначения мастеров, комментарии) будут также удалены!",
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
@@ -2163,7 +2232,7 @@ def handle_confirm_delete_user_callback(user_id, message_id, user_to_delete):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "❌ Эта функция доступна только для администраторов."
@@ -2188,7 +2257,7 @@ def handle_confirm_delete_user_callback(user_id, message_id, user_to_delete):
         bot.edit_message_text(
             chat_id=user_id,
             message_id=message_id,
-            text=f"✅ Пользователь {user_to_delete_info.get_full_name()} успешно удален.",
+            text=f"✅ Пользователь {user_to_delete_info.get('first_name', '')} {user_to_delete_info.get('last_name', '')} успешно удален.",
             reply_markup=get_back_to_main_menu_keyboard(),
             parse_mode="Markdown"
         )
@@ -2212,7 +2281,7 @@ def handle_confirm_delete_order_callback(user_id, message_id, order_id):
         return
 
     # Проверяем, является ли пользователь администратором
-    if not user.is_admin():
+    if not is_admin(user):
         bot.send_message(
             user_id,
             "❌ Эта функция доступна только для администраторов."
@@ -2447,7 +2516,7 @@ def handle_datetime_input(user_id, text):
                         user_id,
                         f"✅ *Заказ успешно создан*\n\n"
                         f"Номер заказа: *#{order_id}*\n\n"
-                        f"{order.format_for_display(user_role='dispatcher')}",
+                        f"{format_orders_list([order])(user_role='dispatcher')}",
                         reply_markup=get_main_menu_keyboard(user_id),
                         parse_mode="Markdown"
                     )
@@ -2483,7 +2552,7 @@ def handle_datetime_input(user_id, text):
         logger.error(f"Ошибка при обработке даты и времени: {e}")
         bot.send_message(
             user_id,
-            "❌ Неверный формат даты и времени.Пожалуйста, введите дату и время в формате 'ДД.ММ.ГГГГ ЧЧ:ММ'."
+            "❌ Неверный формат даты и времени. Пожалуйста, введите дату и время в формате 'ДД.ММ.ГГГГ ЧЧ:ММ'."
         )
 
 def handle_problem_input(user_id, text):
@@ -2528,14 +2597,14 @@ def handle_user_id_input(user_id, text, role):
         # Обновляем роль пользователя
         if update_user_role(target_user_id, role):
             # Подтверждаем пользователя, если он не был подтвержден
-            if not target_user.is_approved:
+            if not target_user["is_approved"]:
                 approve_user(target_user_id)
 
             # Отправляем подтверждение об обновлении роли
             role_name = "администратора" if role == "admin" else "диспетчера" if role == "dispatcher" else "мастера"
             bot.send_message(
                 user_id,
-                f"✅ Пользователь {target_user.get_full_name()} успешно назначен на роль {role_name}.",
+                f"✅ Пользователь {target_user.get('first_name', '')} {target_user.get('last_name', '')} успешно назначен на роль {role_name}.",
                 reply_markup=get_user_management_keyboard()
             )
 
@@ -2610,23 +2679,23 @@ def handle_cost_input(user_id, text):
                 bot.send_message(
                     user_id,
                     f"✅ Стоимость услуг для заказа #{order_id} успешно обновлена.\n\n"
-                    f"{order.format_for_display(user_role='technician')}",
+                    f"{format_orders_list([order])(user_role='technician')}",
                     reply_markup=get_technician_order_keyboard(order_id),
                     parse_mode="Markdown"
                 )
 
                 # Отправляем уведомление диспетчеру
-                if order.dispatcher_id and order.dispatcher_id != user_id:
+                if order["dispatcher_id"] and order["dispatcher_id"] != user_id:
                     try:
                         bot.send_message(
-                            order.dispatcher_id,
+                            order.get('dispatcher_id'),
                             f"💰 *Обновлена стоимость заказа #{order_id}*\n\n"
                             f"Стоимость: {cost} руб.\n\n"
                             "Используйте команду /my_orders для просмотра ваших заказов.",
                             parse_mode="Markdown"
                         )
                     except Exception as e:
-                        logger.error(f"Ошибка при отправке уведомления диспетчеру {order.dispatcher_id}: {e}")
+                        logger.error(f"Ошибка при отправке уведомления диспетчеру {order.get('dispatcher_id')}: {e}")
             else:
                 bot.send_message(
                     user_id,
@@ -2683,23 +2752,23 @@ def handle_description_input(user_id, text):
                 bot.send_message(
                     user_id,
                     f"✅ Описание выполненных работ для заказа #{order_id} успешно обновлено.\n\n"
-                    f"{order.format_for_display(user_role='technician')}",
+                    f"{format_orders_list([order])(user_role='technician')}",
                     reply_markup=get_technician_order_keyboard(order_id),
                     parse_mode="Markdown"
                 )
 
                 # Отправляем уведомление диспетчеру
-                if order.dispatcher_id and order.dispatcher_id != user_id:
+                if order["dispatcher_id"] and order["dispatcher_id"] != user_id:
                     try:
                         bot.send_message(
-                            order.dispatcher_id,
+                            order.get('dispatcher_id'),
                             f"📝 *Обновлено описание работ для заказа #{order_id}*\n\n"
                             f"Описание: {text}\n\n"
                             "Используйте команду /my_orders для просмотра ваших заказов.",
                             parse_mode="Markdown"
                         )
                     except Exception as e:
-                        logger.error(f"Ошибка при отправке уведомления диспетчеру {order.dispatcher_id}: {e}")
+                        logger.error(f"Ошибка при отправке уведомления диспетчеру {order.get('dispatcher_id')}: {e}")
             else:
                 bot.send_message(
                     user_id,
