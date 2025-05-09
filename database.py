@@ -4,9 +4,8 @@
 
 import os
 import datetime
-import psycopg2
-from psycopg2 import sql
-from psycopg2.pool import ThreadedConnectionPool
+import sqlite3
+from sqlite3 import Error
 from typing import Optional, List, Dict
 import functools
 
@@ -20,20 +19,14 @@ logger = get_component_logger('database', level=INFO)
 connection_pool = None
 
 @log_function_call(logger)
-def initialize_connection_pool():
-    """Инициализация пула соединений с базой данных"""
-    global connection_pool
-    if connection_pool is None:
-        try:
-            connection_pool = ThreadedConnectionPool(
-                minconn=2,
-                maxconn=20,
-                dsn=os.environ.get('DATABASE_URL')
-            )
-            logger.info("Пул соединений с базой данных успешно инициализирован")
-        except Exception as e:
-            logger.error(f"Ошибка при инициализации пула соединений: {e}", exc_info=True)
-            raise
+def get_connection():
+    """Получение соединения с SQLite базой данных"""
+    try:
+        conn = sqlite3.connect('service_bot.db')
+        return conn
+    except Error as e:
+        logger.error(f"Ошибка при подключении к базе данных: {e}")
+        raise
 
 @log_function_call(logger)
 def get_connection():
