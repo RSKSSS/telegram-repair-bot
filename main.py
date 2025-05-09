@@ -19,13 +19,8 @@ from shared_state import bot
 # Импортируем bot.py для регистрации всех обработчиков (импортируем только для запуска всех декораторов)
 import bot
 
-# Импортируем AI команды 
-try:
-    # Только импортируем модуль ai_commands, регистрация происходит через декораторы внутри модуля
-    import ai_commands
-    logger.info("AI функции импортированы успешно")
-except Exception as e:
-    logger.error(f"Ошибка при импорте AI команд: {e}")
+# AI функции отключены
+logger.info("AI функции отключены")
 
 # Создаем Flask-приложение
 app = Flask(__name__)
@@ -126,17 +121,8 @@ def main():
         logger.error("Ошибка: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
         return
     
-    # Проверяем наличие ключа API от OpenAI
-    if not os.environ.get('OPENAI_API_KEY'):
-        logger.warning("Внимание: Ключ API OpenAI не найден. Функции ИИ-ассистента будут недоступны.")
-    else:
-        # Регистрируем обработчики AI команд
-        try:
-            from ai_commands import register_ai_commands
-            register_ai_commands(bot)
-            logger.info("AI функции успешно зарегистрированы")
-        except Exception as e:
-            logger.error(f"Ошибка при регистрации AI функций: {e}")
+    # AI функции отключены
+    logger.info("Запуск бота без AI функций")
     
     # Запускаем бота в отдельном потоке
     import threading
