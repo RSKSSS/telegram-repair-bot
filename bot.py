@@ -2643,7 +2643,8 @@ def handle_user_id_input(user_id, text, role):
 
 def handle_cost_input(user_id, text):
     """
-    Обработка ввода стоимости услуг
+    Обработка ввода стоимости услуг с расширенной валидацией
+    и улучшенной обработкой ошибок
     """
     # Получаем ID текущего заказа
     order_id = get_current_order_id(user_id)
@@ -2651,13 +2652,34 @@ def handle_cost_input(user_id, text):
     if not order_id:
         bot.send_message(
             user_id,
-            "❌ Ошибка: ID заказа не найден. Пожалуйста, попробуйте снова.",
+            format_error_message("Ошибка: ID заказа не найден. Пожалуйста, попробуйте снова или выберите заказ из списка."),
             reply_markup=get_main_menu_keyboard(user_id)
         )
         clear_user_state(user_id)
         return
 
+    # Проверка на пустую строку
+    if not text or text.strip() == "":
+        bot.send_message(
+            user_id,
+            format_error_message("Стоимость не может быть пустой. Пожалуйста, введите числовое значение."),
+            parse_mode="HTML"
+        )
+        return
+
+    # Предварительная очистка ввода
+    text = text.strip().replace(' ', '')
+    
     try:
+        # Проверка на корректный формат числа с использованием регулярного выражения
+        if not re.match(r'^-?\d+[.,]?\d*$', text):
+            bot.send_message(
+                user_id,
+                format_error_message("Неверный формат числа. Пожалуйста, введите числовое значение (например: 1500 или 1500.50)."),
+                parse_mode="HTML"
+            )
+            return
+            
         # Преобразуем стоимость в число
         cost = float(text.replace(',', '.'))
 
@@ -2665,10 +2687,23 @@ def handle_cost_input(user_id, text):
         if cost < 0:
             bot.send_message(
                 user_id,
-                "❌ Стоимость не может быть отрицательной. Пожалуйста, введите положительное число."
+                format_error_message("Стоимость не может быть отрицательной. Пожалуйста, введите положительное число."),
+                parse_mode="HTML"
+            )
+            return
+            
+        # Проверка на слишком большое значение (предотвращение случайных ошибок)
+        if cost > 1000000:
+            bot.send_message(
+                user_id,
+                format_error_message("Введена слишком большая стоимость. Пожалуйста, проверьте значение и введите корректную сумму."),
+                parse_mode="HTML"
             )
             return
 
+        # Логирование установки стоимости
+        logger.info(f"Установка стоимости {cost} для заказа {order_id} пользователем {user_id}")
+            
         # Обновляем стоимость услуг в заказе
         if update_order(order_id, service_cost=cost):
             # Получаем обновленную информацию о заказе
@@ -2727,7 +2762,8 @@ def handle_cost_input(user_id, text):
 
 def handle_description_input(user_id, text):
     """
-    Обработка ввода описания выполненных работ
+    Обработка ввода описания выполненных работ с улучшенной
+    валидацией и логированием
     """
     # Получаем ID текущего заказа
     order_id = get_current_order_id(user_id)
@@ -2735,12 +2771,43 @@ def handle_description_input(user_id, text):
     if not order_id:
         bot.send_message(
             user_id,
-            "❌ Ошибка: ID заказа не найден. Пожалуйста, попробуйте снова.",
-            reply_markup=get_main_menu_keyboard(user_id)
+            format_error_message("Ошибка: ID заказа не найден. Пожалуйста, попробуйте снова или выберите заказ из списка."),
+            reply_markup=get_main_menu_keyboard(user_id),
+            parse_mode="HTML"
         )
         clear_user_state(user_id)
         return
-
+        
+    # Проверка на пустую строку
+    if not text or text.strip() == "":
+        bot.send_message(
+            user_id,
+            format_error_message("Описание не может быть пустым. Пожалуйста, введите подробное описание выполненных работ."),
+            parse_mode="HTML"
+        )
+        return
+        
+    # Проверка минимальной длины описания
+    if len(text.strip()) < 10:
+        bot.send_message(
+            user_id,
+            format_error_message("Описание слишком короткое. Пожалуйста, предоставьте более подробное описание выполненных работ."),
+            parse_mode="HTML"
+        )
+        return
+        
+    # Проверка на слишком длинное описание
+    if len(text) > 1000:
+        bot.send_message(
+            user_id,
+            format_error_message("Описание слишком длинное (более 1000 символов). Пожалуйста, сократите описание."),
+            parse_mode="HTML"
+        )
+        return
+        
+    # Логирование добавления описания
+    logger.info(f"Добавление описания работ для заказа {order_id} пользователем {user_id}")
+    
     try:
         # Обновляем описание выполненных работ в заказе
         if update_order(order_id, service_description=text):

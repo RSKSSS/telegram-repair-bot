@@ -137,26 +137,69 @@ def get_reply_keyboard(user_id: int) -> ReplyKeyboardMarkup:
 
 def get_order_status_keyboard(order_id: int, user_id: int = None) -> InlineKeyboardMarkup:
     """
-    Возвращает клавиатуру для изменения статуса заказа
+    Возвращает клавиатуру для изменения статуса заказа с расширенными статусами
     
     Args:
         order_id (int): ID заказа
         user_id (int, optional): ID пользователя для проверки роли
     """
-    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard = InlineKeyboardMarkup(row_width=2)
     
     # Проверяем роль пользователя
+    is_admin_user = user_id and is_admin(user_id)
+    is_dispatcher_user = user_id and is_dispatcher(user_id)
     is_technician_user = user_id and is_technician(user_id)
     
-    # Кнопки статусов
-    keyboard.add(
-        InlineKeyboardButton("🔄 В работе", callback_data=f"status_{order_id}_in_progress"),
-        InlineKeyboardButton("✅ Завершен", callback_data=f"status_{order_id}_completed")
-    )
+    # Получаем текущий статус заказа
+    order = get_order(order_id)
+    current_status = order["status"] if order else "new"
     
-    # Кнопка "Отменен" только для админов и диспетчеров
-    if not is_technician_user:
-        keyboard.add(InlineKeyboardButton("❌ Отменен", callback_data=f"status_{order_id}_cancelled"))
+    # Общие кнопки статусов для всех пользователей
+    if current_status in ['new', 'approved']:
+        # Начальные статусы для новых заказов
+        keyboard.add(
+            InlineKeyboardButton("✅ Принят", callback_data=f"status_{order_id}_approved"),
+            InlineKeyboardButton("👨‍🔧 Назначен", callback_data=f"status_{order_id}_assigned")
+        )
+    
+    if current_status in ['approved', 'assigned', 'scheduled']:
+        # Статусы для назначенных и запланированных заказов
+        keyboard.add(
+            InlineKeyboardButton("📅 Запланирован", callback_data=f"status_{order_id}_scheduled"),
+            InlineKeyboardButton("🔄 В работе", callback_data=f"status_{order_id}_in_progress")
+        )
+    
+    if current_status in ['in_progress', 'pending_parts', 'pending_client', 'testing']:
+        # Статусы для заказов в процессе работы
+        keyboard.add(
+            InlineKeyboardButton("⏳ Ожидание запчастей", callback_data=f"status_{order_id}_pending_parts"),
+            InlineKeyboardButton("👥 Ожидание клиента", callback_data=f"status_{order_id}_pending_client")
+        )
+        keyboard.add(
+            InlineKeyboardButton("🧪 Тестирование", callback_data=f"status_{order_id}_testing"),
+            InlineKeyboardButton("📦 Готов к выдаче", callback_data=f"status_{order_id}_ready")
+        )
+    
+    if current_status in ['ready', 'testing']:
+        # Завершающие статусы
+        keyboard.add(
+            InlineKeyboardButton("✅ Завершен", callback_data=f"status_{order_id}_completed")
+        )
+    
+    # Управленческие кнопки только для админов и диспетчеров
+    if is_admin_user or is_dispatcher_user:
+        management_row = []
+        
+        if current_status not in ['cancelled', 'completed', 'rejected']:
+            management_row.append(InlineKeyboardButton("❌ Отменен", callback_data=f"status_{order_id}_cancelled"))
+            management_row.append(InlineKeyboardButton("⛔ Отклонен", callback_data=f"status_{order_id}_rejected"))
+        
+        if management_row:
+            keyboard.row(*management_row)
+            
+        # Дополнительный статус для особых случаев
+        if current_status not in ['delayed', 'completed']:
+            keyboard.add(InlineKeyboardButton("⏱ Отложен", callback_data=f"status_{order_id}_delayed"))
     
     # Кнопка "Назад"
     keyboard.add(InlineKeyboardButton("◀️ Назад к заказу", callback_data=f"order_{order_id}"))
