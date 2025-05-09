@@ -40,8 +40,9 @@ def main():
     client_name = 'Иван Клиентов'
     client_address = 'г. Москва, ул. Примерная, д. 123'
     problem_description = 'Не включается компьютер, нужна диагностика'
+    scheduled_datetime = None  # Можно указать конкретную дату, если нужно
     
-    order_id = save_order(dispatcher_id, client_phone, client_name, client_address, problem_description)
+    order_id = save_order(dispatcher_id, client_phone, client_name, problem_description, client_address, scheduled_datetime)
     print(f'Создан заказ #{order_id}')
     
     print('\n--- Назначение мастера на заказ ---')
