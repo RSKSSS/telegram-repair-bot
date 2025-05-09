@@ -14,17 +14,23 @@ def main():
     
     # Создаем тестового админа
     admin_id = 1001
-    admin = save_user(admin_id, 'Админ', 'Админович', 'admin_user', role='admin', is_approved=True)
+    save_user(admin_id, 'Админ', 'Админович', 'admin_user')
+    update_user_role(admin_id, 'admin')
+    approve_user(admin_id)
     print(f'Создан админ: {admin_id}')
     
     # Создаем тестового диспетчера
     dispatcher_id = 1002
-    dispatcher = save_user(dispatcher_id, 'Диспетчер', 'Диспетчеров', 'dispatcher_user', role='dispatcher', is_approved=True)
+    save_user(dispatcher_id, 'Диспетчер', 'Диспетчеров', 'dispatcher_user')
+    update_user_role(dispatcher_id, 'dispatcher')
+    approve_user(dispatcher_id)
     print(f'Создан диспетчер: {dispatcher_id}')
     
     # Создаем тестового мастера
     technician_id = 1003
-    technician = save_user(technician_id, 'Мастер', 'Мастеров', 'technician_user', role='technician', is_approved=True)
+    save_user(technician_id, 'Мастер', 'Мастеров', 'technician_user')
+    update_user_role(technician_id, 'technician')
+    approve_user(technician_id)
     print(f'Создан мастер: {technician_id}')
     
     print('\n--- Создание тестового заказа ---')
@@ -49,7 +55,7 @@ def main():
     # Меняем статус заказа на "в работе"
     update_order(order_id, status='in_progress')
     order = get_order(order_id)
-    print(f'Статус заказа: {order.status}')
+    print(f'Статус заказа: {order["status"]}')
     
     print('\n--- Завершение заказа с указанием стоимости 15$ ---')
     
@@ -57,12 +63,16 @@ def main():
     update_order(order_id, status='completed', service_cost=15, 
                 service_description='Заменен блок питания, устранены проблемы с загрузкой Windows')
     order = get_order(order_id)
-    print(f'Статус заказа: {order.status}')
-    print(f'Стоимость услуг: ${order.service_cost}')
-    print(f'Описание услуг: {order.service_description}')
+    print(f'Статус заказа: {order["status"]}')
+    print(f'Стоимость услуг: ${order["service_cost"]}')
+    print(f'Описание услуг: {order["service_description"]}')
     
     print('\n--- Детали заказа ---')
-    print(order.format_for_display(user_role='admin'))
+    # Форматируем детали заказа вручную, так как у словаря нет метода format_for_display
+    print(f'Заказ #{order["order_id"]}')
+    print(f'Клиент: {order["client_name"]}')
+    print(f'Телефон: {order["client_phone"]}')
+    print(f'Проблема: {order["problem_description"]}')
     
 if __name__ == '__main__':
     main()
