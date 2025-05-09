@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Главный файл для запуска Telegram бота для управления заказами на ремонт компьютеров
@@ -21,8 +20,11 @@ print("Запуск бота...")
 # Импортируем бота из shared_state
 from shared_state import bot
 
-# Импортируем bot.py для регистрации всех обработчиков
-import bot
+# Отключаем AI функции
+try:
+    import bot
+except ImportError as e:
+    print(f"Ошибка импорта: {e}")
 
 # AI функции отключены
 logger.info("AI функции отключены")
@@ -107,44 +109,44 @@ def template_folder():
 def render_template_string(template_string):
     """Отображение шаблона из строки"""
     template_folder()
-    
+
     # Создаем временный файл шаблона
     with open('templates/temp.html', 'w') as f:
         f.write(template_string)
-    
+
     return render_template('temp.html')
 
 def main():
     """Запуск бота"""
     logger.info("Инициализация базы данных...")
     initialize_database()
-    
+
     logger.info("Запуск бота сервиса ремонта компьютеров...")
-    
+
     # Проверяем наличие токена
     if not os.environ.get('TELEGRAM_BOT_TOKEN'):
         logger.error("Ошибка: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
         return
-    
+
     # AI функции отключены
     logger.info("Запуск бота без AI функций")
-    
+
     # Запускаем бота в отдельном потоке
     import threading
-    
+
     def bot_polling():
         try:
             from shared_state import bot as telebot_instance
             telebot_instance.polling(none_stop=True, interval=0)
         except Exception as e:
             logger.error(f"Ошибка при запуске бота: {e}")
-    
+
     bot_thread = threading.Thread(target=bot_polling)
     bot_thread.daemon = True
     bot_thread.start()
-    
+
     logger.info("Бот слушает сообщения...")
-    
+
     # Запускаем Flask-приложение для веб-интерфейса
     app.run(host='0.0.0.0', port=5051)
 
