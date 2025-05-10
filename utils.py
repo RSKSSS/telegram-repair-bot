@@ -52,20 +52,53 @@ except ImportError:
         ReplyKeyboardMarkup = ReplyKeyboardMarkup
         KeyboardButton = KeyboardButton
 
-def is_admin(user_id: int) -> bool:
-    """Проверяет, является ли пользователь администратором"""
-    role = get_user_role(user_id)
-    return role == 'admin'
+def is_admin(user_id_or_info) -> bool:
+    """
+    Проверяет, является ли пользователь администратором.
+    
+    Args:
+        user_id_or_info: может быть int (ID пользователя) или dict (словарь с информацией о пользователе)
+    
+    Returns:
+        bool: True, если пользователь - администратор, иначе False
+    """
+    if isinstance(user_id_or_info, dict):
+        return user_id_or_info.get('role') == 'admin'
+    else:
+        role = get_user_role(user_id_or_info)
+        return role == 'admin'
 
-def is_dispatcher(user_id: int) -> bool:
-    """Проверяет, является ли пользователь диспетчером"""
-    role = get_user_role(user_id)
-    return role == 'dispatcher'
+def is_dispatcher(user_id_or_info) -> bool:
+    """
+    Проверяет, является ли пользователь диспетчером.
+    
+    Args:
+        user_id_or_info: может быть int (ID пользователя) или dict (словарь с информацией о пользователе)
+    
+    Returns:
+        bool: True, если пользователь - диспетчер, иначе False
+    """
+    if isinstance(user_id_or_info, dict):
+        return user_id_or_info.get('role') == 'dispatcher'
+    else:
+        role = get_user_role(user_id_or_info)
+        return role == 'dispatcher'
 
-def is_technician(user_id: int) -> bool:
-    """Проверяет, является ли пользователь мастером"""
-    role = get_user_role(user_id)
-    return role == 'technician'
+def is_technician(user_id_or_info) -> bool:
+    """
+    Проверяет, является ли пользователь мастером.
+    
+    Args:
+        user_id_or_info: может быть int (ID пользователя) или dict (словарь с информацией о пользователе)
+    
+    Returns:
+        bool: True, если пользователь - мастер, иначе False
+    """
+    if isinstance(user_id_or_info, dict):
+        return user_id_or_info.get('role') == 'technician'
+    else:
+        role = get_user_role(user_id_or_info)
+        return role == 'technician'
 
 def get_role_name(role: str) -> str:
     """Возвращает название роли на русском языке"""

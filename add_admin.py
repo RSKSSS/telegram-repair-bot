@@ -38,6 +38,10 @@ def add_admin(user_id, first_name="Admin", last_name=None, username=None):
             )
             conn.commit()
             logger.info(f"Пользователь (ID: {user_id}) повышен до администратора.")
+            
+            # Удаляем пользователя из кэша, чтобы при следующем запросе данные были актуальными
+            cache_delete('users', str(user_id))
+            logger.info(f"Кэш пользователя (ID: {user_id}) очищен.")
         except Exception as e:
             conn.rollback()
             logger.error(f"Ошибка при обновлении пользователя: {e}")
@@ -57,6 +61,10 @@ def add_admin(user_id, first_name="Admin", last_name=None, username=None):
             )
             conn.commit()
             logger.info(f"Создан новый администратор (ID: {user_id}).")
+            
+            # Удаляем пользователя из кэша, чтобы при следующем запросе данные были актуальными
+            cache_delete('users', str(user_id))
+            logger.info(f"Кэш пользователя (ID: {user_id}) очищен.")
         except Exception as e:
             conn.rollback()
             logger.error(f"Ошибка при установке роли администратора: {e}")
