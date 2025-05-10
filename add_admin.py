@@ -32,7 +32,7 @@ def add_admin(user_id, first_name="Admin", last_name=None, username=None):
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "UPDATE users SET role = 'admin', is_approved = TRUE WHERE user_id = %s",
+                "UPDATE users SET role = 'admin', is_approved = TRUE WHERE user_id = ?",
                 (user_id,)
             )
             conn.commit()
@@ -45,8 +45,23 @@ def add_admin(user_id, first_name="Admin", last_name=None, username=None):
             conn.close()
     else:
         # Создаем нового пользователя с ролью администратора
-        save_user(user_id, first_name, last_name, username, 'admin', True)
-        logger.info(f"Создан новый администратор (ID: {user_id}).")
+        save_user(user_id, first_name, last_name, username)
+        # Отдельно обновляем роль и статус подтверждения
+        conn = get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                "UPDATE users SET role = 'admin', is_approved = TRUE WHERE user_id = ?",
+                (user_id,)
+            )
+            conn.commit()
+            logger.info(f"Создан новый администратор (ID: {user_id}).")
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Ошибка при установке роли администратора: {e}")
+        finally:
+            cursor.close()
+            conn.close()
 
 def main():
     """Основная функция"""
