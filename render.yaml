@@ -7,7 +7,7 @@ services:
     startCommand: python main.py
     plan: free
     envVars:
-      - key: BOT_TOKEN
+      - key: TELEGRAM_BOT_TOKEN
         sync: false # Этот параметр нужно будет установить вручную в Render
       - key: DATABASE_URL
         fromDatabase:

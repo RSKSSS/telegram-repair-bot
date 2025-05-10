@@ -6,3 +6,4 @@ psycopg2-binary==2.9.6
 email-validator==2.0.0
 telepot==12.7
 python-telegram-bot==13.15
+openai==1.14.0
