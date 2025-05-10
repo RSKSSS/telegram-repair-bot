@@ -39,6 +39,48 @@ logger = get_component_logger('bot', level=INFO)
 # Словарь для хранения временных данных пользователей
 user_data = {}
 
+# Функция-обертка для безопасного редактирования сообщений
+def safe_edit_message_text(chat_id, message_id, text, reply_markup=None, parse_mode=None):
+    """
+    Безопасное редактирование сообщения с обработкой ошибок
+    
+    Args:
+        chat_id: ID чата
+        message_id: ID сообщения
+        text: Новый текст сообщения
+        reply_markup: Клавиатура (опционально)
+        parse_mode: Режим форматирования текста (опционально)
+    
+    Returns:
+        bool: True в случае успеха, False в случае ошибки
+    """
+    try:
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=text,
+            reply_markup=reply_markup,
+            parse_mode=parse_mode
+        )
+        return True
+    except Exception as e:
+        # Логируем ошибку
+        logger.error(f"Ошибка при редактировании сообщения (chat_id={chat_id}, message_id={message_id}): {e}")
+        
+        # Если сообщение не найдено или не может быть изменено, отправим новое
+        if "message to edit not found" in str(e) or "message is not modified" in str(e):
+            try:
+                bot.send_message(
+                    chat_id=chat_id,
+                    text=text,
+                    reply_markup=reply_markup,
+                    parse_mode=parse_mode
+                )
+                return True
+            except Exception as e2:
+                logger.error(f"Ошибка при отправке нового сообщения: {e2}")
+        return False
+
 # Состояния для работы с шаблонами проблем
 TEMPLATE_TITLE_INPUT = "template_title_input"
 TEMPLATE_DESCRIPTION_INPUT = "template_description_input"
@@ -1195,12 +1237,24 @@ def handle_list_users_callback(user_id, message_id):
     keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
 
     # Редактируем сообщение со списком пользователей
-    bot.edit_message_text(
-        chat_id=user_id,
-        message_id=message_id,
-        text=message_text,
-        reply_markup=keyboard
-    )
+    try:
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text=message_text,
+            reply_markup=keyboard
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при редактировании сообщения: {e}")
+        # В случае ошибки отправим новое сообщение вместо редактирования
+        try:
+            bot.send_message(
+                chat_id=user_id,
+                text=message_text,
+                reply_markup=keyboard
+            )
+        except Exception as e2:
+            logger.error(f"Ошибка при отправке нового сообщения: {e2}")
 
 def handle_approval_requests_callback(user_id, message_id):
     """
