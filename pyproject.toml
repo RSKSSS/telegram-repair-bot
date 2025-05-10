@@ -1,16 +1,23 @@
-[project]
-name = "repl-nix-workspace"
+[tool.poetry]
+name = "telegram-service-bot"
 version = "0.1.0"
-description = "Add your description here"
-requires-python = ">=3.11"
-dependencies = [
-    "email-validator>=2.2.0",
-    "flask>=3.1.0",
-    "flask-sqlalchemy>=3.1.1",
-    "gunicorn>=23.0.0",
-    "openai>=1.78.0",
-    "psycopg2-binary>=2.9.10",
-    "pytelegrambotapi>=4.27.0",
-    "telegram>=0.0.1",
-    "telepot==12.7",
-]
+description = "Telegram bot for computer repair service"
+authors = ["Your Name <your.email@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pytelegrambotapi = "^4.14.0"
+telegram = "^0.0.1"
+telepot = "^12.7"
+flask = "^3.0.0"
+flask-sqlalchemy = "^3.1.1"
+gunicorn = "^21.2.0"
+psycopg2-binary = "^2.9.9"
+openai = "^1.1.1"
+email-validator = "^2.1.0.post1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

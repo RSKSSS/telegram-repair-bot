@@ -656,13 +656,13 @@ def handle_main_menu_callback(user_id, message_id):
 
     # Формируем сообщение в зависимости от роли
     if is_admin(user):
-        message_text = f"Здравствуйте, {f"{user["first_name"]} {user["last_name"] or ""}".strip()}!\nВы вошли как *Администратор*.\n\nВыберите действие:"
+        message_text = f"Здравствуйте, {get_full_name(user)}!\nВы вошли как *Администратор*.\n\nВыберите действие:"
     elif is_dispatcher(user):
-        message_text = f"Здравствуйте, {f"{user["first_name"]} {user["last_name"] or ""}".strip()}!\nВы вошли как *Диспетчер*.\n\nВыберите действие:"
+        message_text = f"Здравствуйте, {get_full_name(user)}!\nВы вошли как *Диспетчер*.\n\nВыберите действие:"
     elif is_technician(user):
-        message_text = f"Здравствуйте, {f"{user["first_name"]} {user["last_name"] or ""}".strip()}!\nВы вошли как *Мастер*.\n\nВыберите действие:"
+        message_text = f"Здравствуйте, {get_full_name(user)}!\nВы вошли как *Мастер*.\n\nВыберите действие:"
     else:
-        message_text = f"Здравствуйте, {f"{user["first_name"]} {user["last_name"] or ""}".strip()}!\n\nВыберите действие:"
+        message_text = f"Здравствуйте, {get_full_name(user)}!\n\nВыберите действие:"
 
     # Редактируем сообщение с новой клавиатурой
     bot.edit_message_text(
@@ -719,8 +719,8 @@ def handle_view_templates_callback(user_id, message_id):
         message_text += "В системе нет шаблонов проблем. Добавьте первый шаблон!"
     else:
         for i, template in enumerate(templates):
-            message_text += f"*{i+1}. {template["title"]}*\n"
-            message_text += f"{template["description"]}\n\n"
+            message_text += f"*{i+1}. {template['title']}*\n"
+            message_text += f"{template['description']}\n\n"
 
     # Создаем клавиатуру с кнопками действий для шаблонов
     keyboard = InlineKeyboardMarkup(row_width=2)
@@ -729,11 +729,11 @@ def handle_view_templates_callback(user_id, message_id):
         # Добавляем кнопки для каждого шаблона
         for template in templates:
             keyboard.add(
-                InlineKeyboardButton(f"📝 Ред: {template["title"][:15]}...", callback_data=f"edit_template_{template["template_id"]}"),
-                InlineKeyboardButton(f"❌ Удалить", callback_data=f"delete_template_{template["template_id"]}")
+                InlineKeyboardButton(f"📝 Ред: {template["title"][:15]}...", callback_data=f"edit_template_{template['template_id']}"),
+                InlineKeyboardButton(f"❌ Удалить", callback_data=f"delete_template_{template['template_id']}")
             )
             keyboard.add(
-                InlineKeyboardButton(f"✅ Использовать: {template["title"][:15]}...", callback_data=f"use_template_{template["template_id"]}")
+                InlineKeyboardButton(f"✅ Использовать: {template["title"][:15]}...", callback_data=f"use_template_{template['template_id']}")
             )
 
     if is_admin(user):
@@ -1133,13 +1133,13 @@ def handle_list_users_callback(user_id, message_id):
     for u in users:
         username_info = f" (@{u["username"]})" if u["username"] else ""
         status = "✅" if u["is_approved"] else "⌛"
-        user_info = f"{status} {u["get_full_nam"]e()}{username_info} - ID: {u["user_id"]}\n"
+        user_info = f"{status} {u["get_full_nam"].e()}{username_info} - ID: {u["user_id"]}\n"
 
-        if u["is_admi"]n():
+        if u["is_admi"].n():
             admins.append(user_info)
-        elif u["is_dispatche"]r():
+        elif u["is_dispatche"].r():
             dispatchers.append(user_info)
-        elif u["is_technicia"]n():
+        elif u["is_technicia"].n():
             technicians.append(user_info)
 
     # Добавляем администраторов
@@ -1248,7 +1248,7 @@ def handle_approve_user_callback(user_id, message_id, user_to_approve):
             # Отправляем подтверждение администратору
             bot.send_message(
                 user_id,
-                f"✅ Пользователь {approved_f"{user["first_name"]} {user["last_name"] or ""}".strip()} успешно подтвержден."
+                f"✅ Пользователь {f"{get_full_name(user)}"} успешно подтвержден."
             )
         else:
             bot.send_message(
@@ -1306,7 +1306,7 @@ def handle_reject_user_callback(user_id, message_id, user_to_reject):
         )
 
         # Отправляем подтверждение администратору
-        user_name = rejected_f"{user["first_name"]} {user["last_name"] or ""}".strip() if rejected_user else "Пользователь"
+        user_name = f"{get_full_name(user)}" if rejected_user else "Пользователь"
         bot.send_message(
             user_id,
             f"❌ {user_name} был отклонен."
@@ -1336,7 +1336,7 @@ def handle_add_admin_callback(user_id, message_id):
 
     # Получаем всех пользователей
     all_users = get_all_users()
-    non_admin_users = [u for u in all_users if not u["is_admi"]n()]
+    non_admin_users = [u for u in all_users if not u["is_admi"].n()]
 
     if not non_admin_users:
         # Редактируем сообщение с инструкцией если нет пользователей
@@ -1357,17 +1357,17 @@ def handle_add_admin_callback(user_id, message_id):
     for u in non_admin_users:
         username_info = f" (@{u["username"]})" if u["username"] else ""
         status = "✅" if u["is_approved"] else "⌛"
-        button_text = f"{status} {u["get_full_nam"]e()}{username_info}"
+        button_text = f"{status} {u["get_full_nam"].e()}{username_info}"
 
-        if u["is_dispatche"]r():
+        if u["is_dispatche"].r():
             role_text = "Диспетчер"
-        elif u["is_technicia"]n():
+        elif u["is_technicia"].n():
             role_text = "Мастер"
         else:
             role_text = "Пользователь"
 
         button_text = f"{button_text} [{role_text}]"
-        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_admin_{u["user_id"]}"))
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_admin_{u['user_id']}"))
 
     keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
 
@@ -1401,7 +1401,7 @@ def handle_add_dispatcher_callback(user_id, message_id):
 
     # Получаем всех пользователей
     all_users = get_all_users()
-    non_dispatcher_users = [u for u in all_users if not u["is_dispatche"]r()]
+    non_dispatcher_users = [u for u in all_users if not u["is_dispatche"].r()]
 
     if not non_dispatcher_users:
         # Редактируем сообщение с инструкцией если нет пользователей
@@ -1422,17 +1422,17 @@ def handle_add_dispatcher_callback(user_id, message_id):
     for u in non_dispatcher_users:
         username_info = f" (@{u["username"]})" if u["username"] else ""
         status = "✅" if u["is_approved"] else "⌛"
-        button_text = f"{status} {u["get_full_nam"]e()}{username_info}"
+        button_text = f"{status} {u["get_full_nam"].e()}{username_info}"
 
-        if u["is_admi"]n():
+        if u["is_admi"].n():
             role_text = "Администратор"
-        elif u["is_technicia"]n():
+        elif u["is_technicia"].n():
             role_text = "Мастер"
         else:
             role_text = "Пользователь"
 
         button_text = f"{button_text} [{role_text}]"
-        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_dispatcher_{u["user_id"]}"))
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_dispatcher_{u['user_id']}"))
 
     keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
 
@@ -1474,7 +1474,7 @@ def handle_add_technician_callback(user_id, message_id):
 
     # Получаем всех пользователей
     all_users = get_all_users()
-    non_technician_users = [u for u in all_users if not u["is_technicia"]n()]
+    non_technician_users = [u for u in all_users if not u["is_technicia"].n()]
 
     if not non_technician_users:
         # Редактируем сообщение с инструкцией если нет пользователей
@@ -1495,17 +1495,17 @@ def handle_add_technician_callback(user_id, message_id):
     for u in non_technician_users:
         username_info = f" (@{u["username"]})" if u["username"] else ""
         status = "✅" if u["is_approved"] else "⌛"
-        button_text = f"{status} {u["get_full_nam"]e()}{username_info}"
+        button_text = f"{status} {u["get_full_nam"].e()}{username_info}"
 
-        if u["is_admi"]n():
+        if u["is_admi"].n():
             role_text = "Администратор"
-        elif u["is_dispatche"]r():
+        elif u["is_dispatche"].r():
             role_text = "Диспетчер"
         else:
             role_text = "Пользователь"
 
         button_text = f"{button_text} [{role_text}]"
-        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_technician_{u["user_id"]}"))
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"set_technician_{u['user_id']}"))
 
     keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
 
@@ -1560,7 +1560,7 @@ def handle_set_role_callback(user_id, message_id, target_user_id, role):
         bot.edit_message_text(
             chat_id=user_id,
             message_id=message_id,
-            text=f"✅ Пользователь {target_f"{user["first_name"]} {user["last_name"] or ""}".strip()} успешно назначен на роль {role_name}.",
+            text=f"✅ Пользователь {f"{get_full_name(user)}"} успешно назначен на роль {role_name}.",
             reply_markup=get_user_management_keyboard()
         )
 
@@ -1676,7 +1676,7 @@ def handle_change_status_callback(user_id, message_id, order_id):
         chat_id=user_id,
         message_id=message_id,
         text=f"🔄 *Изменение статуса заказа #{order_id}*\n\n"
-        f"Текущий статус: *{order["ORDER_STATUSES"].get()}*\n\n"
+        f"Текущий статус: *{order["status"]}*\n\n"
         "Выберите новый статус:",
         reply_markup=get_order_status_keyboard(order_id, user_id),
         parse_mode="Markdown"
@@ -1750,7 +1750,7 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
                         bot.send_message(
                             tech["technician_id"],
                             f"🔄 *Обновление статуса заказа #{order_id}*\n\n"
-                            f"Статус изменен на: *{updated_order["ORDER_STATUSES"].get()}*\n\n"
+                            f"Статус изменен на: *{updated_order["status"]}*\n\n"
                             "Используйте команду /my_assigned_orders для просмотра ваших заказов.",
                             parse_mode="Markdown"
                         )
@@ -1763,7 +1763,7 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
                     bot.send_message(
                         updated_order["dispatcher_id"],
                         f"🔄 *Обновление статуса заказа #{order_id}*\n\n"
-                        f"Статус изменен на: *{updated_order["ORDER_STATUSES"].get()}*\n\n"
+                        f"Статус изменен на: *{updated_order["status"]}*\n\n"
                         "Используйте команду /my_orders для просмотра ваших заказов.",
                         parse_mode="Markdown"
                     )
@@ -1773,20 +1773,20 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
             # Отправляем уведомление главному администратору (всем администраторам)
             all_users = get_all_users()
             for admin_user in all_users:
-                if admin_is_admin(user) and admin_user["user_id"] != user_id:  # Не отправляем тому, кто сам изменил статус
+                if is_admin(user) and admin_user["user_id"] != user_id:  # Не отправляем тому, кто сам изменил статус
                     try:
                         # Создаем клавиатуру с кнопкой перехода к заказу
                         order_keyboard = InlineKeyboardMarkup()
-                        order_keyboard["ad"]d(InlineKeyboardButton("👁️ Посмотреть детали", callback_data=f"order_{order_id}"))
+                        order_keyboard["ad"].d(InlineKeyboardButton("👁️ Посмотреть детали", callback_data=f"order_{order_id}"))
 
                         # Отправляем уведомление
                         bot.send_message(
                             admin_user["user_id"],
                             f"🔔 *Обновление статуса заказа #{order_id}*\n\n"
-                            f"Статус изменен на: *{updated_order["ORDER_STATUSES"].get()}*\n"
+                            f"Статус изменен на: *{updated_order["status"]}*\n"
                             f"Клиент: {updated_order["client_name"]}\n"
                             f"Телефон: {updated_order["client_phone"]}\n"
-                            f"Изменил: {f"{user["first_name"]} {user["last_name"] or ""}".strip()} ({get_role_name(user["role"])})",
+                            f"Изменил: {get_full_name(user)} ({get_role_name(user["role"])})",
                             parse_mode="Markdown",
                             reply_markup=order_keyboard
                         )
@@ -2066,7 +2066,7 @@ def handle_delete_user_callback(user_id, message_id, user_to_delete):
         text=f"⚠️ *Подтверждение удаления пользователя*\n\n"
              f"Вы действительно хотите удалить пользователя:\n"
              f"*ID:* {user_to_delete_info["user_id"]}\n"
-             f"*Имя:* {user_to_delete_info["get_full_nam"]e()}\n"
+             f"*Имя:* {user_to_delete_info["get_full_nam"].e()}\n"
              f"*Роль:* {get_role_name(user_to_delete_info["role"])}\n\n"
              "⚠️ Все связанные с этим пользователем данные (заказы, назначения) будут также удалены!",
         reply_markup=keyboard,
@@ -2147,7 +2147,7 @@ def handle_delete_order_callback(user_id, message_id, order_id):
              f"*Номер:* {order["order_id"]}\n"
              f"*Клиент:* {order["client_name"]}\n"
              f"*Телефон:* {order["client_phone"]}\n"
-             f"*Статус:* {order["ORDER_STATUSES"].get()}\n\n"
+             f"*Статус:* {order["status"]}\n\n"
              "⚠️ Все связанные с этим заказом данные (назначения мастеров, комментарии) будут также удалены!",
         reply_markup=keyboard,
         parse_mode="Markdown"
@@ -2188,7 +2188,7 @@ def handle_confirm_delete_user_callback(user_id, message_id, user_to_delete):
         bot.edit_message_text(
             chat_id=user_id,
             message_id=message_id,
-            text=f"✅ Пользователь {user_to_delete_info["get_full_nam"]e()} успешно удален.",
+            text=f"✅ Пользователь {user_to_delete_info["get_full_nam"].e()} успешно удален.",
             reply_markup=get_back_to_main_menu_keyboard(),
             parse_mode="Markdown"
         )
@@ -2535,7 +2535,7 @@ def handle_user_id_input(user_id, text, role):
             role_name = "администратора" if role == "admin" else "диспетчера" if role == "dispatcher" else "мастера"
             bot.send_message(
                 user_id,
-                f"✅ Пользователь {target_f"{user["first_name"]} {user["last_name"] or ""}".strip()} успешно назначен на роль {role_name}.",
+                f"✅ Пользователь {f"{get_full_name(user)}"} успешно назначен на роль {role_name}.",
                 reply_markup=get_user_management_keyboard()
             )
 
@@ -2590,7 +2590,7 @@ def handle_cost_input(user_id, text):
 
     try:
         # Преобразуем стоимость в число
-        cost = float(text["replac"]e(',', '.'))
+        cost = float(text["replac"].e(',', '.'))
 
         # Проверяем, что стоимость положительная
         if cost < 0:
@@ -2772,7 +2772,7 @@ def handle_logs_page_callback(user_id, message_id, page):
             message_text += f"👤 <b>{log['first_name'] or ''} {log['last_name'] or ''}</b>"
             if log['username']:
                 message_text += f" (@{log['username']})"
-            message_text += f" - {ROLES["ge"]t(log['role'], log['role'])}\n"
+            message_text += f" - {ROLES["ge"].t(log['role'], log['role'])}\n"
             message_text += f"🔸 {log['action_description']}\n\n"
 
     # Создаем клавиатуру с кнопками навигации
