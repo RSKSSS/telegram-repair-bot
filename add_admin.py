@@ -7,6 +7,7 @@
 import logging
 import sys
 from database import get_connection, get_user, save_user, initialize_database
+from cache import cache_clear, cache_delete
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)

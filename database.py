@@ -109,18 +109,35 @@ def save_user(user_id: int, first_name: str, last_name: str = None, username: st
     cursor = conn.cursor()
 
     try:
+        # Проверяем, существует ли пользователь и сохраняем текущие значения
         cursor.execute("""
-        INSERT OR REPLACE INTO users (user_id, username, first_name, last_name)
-        VALUES (?, ?, ?, ?)
-        """, (user_id, username, first_name, last_name))
-
-        # Если это первый пользователь, делаем его администратором
-        cursor.execute("SELECT COUNT(*) FROM users")
-        if cursor.fetchone()[0] == 1:
+        SELECT role, is_approved FROM users WHERE user_id = ?
+        """, (user_id,))
+        existing_user = cursor.fetchone()
+        
+        if existing_user:
+            # Обновляем только личные данные, сохраняя роль и статус подтверждения
             cursor.execute("""
-            UPDATE users SET role = 'admin', is_approved = TRUE
+            UPDATE users SET username = ?, first_name = ?, last_name = ? 
             WHERE user_id = ?
-            """, (user_id,))
+            """, (username, first_name, last_name, user_id))
+            logger.info(f"Обновлены данные существующего пользователя {user_id} с сохранением роли и статуса")
+        else:
+            # Создаем нового пользователя
+            cursor.execute("""
+            INSERT INTO users (user_id, username, first_name, last_name, role, is_approved)
+            VALUES (?, ?, ?, ?, 'user', FALSE)
+            """, (user_id, username, first_name, last_name))
+            logger.info(f"Создан новый пользователь {user_id}")
+            
+            # Если это первый пользователь, делаем его администратором
+            cursor.execute("SELECT COUNT(*) FROM users")
+            if cursor.fetchone()[0] == 1:
+                cursor.execute("""
+                UPDATE users SET role = 'admin', is_approved = TRUE
+                WHERE user_id = ?
+                """, (user_id,))
+                logger.info(f"Первый пользователь {user_id} назначен администратором")
 
         conn.commit()
         return True
