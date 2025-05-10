@@ -4,7 +4,7 @@ services:
     name: telegram-bot-service
     env: python
     buildCommand: pip install -r render_requirements.txt
-    startCommand: python main.py
+    startCommand: gunicorn -w 4 -b 0.0.0.0:$PORT main:app
     plan: free
     envVars:
       - key: TELEGRAM_BOT_TOKEN
@@ -13,8 +13,6 @@ services:
         fromDatabase:
           name: bot-database
           property: connectionString
-      - key: PORT
-        value: 10000 # Порт можно изменить на любой другой, если необходимо
       - key: RENDER
         value: "true" # Указывает, что бот запущен в среде Render
 
