@@ -518,28 +518,48 @@ def handle_order_command(message):
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback_query(call):
     """
-    Обработчик всех callback-запросов от inline-кнопок
+    Обработчик всех callback-запросов от inline-кнопок с улучшенной обработкой ошибок
+    и оптимизированной производительностью
     """
-    user_id = call.from_user.id
-    message_id = call.message.message_id
-    callback_data = call.data
+    try:
+        # Отвечаем на колбэк сразу, чтобы убрать "часики" у пользователя
+        try:
+            bot.answer_callback_query(call.id)
+        except Exception as e:
+            # Игнорируем ошибки при ответе на колбэк, они не критичны
+            # Эти ошибки часто возникают из-за истечения времени ожидания запроса
+            logger.debug(f"Ошибка при ответе на callback: {e}")
+            pass
+            
+        user_id = call.from_user.id
+        message_id = call.message.message_id
+        callback_data = call.data
 
-    # Получаем пользователя из БД
-    user = get_user(user_id)
+        # Получаем пользователя из кэша или БД
+        user = get_user(user_id)
 
-    if not user:
-        bot.answer_callback_query(
-            call.id,
-            "Ваша учетная запись не найдена. Пожалуйста, используйте команду /start для регистрации."
-        )
-        return
+        if not user:
+            bot.send_message(
+                user_id,
+                "Ваша учетная запись не найдена. Пожалуйста, используйте команду /start для регистрации."
+            )
+            return
 
-    # Проверяем подтверждение пользователя (кроме некоторых системных callback)
-    if not user["is_approved"] and callback_data != "main_menu" and not callback_data.startswith("approve_") and not callback_data.startswith("reject_"):
-        bot.answer_callback_query(
-            call.id,
-            "Ваша учетная запись не подтверждена администратором. Пожалуйста, дождитесь подтверждения."
-        )
+        # Проверяем подтверждение пользователя (кроме некоторых системных callback)
+        if not user["is_approved"] and callback_data != "main_menu" and not callback_data.startswith("approve_") and not callback_data.startswith("reject_"):
+            bot.send_message(
+                user_id,
+                "Ваша учетная запись не подтверждена администратором. Пожалуйста, дождитесь подтверждения."
+            )
+            return
+    except Exception as e:
+        # Логируем ошибку, но не прерываем работу бота
+        logger.error(f"Ошибка при обработке callback_query: {e}")
+        # В случае ошибки отправляем сообщение пользователю, если возможно
+        try:
+            bot.send_message(call.from_user.id, "Произошла ошибка при обработке запроса. Пожалуйста, попробуйте еще раз.")
+        except:
+            pass
         return
 
     # Обрабатываем различные типы callback-запросов
@@ -712,14 +732,28 @@ def handle_main_menu_callback(user_id, message_id):
     else:
         message_text = f"Здравствуйте, {user_name}!\n\nВыберите действие:"
 
-    # Редактируем сообщение с новой клавиатурой
-    bot.edit_message_text(
-        chat_id=user_id,
-        message_id=message_id,
-        text=message_text,
-        reply_markup=get_main_menu_keyboard(user_id),
-        parse_mode="Markdown"
-    )
+    # Добавляем функцию безопасного редактирования сообщений
+    try:
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text=message_text,
+            reply_markup=get_main_menu_keyboard(user_id),
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        # Если редактирование не удалось (message is not modified, message to edit not found, etc.)
+        logger.error(f"Ошибка при редактировании сообщения главного меню: {e}")
+        # Пробуем отправить новое сообщение вместо редактирования существующего
+        try:
+            bot.send_message(
+                chat_id=user_id,
+                text=message_text,
+                reply_markup=get_main_menu_keyboard(user_id),
+                parse_mode="Markdown"
+            )
+        except Exception as e2:
+            logger.error(f"Ошибка при отправке нового сообщения главного меню: {e2}")
 
 def handle_manage_templates_callback(user_id, message_id):
     """
