@@ -24,12 +24,14 @@ if __name__ == "__main__":
     initialize_database()
     logger.info("База данных инициализирована")
     
-    # Проверяем наличие токена
+    # Проверяем наличие и валидность токена
     token = os.environ.get('TELEGRAM_BOT_TOKEN')
     if not token:
         logger.error("ОШИБКА: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
+    elif ':' not in token:
+        logger.error(f"ОШИБКА: Невалидный формат токена. Токен должен содержать двоеточие (:). Текущая длина: {len(token)}")
     else:
-        logger.info(f"Токен Telegram бота найден, длина: {len(token)} символов")
+        logger.info(f"Токен Telegram бота найден, длина: {len(token)} символов, формат корректный")
     
     # Запускаем бота в отдельном потоке
     logger.info("Запуск бота в отдельном потоке...")

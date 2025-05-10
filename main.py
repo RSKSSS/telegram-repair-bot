@@ -50,7 +50,15 @@ def healthcheck():
             bot_info = telebot_instance.get_me()
             if bot_info:
                 bot_status = "ok"
-                bot_name = bot_info.first_name
+                # Обработка ответа, который может быть как объектом, так и словарем
+                if hasattr(bot_info, 'first_name'):
+                    bot_name = bot_info.first_name
+                elif isinstance(bot_info, dict) and 'first_name' in bot_info:
+                    bot_name = bot_info['first_name']
+                elif isinstance(bot_info, dict) and 'username' in bot_info:
+                    bot_name = bot_info['username']
+                else:
+                    bot_name = "Bot Active"
         except Exception as bot_err:
             logger.warning(f"Bot check error: {bot_err}")
             bot_status = "error"
@@ -162,10 +170,44 @@ def bot_polling():
     """Функция для запуска бота в режиме polling"""
     try:
         from shared_state import bot as telebot_instance
-        telebot_instance.polling(none_stop=True, interval=0)
+        
+        # Проверим валидность токена перед запуском
+        token = os.environ.get('TELEGRAM_BOT_TOKEN')
+        if not token or ':' not in token:
+            logger.error(f"Ошибка: Невалидный формат токена. Токен должен содержать двоеточие (:). Текущая длина: {len(token) if token else 0}")
+            print(f"Ошибка: Невалидный формат токена. Токен должен содержать двоеточие (:). Текущая длина: {len(token) if token else 0}")
+            return
+            
+        # Пробуем получить информацию о боте перед запуском polling
+        try:
+            bot_info = telebot_instance.get_me()
+            if isinstance(bot_info, dict) and 'username' in bot_info:
+                logger.info(f"Бот успешно подключен. Имя бота: @{bot_info['username']}")
+            elif hasattr(bot_info, 'username') and bot_info.username:
+                logger.info(f"Бот успешно подключен. Имя бота: @{bot_info.username}")
+            else:
+                logger.info(f"Бот подключен. Детали: {str(bot_info)}")
+        except Exception as info_err:
+            logger.warning(f"Не удалось получить информацию о боте: {info_err}")
+        
+        # Запускаем polling с обработкой ошибок
+        telebot_instance.polling(none_stop=True, interval=1)
     except Exception as e:
-        logger.error(f"Ошибка при запуске бота: {e}")
-        print(f"Ошибка при запуске бота: {e}")
+        error_message = f"Ошибка при запуске бота: {e}"
+        logger.error(error_message)
+        print(error_message)
+        
+        # Добавляем расширенную информацию об ошибке
+        if "Unauthorized" in str(e):
+            extra_info = """
+            Ошибка 401 Unauthorized означает, что токен бота недействителен.
+            Убедитесь, что:
+            1. Токен скопирован полностью и без лишних символов
+            2. Токен действительно получен от @BotFather
+            3. Токен не был отозван (можно проверить в списке ботов в @BotFather)
+            """
+            logger.error(extra_info)
+            print(extra_info)
 
 def main():
     """Запуск бота"""
