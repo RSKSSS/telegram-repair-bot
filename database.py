@@ -24,10 +24,17 @@ def is_postgres():
 
 def get_placeholder():
     """Возвращает placeholder для SQL параметров в зависимости от типа БД"""
-    return '%s' if is_postgres() else '?'
+    global current_connection_is_postgres
+    return '%s' if current_connection_is_postgres else '?'
+
+# Переменная для отслеживания типа текущего подключения
+# True - PostgreSQL, False - SQLite
+current_connection_is_postgres = False
 
 def get_connection():
     """Получение соединения с базой данных (PostgreSQL или SQLite)"""
+    global current_connection_is_postgres
+    
     try:
         # Проверяем, нужно ли использовать PostgreSQL
         if is_postgres():
@@ -35,17 +42,20 @@ def get_connection():
             logger.info("Подключение к PostgreSQL в среде Render...")
             database_url = os.environ.get('DATABASE_URL')
             conn = psycopg2.connect(database_url)
+            current_connection_is_postgres = True
             return conn
         else:
             # В локальной среде Replit используем SQLite
             logger.info("Подключение к SQLite в локальной среде...")
             conn = sqlite3.connect('service_bot.db')
+            current_connection_is_postgres = False
             return conn
     except Exception as e:
         logger.error(f"Ошибка при подключении к базе данных: {e}")
         # В случае ошибки подключения к PostgreSQL, используем SQLite
         logger.warning("Использую запасной вариант - SQLite")
         conn = sqlite3.connect('service_bot.db')
+        current_connection_is_postgres = False
         return conn
         
 def check_database_connection() -> bool:
