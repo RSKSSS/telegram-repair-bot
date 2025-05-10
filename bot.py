@@ -74,6 +74,9 @@ def handle_start_command(message):
 
         # Получаем актуальную информацию о пользователе
         user = get_user(user_id)
+        
+        # Логирование для отладки
+        logger.info(f"Данные пользователя {user_id}: {user}")
 
         if not user:
             bot.reply_to(message, "Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.")
