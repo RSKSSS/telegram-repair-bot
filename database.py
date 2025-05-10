@@ -277,9 +277,11 @@ def is_user_approved(user_id: int) -> bool:
     try:
         cursor.execute("SELECT is_approved FROM users WHERE user_id = ?", (user_id,))
         approved = cursor.fetchone()
-        return bool(approved[0]) if approved else False
+        result = bool(approved[0]) if approved else False
+        logger.info(f"Проверка подтверждения пользователя {user_id}: {result}, raw_data: {approved}")
+        return result
     except Exception as e:
-        logger.error(f"Ошибка при проверке, подтвержден ли пользователь: {e}")
+        logger.error(f"Ошибка при проверке, подтвержден ли пользователь {user_id}: {e}")
         return False
     finally:
         conn.close()
