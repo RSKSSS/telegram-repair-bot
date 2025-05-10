@@ -121,34 +121,40 @@ def main():
     logger.info("Инициализация базы данных...")
     initialize_database()
 
-    logger.info("Запуск бота сервиса ремонта компьютеров...")
+    # Проверяем, запущен ли скрипт напрямую через python, а не через gunicorn
+    is_direct_run = os.environ.get('GUNICORN_CMD_ARGS') is None
+    
+    if is_direct_run:
+        logger.info("Запуск бота сервиса ремонта компьютеров...")
 
-    # Проверяем наличие токена
-    if not os.environ.get('TELEGRAM_BOT_TOKEN'):
-        logger.error("Ошибка: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
-        return
+        # Проверяем наличие токена
+        if not os.environ.get('TELEGRAM_BOT_TOKEN'):
+            logger.error("Ошибка: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
+            return
 
-    # AI функции отключены
-    logger.info("Запуск бота без AI функций")
+        # AI функции отключены
+        logger.info("Запуск бота без AI функций")
 
-    # Запускаем бота в отдельном потоке
-    import threading
+        # Запускаем бота в отдельном потоке
+        import threading
 
-    def bot_polling():
-        try:
-            from shared_state import bot as telebot_instance
-            telebot_instance.polling(none_stop=True, interval=0)
-        except Exception as e:
-            logger.error(f"Ошибка при запуске бота: {e}")
+        def bot_polling():
+            try:
+                from shared_state import bot as telebot_instance
+                telebot_instance.polling(none_stop=True, interval=0)
+            except Exception as e:
+                logger.error(f"Ошибка при запуске бота: {e}")
 
-    bot_thread = threading.Thread(target=bot_polling)
-    bot_thread.daemon = True
-    bot_thread.start()
+        bot_thread = threading.Thread(target=bot_polling)
+        bot_thread.daemon = True
+        bot_thread.start()
 
-    logger.info("Бот слушает сообщения...")
+        logger.info("Бот слушает сообщения...")
 
-    # Запускаем Flask-приложение для веб-интерфейса
-    app.run(host='0.0.0.0', port=5051)
+        # Запускаем Flask-приложение для веб-интерфейса
+        app.run(host='0.0.0.0', port=5051)
+    else:
+        logger.info("Запущено через gunicorn, бот не запускается в этом экземпляре.")
 
 if __name__ == "__main__":
     main()
