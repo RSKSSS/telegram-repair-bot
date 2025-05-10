@@ -206,28 +206,55 @@ def initialize_database():
     )
     """)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS problem_templates (
-        template_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        description TEXT NOT NULL,
-        created_by INTEGER,
-        is_active BOOLEAN NOT NULL DEFAULT TRUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+    # Разные SQL-запросы в зависимости от типа базы данных
+    if is_postgres:
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS problem_templates (
+            template_id SERIAL PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            created_by BIGINT,
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+    else:
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS problem_templates (
+            template_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            created_by INTEGER,
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS activity_logs (
-        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        action_type TEXT NOT NULL,
-        action_description TEXT NOT NULL,
-        related_order_id INTEGER,
-        related_user_id INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+    # Разные SQL-запросы в зависимости от типа базы данных
+    if is_postgres:
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS activity_logs (
+            log_id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            action_type TEXT NOT NULL,
+            action_description TEXT NOT NULL,
+            related_order_id INTEGER,
+            related_user_id BIGINT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+    else:
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS activity_logs (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            action_type TEXT NOT NULL,
+            action_description TEXT NOT NULL,
+            related_order_id INTEGER,
+            related_user_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
 
 
     conn.commit()
