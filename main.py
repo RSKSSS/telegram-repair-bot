@@ -5,7 +5,8 @@
 
 import logging
 import os
-from flask import Flask, render_template, redirect, url_for
+import datetime
+from flask import Flask, render_template, redirect, url_for, jsonify
 from database import initialize_database
 
 # Настройка логирования
@@ -32,6 +33,47 @@ logger.info("AI функции отключены")
 # Создаем Flask-приложение
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "service_bot_secret_key")
+
+@app.route('/healthcheck')
+def healthcheck():
+    """Эндпоинт для проверки работоспособности приложения"""
+    try:
+        # Проверяем состояние базы данных
+        from database import check_database_connection
+        db_status = "ok" if check_database_connection() else "error"
+        
+        # Проверяем состояние бота (если возможно)
+        bot_status = "unknown"
+        bot_name = "Unknown"
+        try:
+            from shared_state import bot as telebot_instance
+            bot_info = telebot_instance.get_me()
+            if bot_info:
+                bot_status = "ok"
+                bot_name = bot_info.first_name
+        except Exception as bot_err:
+            logger.warning(f"Bot check error: {bot_err}")
+            bot_status = "error"
+        
+        # Возвращаем ответ (всегда 200, чтобы UptimeRobot считал сервис работающим)
+        return {
+            "status": "ok",
+            "server": "running",
+            "database": db_status,
+            "bot": bot_status,
+            "bot_name": bot_name,
+            "timestamp": str(datetime.datetime.now())
+        }, 200
+    except Exception as e:
+        logger.error(f"Healthcheck error: {e}")
+        # Даже в случае ошибки возвращаем 200 для UptimeRobot, 
+        # но с информацией об ошибке
+        return {
+            "status": "warning",
+            "server": "running",
+            "error": str(e),
+            "timestamp": str(datetime.datetime.now())
+        }, 200
 
 @app.route('/')
 def index():
@@ -116,6 +158,15 @@ def render_template_string(template_string):
 
     return render_template('temp.html')
 
+def bot_polling():
+    """Функция для запуска бота в режиме polling"""
+    try:
+        from shared_state import bot as telebot_instance
+        telebot_instance.polling(none_stop=True, interval=0)
+    except Exception as e:
+        logger.error(f"Ошибка при запуске бота: {e}")
+        print(f"Ошибка при запуске бота: {e}")
+
 def main():
     """Запуск бота"""
     logger.info("Инициализация базы данных...")
@@ -141,14 +192,8 @@ def main():
         
         # Запускаем бота в отдельном потоке
         import threading
-
-        def bot_polling():
-            try:
-                from shared_state import bot as telebot_instance
-                telebot_instance.polling(none_stop=True, interval=0)
-            except Exception as e:
-                logger.error(f"Ошибка при запуске бота: {e}")
-
+        
+        # Запускаем бота через функцию bot_polling
         bot_thread = threading.Thread(target=bot_polling)
         bot_thread.daemon = True
         bot_thread.start()

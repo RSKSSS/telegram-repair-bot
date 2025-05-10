@@ -4,7 +4,7 @@ services:
     name: telegram-bot-service
     env: python
     buildCommand: pip install -r render_requirements.txt
-    startCommand: gunicorn -w 4 -b 0.0.0.0:$PORT main:app
+    startCommand: python render_app.py
     plan: free
     envVars:
       - key: TELEGRAM_BOT_TOKEN
