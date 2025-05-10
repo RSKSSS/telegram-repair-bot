@@ -1,0 +1,103 @@
+==> Running 'python render_app.py'
+2025-05-10 20:17:07,947 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:07,947 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+INFO:service.database:Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:07,979 [INFO] service.database: База данных инициализирована
+2025-05-10 20:17:07,979 [INFO] service.database: База данных инициализирована
+INFO:service.database:База данных инициализирована
+2025-05-10 20:17:09,237 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 20:17:09,237 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+INFO:service.shared_state:Загружен токен из переменной окружения длиной: 46 символов
+INFO:__main__:Инициализация базы данных...
+INFO:main:Инициализация базы данных через main.py...
+2025-05-10 20:17:09,239 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:09,239 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+INFO:service.database:Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:09,256 [INFO] service.database: База данных инициализирована
+2025-05-10 20:17:09,256 [INFO] service.database: База данных инициализирована
+INFO:service.database:База данных инициализирована
+INFO:__main__:База данных инициализирована
+INFO:__main__:Токен Telegram бота найден, длина: 46 символов, формат корректный
+INFO:__main__:Запуск бота в отдельном потоке...
+INFO:__main__:Запуск диагностики бота перед запуском...
+2025-05-10 20:17:09,257 [INFO] service.bot_diagnostics: Запуск полной диагностики бота...
+INFO:__main__:Поток бота запущен
+INFO:__main__:Запуск веб-сервера на порту 5000...
+2025-05-10 20:17:09,257 [INFO] service.bot_diagnostics: Запуск полной диагностики бота...
+INFO:service.bot_diagnostics:Запуск полной диагностики бота...
+Загружен токен из переменной окружения длиной: 46 символов
+ * Serving Flask app 'app'
+ * Debug mode: off
+2025-05-10 20:17:09,258 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:09,258 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+INFO:service.database:Подключение к PostgreSQL в среде Render...
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.223.204.173:5000
+INFO:werkzeug:Press CTRL+C to quit
+2025-05-10 20:17:09,336 [INFO] service.bot_diagnostics: ✅ Подключение к базе данных: успешно
+2025-05-10 20:17:09,336 [INFO] service.bot_diagnostics: ✅ Подключение к базе данных: успешно
+INFO:service.bot_diagnostics:✅ Подключение к базе данных: успешно
+2025-05-10 20:17:09,336 [INFO] service.bot_diagnostics: ✅ Токен бота валиден (длина: 46)
+2025-05-10 20:17:09,336 [INFO] service.bot_diagnostics: ✅ Токен бота валиден (длина: 46)
+INFO:service.bot_diagnostics:✅ Токен бота валиден (длина: 46)
+2025-05-10 20:17:09,336 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:09,336 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+INFO:service.database:Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:09,420 [INFO] service.bot_diagnostics: ✅ Количество пользователей в системе: 0
+2025-05-10 20:17:09,420 [INFO] service.bot_diagnostics: ✅ Количество пользователей в системе: 0
+INFO:service.bot_diagnostics:✅ Количество пользователей в системе: 0
+2025-05-10 20:17:09,420 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:09,420 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+INFO:service.database:Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:09,524 [INFO] service.bot_diagnostics: ✅ Количество шаблонов проблем: 0
+2025-05-10 20:17:09,524 [INFO] service.bot_diagnostics: ✅ Количество шаблонов проблем: 0
+INFO:service.bot_diagnostics:✅ Количество шаблонов проблем: 0
+2025-05-10 20:17:09,524 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:09,524 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+INFO:service.database:Подключение к PostgreSQL в среде Render...
+     ==> Your service is live 🎉
+2025-05-10 20:17:09,709 [INFO] service.bot_diagnostics: ✅ Количество мастеров в системе: 0
+2025-05-10 20:17:09,709 [INFO] service.bot_diagnostics: ✅ Количество мастеров в системе: 0
+INFO:service.bot_diagnostics:✅ Количество мастеров в системе: 0
+2025-05-10 20:17:09,710 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:09,710 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+INFO:service.database:Подключение к PostgreSQL в среде Render...
+2025-05-10 20:17:09,811 [INFO] service.bot_diagnostics: ✅ Количество заказов в системе: 0
+2025-05-10 20:17:09,811 [INFO] service.bot_diagnostics: ✅ Количество заказов в системе: 0
+INFO:service.bot_diagnostics:✅ Количество заказов в системе: 0
+2025-05-10 20:17:09,811 [INFO] service.bot_diagnostics: ✅ Диагностика завершена успешно! Ошибок не обнаружено.
+2025-05-10 20:17:09,811 [INFO] service.bot_diagnostics: ✅ Диагностика завершена успешно! Ошибок не обнаружено.
+INFO:service.bot_diagnostics:✅ Диагностика завершена успешно! Ошибок не обнаружено.
+INFO:__main__:✅ Диагностика успешна! Запуск бота...
+2025-05-10 20:17:09,818 [ERROR] service.bot_diagnostics: ❌ Критическая ошибка при запуске бота: invalid syntax (bot_fixed.py, line 519)
+2025-05-10 20:17:09,818 [ERROR] service.bot_diagnostics: ❌ Критическая ошибка при запуске бота: invalid syntax (bot_fixed.py, line 519)
+ERROR:service.bot_diagnostics:❌ Критическая ошибка при запуске бота: invalid syntax (bot_fixed.py, line 519)
+2025-05-10 20:17:09,819 [ERROR] service.bot_diagnostics: Traceback (most recent call last):
+  File "/opt/render/project/src/bot_diagnostics.py", line 120, in bot_polling
+    from start_bot import start_bot
+  File "/opt/render/project/src/start_bot.py", line 21, in <module>
+    from bot_fixed import (
+  File "/opt/render/project/src/bot_fixed.py", line 519
+    elif callback_data["startswit"]h("approve_"):
+                                   ^
+SyntaxError: invalid syntax
+2025-05-10 20:17:09,819 [ERROR] service.bot_diagnostics: Traceback (most recent call last):
+  File "/opt/render/project/src/bot_diagnostics.py", line 120, in bot_polling
+    from start_bot import start_bot
+  File "/opt/render/project/src/start_bot.py", line 21, in <module>
+    from bot_fixed import (
+  File "/opt/render/project/src/bot_fixed.py", line 519
+    elif callback_data["startswit"]h("approve_"):
+                                   ^
+SyntaxError: invalid syntax
+ERROR:service.bot_diagnostics:Traceback (most recent call last):
+  File "/opt/render/project/src/bot_diagnostics.py", line 120, in bot_polling
+    from start_bot import start_bot
+  File "/opt/render/project/src/start_bot.py", line 21, in <module>
+    from bot_fixed import (
+  File "/opt/render/project/src/bot_fixed.py", line 519
+    elif callback_data["startswit"]h("approve_"):
+                                   ^
+SyntaxError: invalid syntax

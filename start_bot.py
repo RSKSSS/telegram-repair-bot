@@ -18,7 +18,7 @@ logger = get_component_logger("bot_starter")
 logger.setLevel(logging.INFO)
 
 # Импортируем все нужные обработчики
-from bot_fixed import (
+from bot_fixed2 import (
     handle_start_command, handle_help_command, handle_new_order_command,
     handle_my_orders_command, handle_my_assigned_orders_command,
     handle_all_orders_command, handle_manage_users_command,

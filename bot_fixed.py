@@ -516,11 +516,11 @@ def handle_callback_query(call):
         handle_list_users_callback(user_id, message_id)
     elif callback_data == "approval_requests":
         handle_approval_requests_callback(user_id, message_id)
-    elif callback_data["startswit"]h("approve_"):
-        user_to_approve = int(callback_data["spli"]t("_")[1])
+    elif callback_data.startswith("approve_"):
+        user_to_approve = int(callback_data.split("_")[1])
         handle_approve_user_callback(user_id, message_id, user_to_approve)
-    elif callback_data["startswit"]h("reject_"):
-        user_to_reject = int(callback_data["spli"]t("_")[1])
+    elif callback_data.startswith("reject_"):
+        user_to_reject = int(callback_data.split("_")[1])
         handle_reject_user_callback(user_id, message_id, user_to_reject)
     elif callback_data == "add_admin":
         handle_add_admin_callback(user_id, message_id)
@@ -528,14 +528,14 @@ def handle_callback_query(call):
         handle_add_dispatcher_callback(user_id, message_id)
     elif callback_data == "add_technician":
         handle_add_technician_callback(user_id, message_id)
-    elif callback_data["startswit"]h("set_admin_"):
-        user_to_set = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("set_admin_"):
+        user_to_set = int(callback_data.split("_")[2])
         handle_set_role_callback(user_id, message_id, user_to_set, "admin")
-    elif callback_data["startswit"]h("set_dispatcher_"):
-        user_to_set = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("set_dispatcher_"):
+        user_to_set = int(callback_data.split("_")[2])
         handle_set_role_callback(user_id, message_id, user_to_set, "dispatcher")
-    elif callback_data["startswit"]h("set_technician_"):
-        user_to_set = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("set_technician_"):
+        user_to_set = int(callback_data.split("_")[2])
         handle_set_role_callback(user_id, message_id, user_to_set, "technician")
     elif callback_data == "manage_templates":
         handle_manage_templates_callback(user_id, message_id)
