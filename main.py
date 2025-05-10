@@ -229,17 +229,18 @@ def main():
     
     # Проверяем, запущен ли скрипт напрямую через python или в среде Render
     # В среде Render или при запуске через gunicorn, GUNICORN_CMD_ARGS будет определен
-    is_direct_run = os.environ.get('GUNICORN_CMD_ARGS') is None and not os.environ.get('RENDER')
+    is_direct_run = os.environ.get('GUNICORN_CMD_ARGS') is None
+    is_render = os.environ.get('RENDER') == 'true'
     
     # Проверяем наличие токена
     if not os.environ.get('TELEGRAM_BOT_TOKEN'):
         logger.error("Ошибка: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
-        if is_direct_run:  # Только выходим, если запущено напрямую
+        if is_direct_run and not is_render:  # Только выходим, если запущено напрямую и не в Render
             return
     
-    # Запускаем бота только если это не процесс gunicorn (запущенный через workflow "Start application")
-    # и нет переменной окружения SKIP_BOT_START, которую мы будем устанавливать в других процессах
-    if (is_direct_run or os.environ.get('RENDER')) and not os.environ.get('SKIP_BOT_START'):
+    # Запускаем бота только если нет переменной окружения SKIP_BOT_START,
+    # которую мы будем устанавливать в других процессах
+    if not os.environ.get('SKIP_BOT_START'):
         logger.info("Запуск бота сервиса ремонта компьютеров...")
         logger.info("Запуск бота без AI функций")
         
@@ -256,7 +257,7 @@ def main():
     if is_direct_run:
         # Запускаем Flask-приложение для веб-интерфейса в режиме разработки
         app.run(host='0.0.0.0', port=port)
-    elif os.environ.get('RENDER'):
+    elif is_render:
         # В режиме Render явно запускаем приложение на указанном порту
         logger.info(f"Запуск в режиме Render на порту {port}")
         app.run(host='0.0.0.0', port=port)
@@ -264,8 +265,8 @@ def main():
         # В режиме gunicorn не запускаем app.run(), 
         # т.к. gunicorn сам управляет приложением
         logger.info(f"Запущено через gunicorn на порту {port}")
-        # Обратите внимание, что в режиме Render бот запускается, 
-        # но Flask-приложение управляется gunicorn
+        # Обратите внимание, что бот должен запускаться, 
+        # а Flask-приложение управляется gunicorn
 
 if __name__ == "__main__":
     main()

@@ -14,7 +14,11 @@ logger = get_component_logger('database')
 def is_postgres():
     """Проверяет, используется ли PostgreSQL"""
     # Проверяем специальную переменную окружения RENDER, которая есть только в Render
+    # В Render она имеет значение 'true'
     if os.environ.get('RENDER') == 'true':
+        return True
+    # Также проверяем наличие DATABASE_URL как дополнительный признак PostgreSQL
+    if os.environ.get('DATABASE_URL') and 'postgres' in os.environ.get('DATABASE_URL', ''):
         return True
     return False  # В локальной среде Replit используем SQLite
 
@@ -25,9 +29,9 @@ def get_placeholder():
 def get_connection():
     """Получение соединения с базой данных (PostgreSQL или SQLite)"""
     try:
-        # Проверяем, находимся ли мы в среде Render
-        if os.environ.get('RENDER') == 'true':
-            # В Render используем PostgreSQL с переменными окружения
+        # Проверяем, нужно ли использовать PostgreSQL
+        if is_postgres():
+            # В Render или если указана переменная DATABASE_URL используем PostgreSQL
             logger.info("Подключение к PostgreSQL в среде Render...")
             database_url = os.environ.get('DATABASE_URL')
             conn = psycopg2.connect(database_url)
@@ -77,10 +81,10 @@ def initialize_database():
     """Инициализация базы данных"""
     conn = get_connection()
     cursor = conn.cursor()
-    is_postgres = os.environ.get('DATABASE_URL') is not None
+    use_postgres = is_postgres()
 
     # Разный синтаксис для PostgreSQL и SQLite
-    if is_postgres:
+    if use_postgres:
         # PostgreSQL синтаксис
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
