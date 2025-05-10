@@ -6,6 +6,13 @@
 import logging
 import os
 import datetime
+
+# Импортируем файл с настройками переменных окружения (если он существует)
+try:
+    import env
+    print("Импортированы настройки окружения из env.py")
+except ImportError:
+    pass
 from flask import Flask, render_template, redirect, url_for, jsonify
 from database import initialize_database
 
@@ -230,8 +237,9 @@ def main():
         if is_direct_run:  # Только выходим, если запущено напрямую
             return
     
-    # Запускаем бота в отдельном потоке (и при запуске через gunicorn в Render)
-    if is_direct_run or os.environ.get('RENDER'):
+    # Запускаем бота только если это не процесс gunicorn (запущенный через workflow "Start application")
+    # и нет переменной окружения SKIP_BOT_START, которую мы будем устанавливать в других процессах
+    if (is_direct_run or os.environ.get('RENDER')) and not os.environ.get('SKIP_BOT_START'):
         logger.info("Запуск бота сервиса ремонта компьютеров...")
         logger.info("Запуск бота без AI функций")
         

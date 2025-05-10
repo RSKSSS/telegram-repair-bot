@@ -25,7 +25,7 @@ from utils import (
     get_technician_order_keyboard, get_back_to_main_menu_keyboard, get_approval_requests_keyboard,
     get_user_management_keyboard, is_admin, is_dispatcher, is_technician,
     send_order_notification_to_admins, validate_phone, format_orders_list, get_technician_list_keyboard,
-    get_role_name, get_user_list_for_deletion, get_order_list_for_deletion
+    get_role_name, get_user_list_for_deletion, get_order_list_for_deletion, get_status_text
 )
 from logger import get_component_logger, DEBUG, INFO, WARNING, ERROR, CRITICAL, log_function_call
 
@@ -391,36 +391,54 @@ def handle_all_orders_command(message):
     """
     Обработчик команды /all_orders (только для администраторов)
     """
-    user_id = message.from_user.id
+    try:
+        user_id = message.from_user.id
+        logger.info(f"Получена команда /all_orders от пользователя {user_id}")
 
-    # Получаем пользователя из БД
-    user = get_user(user_id)
+        # Получаем пользователя из БД
+        user = get_user(user_id)
+        logger.info(f"Данные пользователя: {user}")
 
-    if not user or not user["is_approved"]:
-        bot.reply_to(
-            message,
-            "Ваша учетная запись не подтверждена администратором. "
-            "Пожалуйста, дождитесь подтверждения."
-        )
-        return
+        if not user or not user.get("is_approved", False):
+            logger.warning(f"Пользователь {user_id} не подтвержден")
+            bot.reply_to(
+                message,
+                "Ваша учетная запись не подтверждена администратором. "
+                "Пожалуйста, дождитесь подтверждения."
+            )
+            return
 
-    # Проверяем, является ли пользователь администратором или диспетчером
-    if not (is_admin(user) or is_dispatcher(user)):
-        bot.reply_to(
-            message,
-            "Эта команда доступна только для администраторов и диспетчеров."
-        )
-        return
+        # Проверяем, является ли пользователь администратором или диспетчером
+        if not (is_admin(user) or is_dispatcher(user)):
+            logger.warning(f"Пользователь {user_id} не имеет прав администратора или диспетчера")
+            bot.reply_to(
+                message,
+                "Эта команда доступна только для администраторов и диспетчеров."
+            )
+            return
 
-    # Получаем все заказы
-    orders = get_all_orders()
+        # Получаем все заказы
+        logger.info("Получение всех заказов из БД")
+        orders = get_all_orders()
+        logger.info(f"Получено заказов: {len(orders)}")
 
-    # Форматируем список заказов и получаем клавиатуру
-    role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
-    message_text, keyboard = format_orders_list(orders, user_role=role)
+        # Форматируем список заказов и получаем клавиатуру
+        role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
+        logger.info(f"Роль пользователя: {role}")
+        message_text, keyboard = format_orders_list(orders, user_role=role)
+        
+        # Логируем для отладки
+        logger.info(f"Сформировано сообщение длиной {len(message_text)} символов")
+        logger.info(f"Клавиатура: {keyboard}")
 
-    # Отправляем сообщение с заказами
-    bot.send_message(user_id, message_text, reply_markup=keyboard, parse_mode="Markdown")
+        # Отправляем сообщение с заказами
+        bot.send_message(user_id, message_text, reply_markup=keyboard, parse_mode="Markdown")
+        logger.info(f"Сообщение с заказами отправлено пользователю {user_id}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке команды /all_orders: {e}")
+        bot.reply_to(message, f"Произошла ошибка при обработке команды: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
 
 # Обработчик команды /manage_users (только для администраторов)
 @bot.message_handler(commands=['manage_users'])
@@ -1267,8 +1285,8 @@ def handle_list_users_callback(user_id, message_id):
         message_text += "\n"
 
     # Добавляем кнопку возврата к управлению пользователями
-    keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    keyboard.add(telebot.types.InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
 
     # Редактируем сообщение со списком пользователей
     try:
@@ -1760,7 +1778,7 @@ def handle_order_detail_callback(user_id, message_id, order_id):
 
     # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
     role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
-    message_text = format_orders_list([order])(user_role=role)
+    message_text, _ = format_orders_list([order], user_role=role)
 
     # Определяем тип клавиатуры в зависимости от роли пользователя
     keyboard = None
@@ -1872,7 +1890,7 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
 
         # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
         role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
-        message_text = updated_format_orders_list([order])(user_role=role) if updated_order else "❌ Ошибка при получении информации о заказе."
+        message_text, _ = format_orders_list([updated_order], user_role=role) if updated_order else ("❌ Ошибка при получении информации о заказе.", None)
 
         # Определяем тип клавиатуры в зависимости от роли пользователя
         keyboard = None
@@ -2050,7 +2068,7 @@ def handle_assign_order_callback(user_id, message_id, order_id, technician_id):
 
         # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
         role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
-        message_text = updated_format_orders_list([order])(user_role=role) if updated_order else "❌ Ошибка при получении информации о заказе."
+        message_text, _ = format_orders_list([updated_order], user_role=role) if updated_order else ("❌ Ошибка при получении информации о заказе.", None)
 
         # Получаем клавиатуру для управления заказом с учетом роли пользователя
         keyboard = get_order_management_keyboard(order_id, user_role=role)
@@ -2266,52 +2284,71 @@ def handle_delete_order_callback(user_id, message_id, order_id):
     """
     Обработчик callback-запроса delete_order_{order_id}
     """
-    user = get_user(user_id)
+    try:
+        logger.info(f"Вызван callback удаления заказа: user_id={user_id}, message_id={message_id}, order_id={order_id}")
+        user = get_user(user_id)
+        logger.info(f"Данные пользователя: {user}")
 
-    if not user:
-        return
+        if not user:
+            logger.warning(f"Пользователь {user_id} не найден")
+            return
 
-    # Проверяем, является ли пользователь администратором
-    if not is_admin(user):
-        bot.send_message(
-            user_id,
-            "❌ Эта функция доступна только для администраторов."
+        # Проверяем, является ли пользователь администратором
+        if not is_admin(user):
+            logger.warning(f"Пользователь {user_id} не является администратором")
+            bot.send_message(
+                user_id,
+                "❌ Эта функция доступна только для администраторов."
+            )
+            return
+
+        # Получаем информацию о заказе
+        order = get_order(order_id)
+        logger.info(f"Данные заказа: {order}")
+
+        if not order:
+            logger.warning(f"Заказ с ID {order_id} не найден")
+            safe_edit_message_text(
+                chat_id=user_id,
+                message_id=message_id,
+                text="❌ Заказ с указанным номером не найден.",
+                reply_markup=get_back_to_main_menu_keyboard()
+            )
+            return
+
+        # Создаем клавиатуру для подтверждения удаления
+        keyboard = InlineKeyboardMarkup(row_width=2)
+        keyboard.add(
+            InlineKeyboardButton("✅ Да, удалить", callback_data=f"confirm_delete_order_{order_id}"),
+            InlineKeyboardButton("❌ Нет, отмена", callback_data="manage_orders")
         )
-        return
+        logger.info(f"Создана клавиатура подтверждения удаления: {keyboard}")
 
-    # Получаем информацию о заказе
-    order = get_order(order_id)
-
-    if not order:
-        bot.edit_message_text(
+        # Отправляем сообщение с запросом подтверждения
+        text = (f"⚠️ *Подтверждение удаления заказа*\n\n"
+                f"Вы действительно хотите удалить заказ:\n"
+                f"*Номер:* {order.get('order_id', '')}\n"
+                f"*Клиент:* {order.get('client_name', '')}\n"
+                f"*Телефон:* {order.get('client_phone', '')}\n"
+                f"*Статус:* {get_status_text(order.get('status', ''))}\n\n"
+                f"⚠️ Все связанные с этим заказом данные (назначения мастеров, комментарии) будут также удалены!")
+        
+        result = safe_edit_message_text(
             chat_id=user_id,
             message_id=message_id,
-            text="❌ Заказ с указанным номером не найден.",
-            reply_markup=get_back_to_main_menu_keyboard()
+            text=text,
+            reply_markup=keyboard,
+            parse_mode="Markdown"
         )
-        return
-
-    # Создаем клавиатуру для подтверждения удаления
-    keyboard = InlineKeyboardMarkup(row_width=2)
-    keyboard.add(
-        InlineKeyboardButton("✅ Да, удалить", callback_data=f"confirm_delete_order_{order_id}"),
-        InlineKeyboardButton("❌ Нет, отмена", callback_data="manage_orders")
-    )
-
-    # Отправляем сообщение с запросом подтверждения
-    bot.edit_message_text(
-        chat_id=user_id,
-        message_id=message_id,
-        text=f"⚠️ *Подтверждение удаления заказа*\n\n"
-             f"Вы действительно хотите удалить заказ:\n"
-             f"*Номер:* {order.get('order_id', '')}\n"
-             f"*Клиент:* {order.get('client_name', '')}\n"
-             f"*Телефон:* {order.get('client_phone', '')}\n"
-             f"*Статус:* {get_status_text(order.get('status', ''))}\n\n"
-             f"⚠️ Все связанные с этим заказом данные (назначения мастеров, комментарии) будут также удалены!",
-        reply_markup=keyboard,
-        parse_mode="Markdown"
-    )
+        logger.info(f"Сообщение о подтверждении удаления отправлено: {result}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке колбэка удаления заказа: {e}")
+        try:
+            bot.send_message(user_id, f"Произошла ошибка при обработке команды: {e}")
+        except:
+            pass
+        import traceback
+        logger.error(traceback.format_exc())
 
 def handle_confirm_delete_user_callback(user_id, message_id, user_to_delete):
     """
@@ -2607,7 +2644,7 @@ def handle_datetime_input(user_id, text):
                         user_id,
                         f"✅ *Заказ успешно создан*\n\n"
                         f"Номер заказа: *#{order_id}*\n\n"
-                        f"{format_orders_list([order])(user_role='dispatcher')}",
+                        f"{format_orders_list([order], user_role='dispatcher')[0]}",
                         reply_markup=get_main_menu_keyboard(user_id),
                         parse_mode="Markdown"
                     )
@@ -2805,7 +2842,7 @@ def handle_cost_input(user_id, text):
                 bot.send_message(
                     user_id,
                     f"✅ Стоимость услуг для заказа #{order_id} успешно обновлена.\n\n"
-                    f"{format_orders_list([order])(user_role='technician')}",
+                    f"{format_orders_list([order], user_role='technician')[0]}",
                     reply_markup=get_technician_order_keyboard(order_id),
                     parse_mode="Markdown"
                 )
@@ -2910,7 +2947,7 @@ def handle_description_input(user_id, text):
                 bot.send_message(
                     user_id,
                     f"✅ Описание выполненных работ для заказа #{order_id} успешно обновлено.\n\n"
-                    f"{format_orders_list([order])(user_role='technician')}",
+                    f"{format_orders_list([order], user_role='technician')[0]}",
                     reply_markup=get_technician_order_keyboard(order_id),
                     parse_mode="Markdown"
                 )

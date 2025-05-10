@@ -8,6 +8,25 @@ from typing import List, Dict, Tuple, Optional
 from config import ROLES, ORDER_STATUSES
 from database import get_user_role, get_all_users, get_technicians, get_unapproved_users
 
+def get_status_text(status_code: str) -> str:
+    """
+    Возвращает текстовое представление статуса заказа
+    
+    Args:
+        status_code: Код статуса заказа
+        
+    Returns:
+        str: Текстовое представление статуса
+    """
+    status_mapping = {
+        'new': '🆕 Новый',
+        'assigned': '📋 Назначен',
+        'in_progress': '🔧 В работе',
+        'completed': '✅ Завершен',
+        'cancelled': '❌ Отменен'
+    }
+    return status_mapping.get(status_code, f'Неизвестный ({status_code})')
+
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -515,21 +534,27 @@ def get_user_list_for_deletion() -> Tuple[str, InlineKeyboardMarkup]:
     technicians = []
     
     for user in users:
-        if user.is_admin():
+        if is_admin(user):
             admins.append(user)
-        elif user.is_dispatcher():
+        elif is_dispatcher(user):
             dispatchers.append(user)
-        elif user.is_technician():
+        elif is_technician(user):
             technicians.append(user)
     
-    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard = telebot.types.InlineKeyboardMarkup(row_width=1)
     
     for user in admins + dispatchers + technicians:
-        username_info = f" (@{user.username})" if user.username else ""
-        name = f"{user.get_full_name()}{username_info} - {get_role_name(user.role)}"
-        keyboard.add(InlineKeyboardButton(name, callback_data=f"delete_user_{user.user_id}"))
+        username = user.get('username', '')
+        username_info = f" (@{username})" if username else ""
+        first_name = user.get('first_name', '')
+        last_name = user.get('last_name', '')
+        full_name = f"{first_name} {last_name}".strip()
+        role = user.get('role', '')
+        user_id = user.get('user_id', '')
+        name = f"{full_name}{username_info} - {get_role_name(role)}"
+        keyboard.add(telebot.types.InlineKeyboardButton(name, callback_data=f"delete_user_{user_id}"))
     
-    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
+    keyboard.add(telebot.types.InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
     
     return message, keyboard
     
@@ -542,35 +567,36 @@ def get_order_list_for_deletion() -> Tuple[str, InlineKeyboardMarkup]:
     
     if not orders:
         message = "❌ *Удаление заказов*\n\nНет заказов для удаления."
-        keyboard = InlineKeyboardMarkup()
-        keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_orders"))
+        keyboard = telebot.types.InlineKeyboardMarkup()
+        keyboard.add(telebot.types.InlineKeyboardButton("◀️ Назад", callback_data="manage_orders"))
         return message, keyboard
     
     message = "❌ *Выберите заказ для удаления*\n\n"
     message += "⚠️ **Внимание!** При удалении заказа также будут удалены все его назначения мастерам.\n\n"
     
-    keyboard = InlineKeyboardMarkup(row_width=1)
+    keyboard = telebot.types.InlineKeyboardMarkup(row_width=1)
     
-    # Сортируем заказы по статусам и дате создания (от новых к старым)
-    for order in sorted(orders, key=lambda x: (x.status != 'new', x.status != 'assigned', 
-                                              x.status != 'in_progress', x.status != 'completed', 
-                                              x.status != 'cancelled', -int(x.order_id))):
+    # Отображаем список заказов для возможности удаления
+    for order in orders:
         status_emoji = "🔄"
-        if order.status == "new":
+        status = order.get('status', '')
+        if status == "new":
             status_emoji = "🆕"
-        elif order.status == "assigned":
+        elif status == "assigned":
             status_emoji = "📌"
-        elif order.status == "in_progress":
+        elif status == "in_progress":
             status_emoji = "🔧"
-        elif order.status == "completed":
+        elif status == "completed":
             status_emoji = "✅"
-        elif order.status == "cancelled":
+        elif status == "cancelled":
             status_emoji = "❌"
             
-        button_text = f"{status_emoji} Заказ #{order.order_id} - {order.client_name}"
-        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"delete_order_{order.order_id}"))
+        order_id = order.get('order_id', '')
+        client_name = order.get('client_name', '')
+        button_text = f"{status_emoji} Заказ #{order_id} - {client_name}"
+        keyboard.add(telebot.types.InlineKeyboardButton(button_text, callback_data=f"delete_order_{order_id}"))
     
-    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_orders"))
+    keyboard.add(telebot.types.InlineKeyboardButton("◀️ Назад", callback_data="manage_orders"))
     
     return message, keyboard
 

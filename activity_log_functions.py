@@ -13,15 +13,26 @@ def add_activity_log(user_id, action_type, action_description, related_order_id=
     Returns:
         log_id: ID записи в логе или None в случае ошибки
     """
+    from database import is_postgres, get_placeholder
+    
     cursor = conn.cursor()
+    
+    # Получаем placeholder в зависимости от типа БД
+    placeholder = get_placeholder()
     
     try:
         cursor.execute(
-            "INSERT INTO activity_logs (user_id, action_type, action_description, related_order_id, related_user_id) VALUES (?, ?, ?, ?, ?)",
+            f"INSERT INTO activity_logs (user_id, action_type, action_description, related_order_id, related_user_id) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})",
             (user_id, action_type, action_description, related_order_id, related_user_id)
         )
-        log_id = cursor.lastrowid
-        log_id = cursor.fetchone()[0]
+        
+        # Для PostgreSQL и SQLite получение ID последней вставленной записи отличается
+        if is_postgres():
+            cursor.execute("SELECT lastval()")
+            log_id = cursor.fetchone()[0]
+        else:
+            log_id = cursor.lastrowid
+            
         return log_id
     except Exception as e:
         logger.error(f"Ошибка при добавлении записи в лог: {e}")
@@ -45,7 +56,12 @@ def get_activity_logs(limit=50, offset=0, user_id=None, action_type=None, relate
     Returns:
         logs: Список логов активности
     """
+    from database import is_postgres, get_placeholder
+    
     cursor = conn.cursor()
+    
+    # Получаем placeholder в зависимости от типа БД
+    placeholder = get_placeholder()
     
     try:
         # Базовый запрос
@@ -65,26 +81,26 @@ def get_activity_logs(limit=50, offset=0, user_id=None, action_type=None, relate
         params = []
         
         if user_id is not None:
-            conditions.append("al.user_id = %s")
+            conditions.append(f"al.user_id = {placeholder}")
             params.append(user_id)
         
         if action_type is not None:
-            conditions.append("al.action_type = %s")
+            conditions.append(f"al.action_type = {placeholder}")
             params.append(action_type)
         
         if related_order_id is not None:
-            conditions.append("al.related_order_id = %s")
+            conditions.append(f"al.related_order_id = {placeholder}")
             params.append(related_order_id)
         
         if related_user_id is not None:
-            conditions.append("al.related_user_id = %s")
+            conditions.append(f"al.related_user_id = {placeholder}")
             params.append(related_user_id)
         
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
         
         # Добавляем сортировку и лимит
-        query += " ORDER BY al.created_at DESC LIMIT %s OFFSET %s"
+        query += f" ORDER BY al.created_at DESC LIMIT {placeholder} OFFSET {placeholder}"
         params.extend([limit, offset])
         
         # Выполняем запрос

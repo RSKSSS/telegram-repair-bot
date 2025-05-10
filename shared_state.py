@@ -11,12 +11,16 @@ from logger import get_component_logger, log_function_call
 logger = get_component_logger('shared_state')
 
 # Создаем экземпляр бота
+# Пробуем загрузить токен из переменной окружения
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-# Проверка на наличие токена, чтобы избежать ошибок
-if TOKEN is None:
-    logger.error("Ошибка: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
-    TOKEN = "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ"  # Временный токен для инициализации
-    logger.warning("Используется временный недействительный токен. Бот не будет работать без правильного токена.")
+# Если токен не найден в переменных окружения, используем указанный токен
+if TOKEN is None or ':' not in TOKEN:
+    TOKEN = "8158789441:AAGlPsdPmgTKXtugoa3qlVwb4ee2vW3mL9g"  # Фиксированный токен
+    logger.info(f"Загружен фиксированный токен длиной: {len(TOKEN)} символов")
+    print(f"Загружен фиксированный токен длиной: {len(TOKEN)} символов")
+else:
+    logger.info(f"Загружен токен из переменной окружения длиной: {len(TOKEN)} символов")
+    print(f"Загружен токен из переменной окружения длиной: {len(TOKEN)} символов")
     
 bot = telebot.TeleBot(TOKEN)
 
@@ -32,6 +36,7 @@ def set_user_state(user_id: int, state: str, order_id: Optional[int] = None) -> 
     """
     from database import set_user_state as db_set_user_state
     logger.debug(f"Установка состояния для пользователя {user_id}: {state}, order_id={order_id}")
+    # Передаём order_id как есть, в database.py уже предусмотрен параметр по умолчанию None
     db_set_user_state(user_id, state, order_id)
 
 @log_function_call(logger)
