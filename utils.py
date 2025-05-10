@@ -387,7 +387,10 @@ def send_order_notification_to_admins(bot, order_id: int) -> None:
     if not order:
         return
     
-    message = f"🔔 Новый заказ #{order.order_id}\n\n{order.format_for_display(user_role='admin')}"
+    # Формируем сообщение с учетом того, что order - это словарь
+    message = f"🔔 Новый заказ #{order.get('order_id', '')}\n\n"
+    # Используем функцию format_orders_list из utils.py вместо несуществующего метода format_for_display
+    message += format_orders_list([order], user_role='admin')[0]
     
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton("👁️ Посмотреть заказ", callback_data=f"order_{order_id}"))
@@ -487,29 +490,58 @@ def format_orders_list(orders: List[Dict], show_buttons: bool = True, user_role:
     
     for order in orders:
         status_emoji = "🔄"
-        if order.status == "new":
+        status = order.get('status', '') if isinstance(order, dict) else order.status
+        
+        if status == "new":
             status_emoji = "🆕"
-        elif order.status == "assigned":
+        elif status == "assigned":
             status_emoji = "📌"
-        elif order.status == "in_progress":
+        elif status == "in_progress":
             status_emoji = "🔧"
-        elif order.status == "completed":
+        elif status == "completed":
             status_emoji = "✅"
-        elif order.status == "cancelled":
+        elif status == "cancelled":
             status_emoji = "❌"
+        
+        # Функция для перевода статуса
+        def get_status_russian(status_code):
+            statuses = {
+                'new': 'Новый',
+                'assigned': 'Назначен',
+                'in_progress': 'В работе',
+                'completed': 'Выполнен',
+                'cancelled': 'Отменен'
+            }
+            return statuses.get(status_code, 'Неизвестный статус')
             
-        message += f"{status_emoji} Заказ #{order.order_id} - {order.status_to_russian()}\n"
+        # Получаем значения в зависимости от типа (dict или object)
+        if isinstance(order, dict):
+            order_id = order.get('order_id', 'Н/Д')
+            client_name = order.get('client_name', 'Н/Д')
+            client_phone = order.get('client_phone', 'Н/Д')
+            client_address = order.get('client_address', 'Н/Д')
+            status_russian = get_status_russian(status)
+        else:
+            order_id = order.order_id
+            client_name = order.client_name
+            client_phone = order.client_phone
+            client_address = order.client_address
+            # Используем метод объекта, если он есть, иначе используем функцию
+            status_russian = order.status_to_russian() if hasattr(order, 'status_to_russian') else get_status_russian(status)
+            
+        message += f"{status_emoji} Заказ #{order_id} - {status_russian}\n"
         
         # Скрываем номер телефона для мастеров
         if user_role == 'technician':
-            message += f"👤 {order.client_name}\n"
+            message += f"👤 {client_name}\n"
         else:
-            message += f"👤 {order.client_name} | 📱 {order.client_phone}\n"
+            message += f"👤 {client_name} | 📱 {client_phone}\n"
             
-        message += f"🏠 {order.client_address}\n"
+        message += f"🏠 {client_address}\n"
         
         if show_buttons:
-            keyboard.add(InlineKeyboardButton(f"Заказ #{order.order_id}", callback_data=f"order_{order.order_id}"))
+            # Используем уже полученный order_id
+            keyboard.add(InlineKeyboardButton(f"Заказ #{order_id}", callback_data=f"order_{order_id}"))
         
         message += "\n"
     
@@ -541,7 +573,7 @@ def get_user_list_for_deletion() -> Tuple[str, InlineKeyboardMarkup]:
         elif is_technician(user):
             technicians.append(user)
     
-    keyboard = telebot.types.InlineKeyboardMarkup(row_width=1)
+    keyboard = InlineKeyboardMarkup(row_width=1)
     
     for user in admins + dispatchers + technicians:
         username = user.get('username', '')
@@ -552,9 +584,9 @@ def get_user_list_for_deletion() -> Tuple[str, InlineKeyboardMarkup]:
         role = user.get('role', '')
         user_id = user.get('user_id', '')
         name = f"{full_name}{username_info} - {get_role_name(role)}"
-        keyboard.add(telebot.types.InlineKeyboardButton(name, callback_data=f"delete_user_{user_id}"))
+        keyboard.add(InlineKeyboardButton(name, callback_data=f"delete_user_{user_id}"))
     
-    keyboard.add(telebot.types.InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
+    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
     
     return message, keyboard
     
@@ -567,14 +599,14 @@ def get_order_list_for_deletion() -> Tuple[str, InlineKeyboardMarkup]:
     
     if not orders:
         message = "❌ *Удаление заказов*\n\nНет заказов для удаления."
-        keyboard = telebot.types.InlineKeyboardMarkup()
-        keyboard.add(telebot.types.InlineKeyboardButton("◀️ Назад", callback_data="manage_orders"))
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_orders"))
         return message, keyboard
     
     message = "❌ *Выберите заказ для удаления*\n\n"
     message += "⚠️ **Внимание!** При удалении заказа также будут удалены все его назначения мастерам.\n\n"
     
-    keyboard = telebot.types.InlineKeyboardMarkup(row_width=1)
+    keyboard = InlineKeyboardMarkup(row_width=1)
     
     # Отображаем список заказов для возможности удаления
     for order in orders:
@@ -594,9 +626,9 @@ def get_order_list_for_deletion() -> Tuple[str, InlineKeyboardMarkup]:
         order_id = order.get('order_id', '')
         client_name = order.get('client_name', '')
         button_text = f"{status_emoji} Заказ #{order_id} - {client_name}"
-        keyboard.add(telebot.types.InlineKeyboardButton(button_text, callback_data=f"delete_order_{order_id}"))
+        keyboard.add(InlineKeyboardButton(button_text, callback_data=f"delete_order_{order_id}"))
     
-    keyboard.add(telebot.types.InlineKeyboardButton("◀️ Назад", callback_data="manage_orders"))
+    keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_orders"))
     
     return message, keyboard
 

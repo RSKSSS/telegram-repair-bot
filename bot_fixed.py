@@ -435,7 +435,7 @@ def handle_order_command(message):
     # Получаем номер заказа из команды
     match = re.match(r"^/order_(\d+)$", message.text)
     if match:
-        order_id = int(match["grou"]p(1))
+        order_id = int(match.group(1))
 
         # Получаем информацию о заказе
         order = get_order(order_id)
@@ -555,11 +555,11 @@ def handle_callback_query(call):
     elif callback_data["startswit"]h("order_"):
         order_id = int(callback_data["spli"]t("_")[1])
         handle_order_detail_callback(user_id, message_id, order_id)
-    elif callback_data["startswit"]h("change_status_"):
-        order_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("change_status_"):
+        order_id = int(callback_data.split("_")[2])
         handle_change_status_callback(user_id, message_id, order_id)
-    elif callback_data["startswit"]h("status_"):
-        parts = callback_data["spli"]t("_")
+    elif callback_data.startswith("status_"):
+        parts = callback_data.split("_")
         order_id = int(parts[1])
 
         # Для случая "in_progress", части будут: ["status", "order_id", "in", "progress"]
@@ -587,28 +587,28 @@ def handle_callback_query(call):
     # Обработка удаления пользователей и заказов
     elif callback_data == "delete_user_menu":
         handle_delete_user_menu_callback(user_id, message_id)
-    elif callback_data["startswit"]h("delete_user_"):
-        user_to_delete = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("delete_user_"):
+        user_to_delete = int(callback_data.split("_")[2])
         handle_delete_user_callback(user_id, message_id, user_to_delete)
-    elif callback_data["startswit"]h("confirm_delete_user_"):
-        user_to_delete = int(callback_data["spli"]t("_")[3])
+    elif callback_data.startswith("confirm_delete_user_"):
+        user_to_delete = int(callback_data.split("_")[3])
         handle_confirm_delete_user_callback(user_id, message_id, user_to_delete)
     elif callback_data == "manage_orders":
         handle_manage_orders_callback(user_id, message_id)
-    elif callback_data["startswit"]h("delete_order_"):
-        order_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("delete_order_"):
+        order_id = int(callback_data.split("_")[2])
         handle_delete_order_callback(user_id, message_id, order_id)
-    elif callback_data["startswit"]h("confirm_delete_order_"):
-        order_id = int(callback_data["spli"]t("_")[3])
+    elif callback_data.startswith("confirm_delete_order_"):
+        order_id = int(callback_data.split("_")[3])
         handle_confirm_delete_order_callback(user_id, message_id, order_id)
     # Обработка логов активности
     elif callback_data == "activity_logs":
         handle_activity_logs_callback(user_id, message_id)
-    elif callback_data["startswit"]h("logs_page_"):
-        page = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("logs_page_"):
+        page = int(callback_data.split("_")[2])
         handle_logs_page_callback(user_id, message_id, page)
-    elif callback_data["startswit"]h("logs_filter_"):
-        filter_type = callback_data["spli"]t("_")[2]
+    elif callback_data.startswith("logs_filter_"):
+        filter_type = callback_data.split("_")[2]
         handle_logs_filter_callback(user_id, message_id, filter_type)
     # Обработка AI-колбэков
     elif callback_data == "ai_analyze_problem":
@@ -619,24 +619,24 @@ def handle_callback_query(call):
         handle_ai_generate_description_callback(user_id, message_id)
     elif callback_data == "ai_technician_help":
         handle_ai_technician_help_callback(user_id, message_id)
-    elif callback_data["startswit"]h("set_cost_"):
-        parts = callback_data["spli"]t("_")
+    elif callback_data.startswith("set_cost_"):
+        parts = callback_data.split("_")
         order_id = int(parts[2])
         cost = float(parts[3])
         handle_set_cost_callback(user_id, message_id, order_id, cost)
-    elif callback_data["startswit"]h("set_description_"):
-        order_id = int(callback_data["spli"]t("_")[2])
+    elif callback_data.startswith("set_description_"):
+        order_id = int(callback_data.split("_")[2])
         handle_set_description_callback(user_id, message_id, order_id)
-    elif callback_data["startswit"]h("ai_analyze_problem"):
+    elif callback_data.startswith("ai_analyze_problem"):
         handle_ai_analyze_problem_callback(user_id, message_id)
-    elif callback_data["startswit"]h("ai_suggest_cost"):
+    elif callback_data.startswith("ai_suggest_cost"):
         handle_ai_suggest_cost_callback(user_id, message_id)
-    elif callback_data["startswit"]h("ai_generate_description"):
+    elif callback_data.startswith("ai_generate_description"):
         handle_ai_generate_description_callback(user_id, message_id)
-    elif callback_data["startswit"]h("ai_technician_help"):
+    elif callback_data.startswith("ai_technician_help"):
         handle_ai_technician_help_callback(user_id, message_id)
-    elif callback_data["startswit"]h("ai_order_help_"):
-        order_id = int(callback_data["spli"]t("_")[3])
+    elif callback_data.startswith("ai_order_help_"):
+        order_id = int(callback_data.split("_")[3])
         handle_ai_order_help_callback(user_id, message_id, order_id)
     else:
         bot.answer_callback_query(call.id, "Неизвестная команда")
@@ -656,13 +656,13 @@ def handle_main_menu_callback(user_id, message_id):
 
     # Формируем сообщение в зависимости от роли
     if is_admin(user):
-        message_text = f"Здравствуйте, {f"{user["first_name"]} {user["last_name"] or ""}".strip()}!\nВы вошли как *Администратор*.\n\nВыберите действие:"
+        message_text = f"Здравствуйте, {user['first_name']} {user.get('last_name', '')}!\nВы вошли как *Администратор*.\n\nВыберите действие:"
     elif is_dispatcher(user):
-        message_text = f"Здравствуйте, {f"{user["first_name"]} {user["last_name"] or ""}".strip()}!\nВы вошли как *Диспетчер*.\n\nВыберите действие:"
+        message_text = f"Здравствуйте, {user['first_name']} {user.get('last_name', '')}!\nВы вошли как *Диспетчер*.\n\nВыберите действие:"
     elif is_technician(user):
-        message_text = f"Здравствуйте, {f"{user["first_name"]} {user["last_name"] or ""}".strip()}!\nВы вошли как *Мастер*.\n\nВыберите действие:"
+        message_text = f"Здравствуйте, {user['first_name']} {user.get('last_name', '')}!\nВы вошли как *Мастер*.\n\nВыберите действие:"
     else:
-        message_text = f"Здравствуйте, {f"{user["first_name"]} {user["last_name"] or ""}".strip()}!\n\nВыберите действие:"
+        message_text = f"Здравствуйте, {user['first_name']} {user.get('last_name', '')}!\n\nВыберите действие:"
 
     # Редактируем сообщение с новой клавиатурой
     bot.edit_message_text(
@@ -1676,7 +1676,7 @@ def handle_change_status_callback(user_id, message_id, order_id):
         chat_id=user_id,
         message_id=message_id,
         text=f"🔄 *Изменение статуса заказа #{order_id}*\n\n"
-        f"Текущий статус: *{order["ORDER_STATUSES"].get()}*\n\n"
+        f"Текущий статус: *{order.get('status', 'Не указан')}*\n\n"
         "Выберите новый статус:",
         reply_markup=get_order_status_keyboard(order_id, user_id),
         parse_mode="Markdown"
@@ -1704,7 +1704,7 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
         return
 
     # Сохраняем текущий статус заказа перед обновлением
-    old_status = order["status"]
+    old_status = order.get('status', 'Не указан')
 
     # Обновляем статус заказа
     if update_order(order_id, status=status):
@@ -1713,13 +1713,13 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
 
         # Формируем сообщение с информацией о заказе в зависимости от роли пользователя
         role = 'admin' if is_admin(user) else 'dispatcher' if is_dispatcher(user) else 'technician'
-        message_text = updated_format_orders_list([order])(user_role=role) if updated_order else "❌ Ошибка при получении информации о заказе."
+        message_text = f"✅ Статус заказа #{order_id} изменен с *{old_status}* на *{status}*"
 
         # Определяем тип клавиатуры в зависимости от роли пользователя
         keyboard = None
         if is_admin(user):
             keyboard = get_order_management_keyboard(order_id)
-        elif is_dispatcher(user) and order["dispatcher_id"] == user_id:
+        elif is_dispatcher(user) and order.get('dispatcher_id') == user_id:
             keyboard = get_order_management_keyboard(order_id)
         elif is_technician(user):
             keyboard = get_technician_order_keyboard(order_id)
@@ -2385,7 +2385,7 @@ def handle_address_input(user_id, text):
     # Запрашиваем дату и время для выполнения заказа
     bot.send_message(
         user_id,
-        "📅 Введите дату и время для выполнения заказа (например, '15["05"].2025 14:30'):"
+        "📅 Введите дату и время для выполнения заказа (например, '15.05.2025 14:30'):"
     )
 
     # Обновляем состояние пользователя

@@ -550,6 +550,7 @@ def handle_callback_query(call):
             pass
             
         user_id = call.from_user.id
+        chat_id = call.message.chat.id  # Используем chat_id для отправки сообщений
         message_id = call.message.message_id
         callback_data = call.data
 
@@ -558,7 +559,7 @@ def handle_callback_query(call):
 
         if not user:
             bot.send_message(
-                user_id,
+                chat_id,  # Используем chat_id вместо user_id
                 "Ваша учетная запись не найдена. Пожалуйста, используйте команду /start для регистрации."
             )
             return
@@ -566,7 +567,7 @@ def handle_callback_query(call):
         # Проверяем подтверждение пользователя (кроме некоторых системных callback)
         if not user["is_approved"] and callback_data != "main_menu" and not callback_data.startswith("approve_") and not callback_data.startswith("reject_"):
             bot.send_message(
-                user_id,
+                chat_id,  # Используем chat_id вместо user_id
                 "Ваша учетная запись не подтверждена администратором. Пожалуйста, дождитесь подтверждения."
             )
             return
@@ -582,65 +583,65 @@ def handle_callback_query(call):
 
     # Обрабатываем различные типы callback-запросов
     if callback_data == "main_menu":
-        handle_main_menu_callback(user_id, message_id)
+        handle_main_menu_callback(user_id, message_id, chat_id)
     elif callback_data == "help":
-        handle_help_callback(user_id, message_id)
+        handle_help_callback(user_id, message_id, chat_id)
     elif callback_data == "new_order":
-        handle_new_order_callback(user_id, message_id)
+        handle_new_order_callback(user_id, message_id, chat_id)
     elif callback_data == "my_orders":
-        handle_my_orders_callback(user_id, message_id)
+        handle_my_orders_callback(user_id, message_id, chat_id)
     elif callback_data == "my_assigned_orders":
-        handle_my_assigned_orders_callback(user_id, message_id)
+        handle_my_assigned_orders_callback(user_id, message_id, chat_id)
     elif callback_data == "all_orders":
-        handle_all_orders_callback(user_id, message_id)
+        handle_all_orders_callback(user_id, message_id, chat_id)
     elif callback_data == "manage_users":
-        handle_manage_users_callback(user_id, message_id)
+        handle_manage_users_callback(user_id, message_id, chat_id)
     elif callback_data == "list_users":
-        handle_list_users_callback(user_id, message_id)
+        handle_list_users_callback(user_id, message_id, chat_id)
     elif callback_data == "approval_requests":
-        handle_approval_requests_callback(user_id, message_id)
+        handle_approval_requests_callback(user_id, message_id, chat_id)
     elif callback_data.startswith("approve_"):
         user_to_approve = int(callback_data.split("_")[1])
-        handle_approve_user_callback(user_id, message_id, user_to_approve)
+        handle_approve_user_callback(user_id, message_id, user_to_approve, chat_id)
     elif callback_data.startswith("reject_"):
         user_to_reject = int(callback_data.split("_")[1])
-        handle_reject_user_callback(user_id, message_id, user_to_reject)
+        handle_reject_user_callback(user_id, message_id, user_to_reject, chat_id)
     elif callback_data == "add_admin":
-        handle_add_admin_callback(user_id, message_id)
+        handle_add_admin_callback(user_id, message_id, chat_id)
     elif callback_data == "add_dispatcher":
-        handle_add_dispatcher_callback(user_id, message_id)
+        handle_add_dispatcher_callback(user_id, message_id, chat_id)
     elif callback_data == "add_technician":
-        handle_add_technician_callback(user_id, message_id)
+        handle_add_technician_callback(user_id, message_id, chat_id)
     elif callback_data.startswith("set_admin_"):
         user_to_set = int(callback_data.split("_")[2])
-        handle_set_role_callback(user_id, message_id, user_to_set, "admin")
+        handle_set_role_callback(user_id, message_id, user_to_set, "admin", chat_id)
     elif callback_data.startswith("set_dispatcher_"):
         user_to_set = int(callback_data.split("_")[2])
-        handle_set_role_callback(user_id, message_id, user_to_set, "dispatcher")
+        handle_set_role_callback(user_id, message_id, user_to_set, "dispatcher", chat_id)
     elif callback_data.startswith("set_technician_"):
         user_to_set = int(callback_data.split("_")[2])
-        handle_set_role_callback(user_id, message_id, user_to_set, "technician")
+        handle_set_role_callback(user_id, message_id, user_to_set, "technician", chat_id)
     elif callback_data == "manage_templates":
-        handle_manage_templates_callback(user_id, message_id)
+        handle_manage_templates_callback(user_id, message_id, chat_id)
     elif callback_data == "view_templates":
-        handle_view_templates_callback(user_id, message_id)
+        handle_view_templates_callback(user_id, message_id, chat_id)
     elif callback_data == "add_template":
-        handle_add_template_callback(user_id, message_id)
+        handle_add_template_callback(user_id, message_id, chat_id)
     elif callback_data.startswith("use_template_"):
         template_id = int(callback_data.split("_")[2])
-        handle_use_template_callback(user_id, message_id, template_id)
+        handle_use_template_callback(user_id, message_id, template_id, chat_id)
     elif callback_data.startswith("edit_template_"):
         template_id = int(callback_data.split("_")[2])
-        handle_edit_template_callback(user_id, message_id, template_id)
+        handle_edit_template_callback(user_id, message_id, template_id, chat_id)
     elif callback_data.startswith("delete_template_"):
         template_id = int(callback_data.split("_")[2])
-        handle_delete_template_callback(user_id, message_id, template_id)
+        handle_delete_template_callback(user_id, message_id, template_id, chat_id)
     elif callback_data.startswith("order_"):
         order_id = int(callback_data.split("_")[1])
-        handle_order_detail_callback(user_id, message_id, order_id)
+        handle_order_detail_callback(user_id, message_id, order_id, chat_id)
     elif callback_data.startswith("change_status_"):
         order_id = int(callback_data.split("_")[2])
-        handle_change_status_callback(user_id, message_id, order_id)
+        handle_change_status_callback(user_id, message_id, order_id, chat_id)
     elif callback_data.startswith("status_"):
         parts = callback_data.split("_")
         order_id = int(parts[1])
@@ -652,7 +653,7 @@ def handle_callback_query(call):
         else:
             status = parts[2]
 
-        handle_update_status_callback(user_id, message_id, order_id, status)
+        handle_update_status_callback(user_id, message_id, order_id, status, chat_id)
     elif callback_data.startswith("assign_technician_"):
         order_id = int(callback_data.split("_")[2])
         handle_assign_technician_callback(user_id, message_id, order_id)
@@ -677,13 +678,13 @@ def handle_callback_query(call):
         user_to_delete = int(callback_data.split("_")[3])
         handle_confirm_delete_user_callback(user_id, message_id, user_to_delete)
     elif callback_data == "manage_orders":
-        handle_manage_orders_callback(user_id, message_id)
+        handle_manage_orders_callback(user_id, message_id, chat_id)
     elif callback_data.startswith("delete_order_"):
         order_id = int(callback_data.split("_")[2])
-        handle_delete_order_callback(user_id, message_id, order_id)
+        handle_delete_order_callback(user_id, message_id, order_id, chat_id)
     elif callback_data.startswith("confirm_delete_order_"):
         order_id = int(callback_data.split("_")[3])
-        handle_confirm_delete_order_callback(user_id, message_id, order_id)
+        handle_confirm_delete_order_callback(user_id, message_id, order_id, chat_id)
     # Обработка логов активности
     elif callback_data == "activity_logs":
         handle_activity_logs_callback(user_id, message_id)
@@ -725,10 +726,14 @@ def handle_callback_query(call):
         bot.answer_callback_query(call.id, "Неизвестная команда")
 
 # Обработчики callback-запросов
-def handle_main_menu_callback(user_id, message_id):
+def handle_main_menu_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса main_menu
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
+        
     user = get_user(user_id)
 
     if not user:
@@ -753,7 +758,7 @@ def handle_main_menu_callback(user_id, message_id):
     # Добавляем функцию безопасного редактирования сообщений
     try:
         bot.edit_message_text(
-            chat_id=user_id,
+            chat_id=chat_id,
             message_id=message_id,
             text=message_text,
             reply_markup=get_main_menu_keyboard(user_id),
@@ -765,7 +770,7 @@ def handle_main_menu_callback(user_id, message_id):
         # Пробуем отправить новое сообщение вместо редактирования существующего
         try:
             bot.send_message(
-                chat_id=user_id,
+                chat_id=chat_id,
                 text=message_text,
                 reply_markup=get_main_menu_keyboard(user_id),
                 parse_mode="Markdown"
@@ -773,10 +778,13 @@ def handle_main_menu_callback(user_id, message_id):
         except Exception as e2:
             logger.error(f"Ошибка при отправке нового сообщения главного меню: {e2}")
 
-def handle_manage_templates_callback(user_id, message_id):
+def handle_manage_templates_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса manage_templates
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user or not is_admin(user):
@@ -792,7 +800,7 @@ def handle_manage_templates_callback(user_id, message_id):
 
     # Отправляем сообщение с клавиатурой
     bot.edit_message_text(
-        chat_id=user_id,
+        chat_id=chat_id,
         message_id=message_id,
         text="🛠️ *Управление шаблонами проблем*\n\n"
         "Вы можете просматривать, добавлять, редактировать и удалять шаблоны типичных проблем для быстрого создания заказов.",
@@ -800,10 +808,13 @@ def handle_manage_templates_callback(user_id, message_id):
         reply_markup=keyboard
     )
 
-def handle_view_templates_callback(user_id, message_id):
+def handle_view_templates_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса view_templates
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user or not (is_admin(user) or is_dispatcher(user)):
@@ -853,10 +864,13 @@ def handle_view_templates_callback(user_id, message_id):
         reply_markup=keyboard
     )
 
-def handle_add_template_callback(user_id, message_id):
+def handle_add_template_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса add_template
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user or not is_admin(user):
@@ -874,10 +888,13 @@ def handle_add_template_callback(user_id, message_id):
     # Устанавливаем состояние пользователя
     set_user_state(user_id, TEMPLATE_TITLE_INPUT)
 
-def handle_use_template_callback(user_id, message_id, template_id):
+def handle_use_template_callback(user_id, message_id, template_id, chat_id=None):
     """
     Обработчик callback-запроса use_template_<template_id>
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user or not (is_admin(user) or is_dispatcher(user)):
@@ -915,10 +932,13 @@ def handle_use_template_callback(user_id, message_id, template_id):
     # Устанавливаем состояние пользователя
     set_user_state(user_id, "waiting_for_phone")
 
-def handle_edit_template_callback(user_id, message_id, template_id):
+def handle_edit_template_callback(user_id, message_id, template_id, chat_id=None):
     """
     Обработчик callback-запроса edit_template_<template_id>
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user or not is_admin(user):
@@ -958,10 +978,13 @@ def handle_edit_template_callback(user_id, message_id, template_id):
         reply_markup=keyboard
     )
 
-def handle_delete_template_callback(user_id, message_id, template_id):
+def handle_delete_template_callback(user_id, message_id, template_id, chat_id=None):
     """
     Обработчик callback-запроса delete_template_<template_id>
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user or not is_admin(user):
@@ -998,10 +1021,14 @@ def handle_delete_template_callback(user_id, message_id, template_id):
         reply_markup=keyboard
     )
 
-def handle_help_callback(user_id, message_id):
+def handle_help_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса help
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
+        
     user = get_user(user_id)
 
     if not user:
@@ -1054,16 +1081,20 @@ def handle_help_callback(user_id, message_id):
 
     # Редактируем сообщение с текстом справки
     bot.edit_message_text(
-        chat_id=user_id,
+        chat_id=chat_id,
         message_id=message_id,
         text=help_text,
         reply_markup=keyboard
     )
 
-def handle_new_order_callback(user_id, message_id):
+def handle_new_order_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса new_order
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
+        
     user = get_user(user_id)
 
     if not user:
@@ -1072,14 +1103,14 @@ def handle_new_order_callback(user_id, message_id):
     # Проверяем, является ли пользователь диспетчером или администратором
     if not (is_dispatcher(user) or is_admin(user)):
         bot.send_message(
-            user_id,
+            chat_id,
             "Эта функция доступна только для диспетчеров и администраторов."
         )
         return
 
     # Редактируем сообщение с инструкцией по созданию заказа
     bot.edit_message_text(
-        chat_id=user_id,
+        chat_id=chat_id,
         message_id=message_id,
         text="📝 *Создание нового заказа*\n\n"
         "Введите номер телефона клиента:",
@@ -1089,10 +1120,14 @@ def handle_new_order_callback(user_id, message_id):
     # Устанавливаем состояние пользователя
     set_user_state(user_id, "waiting_for_phone")
 
-def handle_my_orders_callback(user_id, message_id):
+def handle_my_orders_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса my_orders
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
+        
     user = get_user(user_id)
 
     if not user:
@@ -1101,7 +1136,7 @@ def handle_my_orders_callback(user_id, message_id):
     # Проверяем, является ли пользователь диспетчером или администратором
     if not (is_dispatcher(user) or is_admin(user)):
         bot.send_message(
-            user_id,
+            chat_id,
             "Эта функция доступна только для диспетчеров и администраторов."
         )
         return
@@ -1115,17 +1150,21 @@ def handle_my_orders_callback(user_id, message_id):
 
     # Редактируем сообщение со списком заказов
     bot.edit_message_text(
-        chat_id=user_id,
+        chat_id=chat_id,
         message_id=message_id,
         text=message_text,
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
 
-def handle_my_assigned_orders_callback(user_id, message_id):
+def handle_my_assigned_orders_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса my_assigned_orders
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
+        
     user = get_user(user_id)
 
     if not user:
@@ -1134,7 +1173,7 @@ def handle_my_assigned_orders_callback(user_id, message_id):
     # Проверяем, является ли пользователь мастером
     if not is_technician(user):
         bot.send_message(
-            user_id,
+            chat_id,
             "Эта функция доступна только для мастеров."
         )
         return
@@ -1148,17 +1187,21 @@ def handle_my_assigned_orders_callback(user_id, message_id):
 
     # Редактируем сообщение со списком заказов
     bot.edit_message_text(
-        chat_id=user_id,
+        chat_id=chat_id,
         message_id=message_id,
         text=message_text,
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
 
-def handle_all_orders_callback(user_id, message_id):
+def handle_all_orders_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса all_orders
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
+        
     user = get_user(user_id)
 
     if not user:
@@ -1167,7 +1210,7 @@ def handle_all_orders_callback(user_id, message_id):
     # Проверяем, является ли пользователь администратором или диспетчером
     if not (is_admin(user) or is_dispatcher(user)):
         bot.send_message(
-            user_id,
+            chat_id,
             "Эта функция доступна только для администраторов и диспетчеров."
         )
         return
@@ -1181,17 +1224,21 @@ def handle_all_orders_callback(user_id, message_id):
 
     # Редактируем сообщение со списком заказов
     bot.edit_message_text(
-        chat_id=user_id,
+        chat_id=chat_id,
         message_id=message_id,
         text=message_text,
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
 
-def handle_manage_users_callback(user_id, message_id):
+def handle_manage_users_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса manage_users
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
+        
     user = get_user(user_id)
 
     if not user:
@@ -1200,14 +1247,14 @@ def handle_manage_users_callback(user_id, message_id):
     # Проверяем, является ли пользователь администратором
     if not is_admin(user):
         bot.send_message(
-            user_id,
+            chat_id,
             "Эта функция доступна только для администраторов."
         )
         return
 
     # Редактируем сообщение с клавиатурой управления пользователями
     bot.edit_message_text(
-        chat_id=user_id,
+        chat_id=chat_id,
         message_id=message_id,
         text="👥 *Управление пользователями*\n\n"
         "Выберите действие:",
@@ -1215,7 +1262,7 @@ def handle_manage_users_callback(user_id, message_id):
         parse_mode="Markdown"
     )
 
-def handle_list_users_callback(user_id, message_id):
+def handle_list_users_callback(user_id, message_id, chat_id):
     """
     Обработчик callback-запроса list_users
     """
@@ -1227,7 +1274,7 @@ def handle_list_users_callback(user_id, message_id):
     # Проверяем, является ли пользователь администратором
     if not is_admin(user):
         bot.send_message(
-            user_id,
+            chat_id,
             "Эта функция доступна только для администраторов."
         )
         return
@@ -1291,7 +1338,7 @@ def handle_list_users_callback(user_id, message_id):
     # Редактируем сообщение со списком пользователей
     try:
         bot.edit_message_text(
-            chat_id=user_id,
+            chat_id=chat_id,
             message_id=message_id,
             text=message_text,
             reply_markup=keyboard
@@ -1301,17 +1348,20 @@ def handle_list_users_callback(user_id, message_id):
         # В случае ошибки отправим новое сообщение вместо редактирования
         try:
             bot.send_message(
-                chat_id=user_id,
+                chat_id=chat_id,
                 text=message_text,
                 reply_markup=keyboard
             )
         except Exception as e2:
             logger.error(f"Ошибка при отправке нового сообщения: {e2}")
 
-def handle_approval_requests_callback(user_id, message_id):
+def handle_approval_requests_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса approval_requests
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user:
@@ -1336,10 +1386,13 @@ def handle_approval_requests_callback(user_id, message_id):
         reply_markup=keyboard
     )
 
-def handle_approve_user_callback(user_id, message_id, user_to_approve):
+def handle_approve_user_callback(user_id, message_id, user_to_approve, chat_id=None):
     """
     Обработчик подтверждения пользователя
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user:
@@ -1401,10 +1454,13 @@ def handle_approve_user_callback(user_id, message_id, user_to_approve):
             "❌ Ошибка при подтверждении пользователя."
         )
 
-def handle_reject_user_callback(user_id, message_id, user_to_reject):
+def handle_reject_user_callback(user_id, message_id, user_to_reject, chat_id=None):
     """
     Обработчик отклонения пользователя
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user:
@@ -1463,10 +1519,13 @@ def handle_reject_user_callback(user_id, message_id, user_to_reject):
             "❌ Ошибка при отклонении пользователя."
         )
 
-def handle_add_admin_callback(user_id, message_id):
+def handle_add_admin_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса add_admin
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user:
@@ -1537,10 +1596,13 @@ def handle_add_admin_callback(user_id, message_id):
         reply_markup=keyboard
     )
 
-def handle_add_dispatcher_callback(user_id, message_id):
+def handle_add_dispatcher_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса add_dispatcher
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user:
@@ -1619,10 +1681,13 @@ def get_back_to_user_management_keyboard():
     keyboard.add(InlineKeyboardButton("◀️ Назад", callback_data="manage_users"))
     return keyboard
 
-def handle_add_technician_callback(user_id, message_id):
+def handle_add_technician_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса add_technician
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user:
@@ -1693,10 +1758,13 @@ def handle_add_technician_callback(user_id, message_id):
         reply_markup=keyboard
     )
 
-def handle_set_role_callback(user_id, message_id, target_user_id, role):
+def handle_set_role_callback(user_id, message_id, target_user_id, role, chat_id=None):
     """
     Обработчик callback-запроса set_{role}_{user_id}
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user:
@@ -1755,10 +1823,13 @@ def handle_set_role_callback(user_id, message_id, target_user_id, role):
             reply_markup=get_back_to_user_management_keyboard()
         )
 
-def handle_order_detail_callback(user_id, message_id, order_id):
+def handle_order_detail_callback(user_id, message_id, order_id, chat_id=None):
     """
     Обработчик callback-запроса order_{order_id}
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user:
@@ -1769,7 +1840,7 @@ def handle_order_detail_callback(user_id, message_id, order_id):
 
     if not order:
         bot.edit_message_text(
-            chat_id=user_id,
+            chat_id=chat_id,
             message_id=message_id,
             text="❌ Заказ с указанным номером не найден.",
             reply_markup=get_back_to_main_menu_keyboard()
@@ -1801,7 +1872,7 @@ def handle_order_detail_callback(user_id, message_id, order_id):
     # Редактируем сообщение
     try:
         bot.edit_message_text(
-            chat_id=user_id,
+            chat_id=chat_id,
             message_id=message_id,
             text=message_text,
             reply_markup=keyboard,
@@ -1811,7 +1882,7 @@ def handle_order_detail_callback(user_id, message_id, order_id):
         # Если текст слишком длинный или другие проблемы, пробуем отправить без разметки
         try:
             bot.edit_message_text(
-                chat_id=user_id,
+                chat_id=chat_id,
                 message_id=message_id,
                 text=message_text,
                 reply_markup=keyboard
@@ -1823,10 +1894,14 @@ def handle_order_detail_callback(user_id, message_id, order_id):
                 "Произошла ошибка при отображении информации о заказе."
             )
 
-def handle_change_status_callback(user_id, message_id, order_id):
+def handle_change_status_callback(user_id, message_id, order_id, chat_id=None):
     """
     Обработчик callback-запроса change_status_{order_id}
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
+    
     user = get_user(user_id)
 
     if not user:
@@ -1837,7 +1912,7 @@ def handle_change_status_callback(user_id, message_id, order_id):
 
     if not order:
         bot.edit_message_text(
-            chat_id=user_id,
+            chat_id=chat_id,
             message_id=message_id,
             text="❌ Заказ с указанным номером не найден.",
             reply_markup=get_back_to_main_menu_keyboard()
@@ -1850,7 +1925,7 @@ def handle_change_status_callback(user_id, message_id, order_id):
     status_text = get_status_text(status_value)  # Предполагается, что такая функция существует
     
     bot.edit_message_text(
-        chat_id=user_id,
+        chat_id=chat_id,
         message_id=message_id,
         text=f"🔄 *Изменение статуса заказа #{order_id}*\n\n"
         f"Текущий статус: *{status_text}*\n\n"
@@ -1859,10 +1934,14 @@ def handle_change_status_callback(user_id, message_id, order_id):
         parse_mode="Markdown"
     )
 
-def handle_update_status_callback(user_id, message_id, order_id, status):
+def handle_update_status_callback(user_id, message_id, order_id, status, chat_id=None):
     """
     Обработчик callback-запроса status_{order_id}_{status}
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
+        
     user = get_user(user_id)
 
     if not user:
@@ -1873,7 +1952,7 @@ def handle_update_status_callback(user_id, message_id, order_id, status):
 
     if not order:
         bot.edit_message_text(
-            chat_id=user_id,
+            chat_id=chat_id,
             message_id=message_id,
             text="❌ Заказ с указанным номером не найден.",
             reply_markup=get_back_to_main_menu_keyboard()
@@ -2251,10 +2330,13 @@ def handle_delete_user_callback(user_id, message_id, user_to_delete):
         parse_mode="Markdown"
     )
 
-def handle_manage_orders_callback(user_id, message_id):
+def handle_manage_orders_callback(user_id, message_id, chat_id=None):
     """
     Обработчик callback-запроса manage_orders
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user:
@@ -2280,10 +2362,13 @@ def handle_manage_orders_callback(user_id, message_id):
         parse_mode="Markdown"
     )
 
-def handle_delete_order_callback(user_id, message_id, order_id):
+def handle_delete_order_callback(user_id, message_id, order_id, chat_id=None):
     """
     Обработчик callback-запроса delete_order_{order_id}
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     try:
         logger.info(f"Вызван callback удаления заказа: user_id={user_id}, message_id={message_id}, order_id={order_id}")
         user = get_user(user_id)
@@ -2334,7 +2419,7 @@ def handle_delete_order_callback(user_id, message_id, order_id):
                 f"⚠️ Все связанные с этим заказом данные (назначения мастеров, комментарии) будут также удалены!")
         
         result = safe_edit_message_text(
-            chat_id=user_id,
+            chat_id=chat_id,
             message_id=message_id,
             text=text,
             reply_markup=keyboard,
@@ -2399,10 +2484,13 @@ def handle_confirm_delete_user_callback(user_id, message_id, user_to_delete):
             parse_mode="Markdown"
         )
 
-def handle_confirm_delete_order_callback(user_id, message_id, order_id):
+def handle_confirm_delete_order_callback(user_id, message_id, order_id, chat_id=None):
     """
     Обработчик callback-запроса confirm_delete_order_{order_id}
     """
+    # Если chat_id не указан, используем user_id (для обратной совместимости)
+    if chat_id is None:
+        chat_id = user_id
     user = get_user(user_id)
 
     if not user:
@@ -2421,7 +2509,7 @@ def handle_confirm_delete_order_callback(user_id, message_id, order_id):
 
     if not order:
         bot.edit_message_text(
-            chat_id=user_id,
+            chat_id=chat_id,
             message_id=message_id,
             text="❌ Заказ с указанным номером не найден.",
             reply_markup=get_back_to_main_menu_keyboard()
@@ -2432,7 +2520,7 @@ def handle_confirm_delete_order_callback(user_id, message_id, order_id):
     if delete_order(order_id):
         # Успешное удаление
         bot.edit_message_text(
-            chat_id=user_id,
+            chat_id=chat_id,
             message_id=message_id,
             text=f"✅ Заказ #{order_id} успешно удален.",
             reply_markup=get_back_to_main_menu_keyboard(),
@@ -2475,8 +2563,6 @@ def handle_message(message):
         # Если сообщение обработано AI модулем, завершаем обработку
         if handle_ai_message_input(message):
             return
-    except Exception as e:
-        logger.error(f"Ошибка при обработке AI сообщения: {e}")
     except Exception as e:
         logger.error(f"Ошибка при обработке AI сообщения: {e}")
 

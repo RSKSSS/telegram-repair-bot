@@ -1,0 +1,59 @@
+==> Running 'python main.py'
+2025-05-10 16:18:52,459 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 16:18:52,459 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 16:18:52,459 - service.shared_state - INFO - Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 16:18:56,647 - __main__ - INFO - AI функции отключены
+2025-05-10 16:18:56,648 - __main__ - INFO - Инициализация базы данных...
+2025-05-10 16:18:56,649 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 16:18:56,649 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 16:18:56,649 - service.database - INFO - Подключение к PostgreSQL в среде Render...
+2025-05-10 16:18:56,808 [ERROR] service.database: Ошибка в функции initialize_database: syntax error at or near "AUTOINCREMENT"
+LINE 3:         template_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                ^
+Traceback (most recent call last):
+  File "/opt/render/project/src/logger.py", line 116, in wrapper
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/render/project/src/database.py", line 209, in initialize_database
+    cursor.execute("""
+psycopg2.errors.SyntaxError: syntax error at or near "AUTOINCREMENT"
+LINE 3:         template_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                ^
+2025-05-10 16:18:56,808 [ERROR] service.database: Ошибка в функции initialize_database: syntax error at or near "AUTOINCREMENT"
+LINE 3:         template_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                ^
+Traceback (most recent call last):
+  File "/opt/render/project/src/logger.py", line 116, in wrapper
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/render/project/src/database.py", line 209, in initialize_database
+    cursor.execute("""
+psycopg2.errors.SyntaxError: syntax error at or near "AUTOINCREMENT"
+LINE 3:         template_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                ^
+2025-05-10 16:18:56,808 - service.database - ERROR - Ошибка в функции initialize_database: syntax error at or near "AUTOINCREMENT"
+LINE 3:         template_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                ^
+Traceback (most recent call last):
+  File "/opt/render/project/src/logger.py", line 116, in wrapper
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/render/project/src/database.py", line 209, in initialize_database
+    cursor.execute("""
+psycopg2.errors.SyntaxError: syntax error at or near "AUTOINCREMENT"
+LINE 3:         template_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                ^
+Traceback (most recent call last):
+  File "/opt/render/project/src/main.py", line 271, in <module>
+Импортированы настройки окружения из env.py
+Запуск бота...
+Загружен токен из переменной окружения длиной: 46 символов
+    main()
+  File "/opt/render/project/src/main.py", line 223, in main
+    initialize_database()
+  File "/opt/render/project/src/logger.py", line 116, in wrapper
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/render/project/src/database.py", line 209, in initialize_database
+    cursor.execute("""
+psycopg2.errors.SyntaxError: syntax error at or near "AUTOINCREMENT"
