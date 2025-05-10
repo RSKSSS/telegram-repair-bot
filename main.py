@@ -191,7 +191,8 @@ def bot_polling():
             logger.warning(f"Не удалось получить информацию о боте: {info_err}")
         
         # Запускаем polling с обработкой ошибок
-        telebot_instance.polling(none_stop=True, interval=1)
+        # Вместо обычного polling используем infinity_polling, который лучше обрабатывает ошибки
+        telebot_instance.infinity_polling(interval=1)
     except Exception as e:
         error_message = f"Ошибка при запуске бота: {e}"
         logger.error(error_message)
