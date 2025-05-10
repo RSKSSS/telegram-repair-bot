@@ -15,7 +15,8 @@ TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 # Проверка на наличие токена, чтобы избежать ошибок
 if TOKEN is None:
     logger.error("Ошибка: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
-    TOKEN = "dummy_token"  # Временный токен, чтобы избежать ошибок инициализации
+    TOKEN = "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ"  # Временный токен для инициализации
+    logger.warning("Используется временный недействительный токен. Бот не будет работать без правильного токена.")
     
 bot = telebot.TeleBot(TOKEN)
 
