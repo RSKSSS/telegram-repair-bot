@@ -25,10 +25,11 @@ if __name__ == "__main__":
     logger.info("База данных инициализирована")
     
     # Проверяем наличие токена
-    if not os.environ.get('TELEGRAM_BOT_TOKEN'):
+    token = os.environ.get('TELEGRAM_BOT_TOKEN')
+    if not token:
         logger.error("ОШИБКА: Токен Telegram бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN.")
     else:
-        logger.info(f"Токен Telegram бота найден, длина: {len(os.environ.get('TELEGRAM_BOT_TOKEN'))} символов")
+        logger.info(f"Токен Telegram бота найден, длина: {len(token)} символов")
     
     # Запускаем бота в отдельном потоке
     logger.info("Запуск бота в отдельном потоке...")

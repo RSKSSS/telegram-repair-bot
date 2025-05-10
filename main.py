@@ -173,7 +173,9 @@ def main():
     initialize_database()
 
     # Получаем порт из переменной окружения или используем порт по умолчанию
+    # На Render порт задается через переменную PORT
     port = int(os.environ.get('PORT', 5051))
+    logger.info(f"Используем порт: {port}")
     
     # Проверяем, запущен ли скрипт напрямую через python или в среде Render
     # В среде Render или при запуске через gunicorn, GUNICORN_CMD_ARGS будет определен
@@ -202,6 +204,10 @@ def main():
     
     if is_direct_run:
         # Запускаем Flask-приложение для веб-интерфейса в режиме разработки
+        app.run(host='0.0.0.0', port=port)
+    elif os.environ.get('RENDER'):
+        # В режиме Render явно запускаем приложение на указанном порту
+        logger.info(f"Запуск в режиме Render на порту {port}")
         app.run(host='0.0.0.0', port=port)
     else:
         # В режиме gunicorn не запускаем app.run(), 
