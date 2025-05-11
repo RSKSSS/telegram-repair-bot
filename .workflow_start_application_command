@@ -1,0 +1,1 @@
+gunicorn --bind 0.0.0.0:5001 --reuse-port --reload flask_app:app

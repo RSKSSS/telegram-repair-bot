@@ -193,21 +193,22 @@ def handle_info(message):
         f"TELEGRAM_BOT_TOKEN: {'установлена' if os.environ.get('TELEGRAM_BOT_TOKEN') else 'не установлена'}"
     ]
     
-    # Формируем и отправляем сообщение
+    # Формируем и отправляем сообщение без Markdown-форматирования
     info_message = (
-        "📊 *Системная информация*\n\n"
-        f"🔹 *Python*: {platform.python_version()}\n"
-        f"🔹 *OS*: {platform.system()} {platform.release()}\n"
-        f"🔹 *Telebot версия*: {getattr(telebot, '__version__', 'не определена')}\n"
-        f"🔹 *База данных*: {'PostgreSQL' if is_postgres() else 'SQLite'}\n"
-        f"🔹 *Статус БД*: {db_status}\n\n"
-        "🔸 *Переменные окружения*:\n"
+        "📊 Системная информация\n\n"
+        f"🔹 Python: {platform.python_version()}\n"
+        f"🔹 OS: {platform.system()} {platform.release()}\n"
+        f"🔹 Telebot версия: {getattr(telebot, '__version__', 'не определена')}\n"
+        f"🔹 База данных: {'PostgreSQL' if is_postgres() else 'SQLite'}\n"
+        f"🔹 Статус БД: {db_status}\n\n"
+        "🔸 Переменные окружения:\n"
     )
     
     for env_var in env_vars:
         info_message += f"- {env_var}\n"
     
-    bot.reply_to(message, info_message, parse_mode="Markdown")
+    # Отправляем без parse_mode, чтобы избежать ошибок форматирования
+    bot.reply_to(message, info_message)
 
 # Обработчик для всех остальных сообщений
 @bot.message_handler(func=lambda message: True, content_types=['text'])

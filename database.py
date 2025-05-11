@@ -587,16 +587,47 @@ def save_order(dispatcher_id: int, client_phone: str, client_name: str, problem_
         conn.close()
 
 @invalidate_cache_on_update('orders')
-def update_order(order_id: int, status: str = None, service_cost: float = None, service_description: str = None, scheduled_datetime: str = None) -> bool:
+def update_order_status(order_id: int, new_status: int) -> bool:
+    """
+    Обновляет статус заказа
+    
+    Args:
+        order_id: ID заказа
+        new_status: Новый статус заказа
+        
+    Returns:
+        bool: True в случае успеха, False в случае ошибки
+    """
+    try:
+        conn = get_connection()
+        conn.execute("""
+            UPDATE orders 
+            SET status = ? 
+            WHERE order_id = ?
+        """, (new_status, order_id))
+        conn.commit()
+        
+        # Инвалидируем кэш всех заказов
+        cache_clear('orders')
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка при обновлении статуса заказа: {e}")
+        return False
+    finally:
+        conn.close()
+
+@invalidate_cache_on_update('orders')
+def update_order(order_id: int, data=None, status: str = None, service_cost: float = None, service_description: str = None, scheduled_datetime: str = None) -> bool:
     """
     Обновление заказа с автоматической инвалидацией кэша.
     
     Args:
         order_id: ID заказа
-        status: Новый статус заказа
-        service_cost: Новая стоимость услуг
-        service_description: Новое описание услуг
-        scheduled_datetime: Новое время исполнения заказа
+        data: Словарь с параметрами для обновления (ключи: status, technician_id, service_cost, service_description, scheduled_datetime)
+        status: Новый статус заказа (устаревший параметр, используйте data)
+        service_cost: Новая стоимость услуг (устаревший параметр, используйте data)
+        service_description: Новое описание услуг (устаревший параметр, используйте data)
+        scheduled_datetime: Новое время исполнения заказа (устаревший параметр, используйте data)
         
     Returns:
         bool: True, если обновление успешно, иначе False
@@ -611,18 +642,37 @@ def update_order(order_id: int, status: str = None, service_cost: float = None, 
         update_fields = []
         update_values = []
 
-        if status:
-            update_fields.append(f"status = {placeholder}")
-            update_values.append(status)
-        if service_cost:
-            update_fields.append(f"service_cost = {placeholder}")
-            update_values.append(service_cost)
-        if service_description:
-            update_fields.append(f"service_description = {placeholder}")
-            update_values.append(service_description)
-        if scheduled_datetime:
-            update_fields.append(f"scheduled_datetime = {placeholder}")
-            update_values.append(scheduled_datetime)
+        # Используем переданный словарь data, если он есть
+        if data and isinstance(data, dict):
+            if 'status' in data and data['status']:
+                update_fields.append(f"status = {placeholder}")
+                update_values.append(data['status'])
+            if 'technician_id' in data:
+                update_fields.append(f"technician_id = {placeholder}")
+                update_values.append(data['technician_id'])
+            if 'service_cost' in data and data['service_cost']:
+                update_fields.append(f"service_cost = {placeholder}")
+                update_values.append(data['service_cost'])
+            if 'service_description' in data and data['service_description']:
+                update_fields.append(f"service_description = {placeholder}")
+                update_values.append(data['service_description'])
+            if 'scheduled_datetime' in data and data['scheduled_datetime']:
+                update_fields.append(f"scheduled_datetime = {placeholder}")
+                update_values.append(data['scheduled_datetime'])
+        else:
+            # Поддержка обратной совместимости
+            if status:
+                update_fields.append(f"status = {placeholder}")
+                update_values.append(status)
+            if service_cost:
+                update_fields.append(f"service_cost = {placeholder}")
+                update_values.append(service_cost)
+            if service_description:
+                update_fields.append(f"service_description = {placeholder}")
+                update_values.append(service_description)
+            if scheduled_datetime:
+                update_fields.append(f"scheduled_datetime = {placeholder}")
+                update_values.append(scheduled_datetime)
 
         if update_fields:
             sql = f"UPDATE orders SET {', '.join(update_fields)} WHERE order_id = {placeholder}"

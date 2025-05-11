@@ -30,8 +30,8 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
-waitForPort = 5000
+args = "gunicorn --bind 0.0.0.0:5001 --reuse-port --reload flask_app:app"
+waitForPort = 5001
 
 [[workflows.workflow]]
 name = "telegram_bot"
@@ -39,7 +39,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python main.py"
+args = "python working_bot.py"
 
 [[workflows.workflow]]
 name = "Run Bot"
@@ -53,6 +53,10 @@ args = "python main.py"
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 5001
+externalPort = 3003
 
 [[ports]]
 localPort = 5050

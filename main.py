@@ -1,44 +1,78 @@
+#!/usr/bin/env python
 """
-Основной модуль приложения для запуска веб-сервера Flask
-и Telegram бота в среде Render или локально.
+Главный файл запуска бота и Flask приложения на разных портах.
 """
 
 import os
+import sys
 import logging
-from app import app
-from database import initialize_database as db_initialize
-from bot_diagnostics import bot_polling, run_bot_diagnostics
+import threading
+import time
 
 # Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-# Эта функция необходима для render_app.py
-def initialize_database():
-    """Функция-обертка для инициализации базы данных
-    Вызывает соответствующую функцию из модуля database"""
-    logger.info("Инициализация базы данных через main.py...")
-    return db_initialize()
+def run_flask_app():
+    """Запускает Flask приложение на порту 5001"""
+    try:
+        logger.info("Запуск Flask на порту 5001...")
+        os.environ['FLASK_PORT'] = '5001'
+        import flask_app
+        flask_app.app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False)
+    except Exception as e:
+        logger.error(f"Ошибка запуска Flask: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
 
-# Получаем токен бота либо из переменных окружения, либо используем фиксированный токен
-def get_bot_token():
-    """Получение токена бота из переменных окружения или использование фиксированного токена"""
-    token = os.environ.get('TELEGRAM_BOT_TOKEN')
-    if token and ':' in token:
-        logger.info(f"Использую токен из переменных окружения (длина: {len(token)})")
-        return token
-    else:
-        from shared_state import TOKEN
-        logger.info(f"Использую фиксированный токен из shared_state (длина: {len(TOKEN)})")
-        return TOKEN
+def run_telegram_bot():
+    """Запускает Telegram бота"""
+    try:
+        logger.info("Запуск Telegram бота...")
+        # Импортируем исправленную версию файла запуска бота
+        if os.path.exists('main_telegram_bot_fixed.py'):
+            # Используем исправленную версию, если она существует
+            sys.path.insert(0, os.getcwd())
+            from main_telegram_bot_fixed import main
+            main()
+        else:
+            # Используем оригинальную версию, если исправленной нет
+            from main_telegram_bot import main
+            main()
+    except Exception as e:
+        logger.error(f"Ошибка запуска Telegram бота: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
 
-# Эта функция запускает бота и нужна для render_app.py
-def start_bot():
+def main():
     """
-    Запуск бота с использованием функции из bot_diagnostics.py
+    Основная функция запуска, которая запускает Flask и бота в разных потоках.
     """
-    from start_bot import start_bot as starter
-    return starter()
+    logger.info("===== Запуск приложения =====")
+    
+    # Ждем ввод пользователя перед запуском
+    time.sleep(1)
+    
+    # Запускаем Flask в отдельном потоке
+    flask_thread = threading.Thread(target=run_flask_app)
+    flask_thread.daemon = True
+    flask_thread.start()
+    
+    # Даем Flask время на запуск
+    time.sleep(2)
+    
+    # Запускаем Telegram бота в основном потоке
+    run_telegram_bot()
+    
+    return True
 
 if __name__ == "__main__":
-    # Запускаем только веб-сервер Flask на порту 5000
-    app.run(host='0.0.0.0', port=5000)
+    success = main()
+    if not success:
+        logger.error("Программа не запущена из-за ошибок!")
+        sys.exit(1)
+    else:
+        logger.info("Программа успешно запущена!")

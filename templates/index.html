@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+        }
+        .content {
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .status-box {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .bot-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+        .active {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .inactive {
+            background-color: #e74c3c;
+            color: white;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px 0;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Сервис ремонта компьютеров</h1>
+            <p>Система управления заказами и работой с клиентами</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="content">
+            <h2>Добро пожаловать в панель управления</h2>
+            <p>Эта система позволяет управлять заказами на ремонт компьютеров, общаться с клиентами и организовывать работу мастеров.</p>
+            
+            <h3>Основные возможности системы:</h3>
+            <ul>
+                <li>Управление заказами на ремонт</li>
+                <li>Коммуникация с клиентами через Telegram</li>
+                <li>Распределение заданий между мастерами</li>
+                <li>Отслеживание статусов заказов</li>
+                <li>Аналитика работы сервиса</li>
+            </ul>
+            
+            <div class="status-box">
+                <h3>Статус системы:</h3>
+                <p>Веб-интерфейс: <span class="bot-status active">Активен</span></p>
+                <p>Telegram-бот: <span class="bot-status" id="bot-status">Проверка...</span></p>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Сервис ремонта компьютеров. Все права защищены.</p>
+        </div>
+    </footer>
+    
+    <script>
+        // Проверка статуса бота
+        fetch('/api/bot-status')
+            .then(response => response.json())
+            .then(data => {
+                const botStatusEl = document.getElementById('bot-status');
+                if (data.status === 'active') {
+                    botStatusEl.textContent = 'Активен';
+                    botStatusEl.classList.add('active');
+                } else {
+                    botStatusEl.textContent = 'Неактивен';
+                    botStatusEl.classList.add('inactive');
+                }
+            })
+            .catch(error => {
+                const botStatusEl = document.getElementById('bot-status');
+                botStatusEl.textContent = 'Недоступен';
+                botStatusEl.classList.add('inactive');
+                console.error('Ошибка при проверке статуса бота:', error);
+            });
+    </script>
+</body>
+</html>

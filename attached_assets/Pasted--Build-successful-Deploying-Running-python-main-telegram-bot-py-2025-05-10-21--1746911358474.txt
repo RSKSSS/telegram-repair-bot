@@ -1,0 +1,196 @@
+==> Build successful 🎉
+==> Deploying...
+==> Running 'python main_telegram_bot.py'
+2025-05-10 21:07:48,387 - __main__ - INFO - ===== Запуск Telegram бота =====
+2025-05-10 21:07:48,387 - __main__ - INFO - Обнаружена среда Render, запускаем специальную версию...
+2025-05-10 21:07:48,496 - main_render - INFO - ===== Запуск Telegram бота в режиме Render =====
+2025-05-10 21:07:48,496 - main_render - INFO - ===== Запуск Telegram бота в режиме Render =====
+2025-05-10 21:07:50,678 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:07:50,678 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:07:50,678 - service.shared_state - INFO - Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:07:50,678 - service.shared_state - INFO - Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:07:50,679 - main_render - INFO - Инициализация базы данных...
+2025-05-10 21:07:50,679 - main_render - INFO - Инициализация базы данных...
+2025-05-10 21:07:50,679 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 21:07:50,679 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 21:07:50,679 - service.database - INFO - Подключение к PostgreSQL в среде Render...
+2025-05-10 21:07:50,679 - service.database - INFO - Подключение к PostgreSQL в среде Render...
+2025-05-10 21:07:50,904 [INFO] service.database: База данных инициализирована
+2025-05-10 21:07:50,904 [INFO] service.database: База данных инициализирована
+2025-05-10 21:07:50,904 - service.database - INFO - База данных инициализирована
+2025-05-10 21:07:50,904 - service.database - INFO - База данных инициализирована
+2025-05-10 21:07:50,904 - main_render - INFO - База данных инициализирована
+2025-05-10 21:07:50,904 - main_render - INFO - База данных инициализирована
+2025-05-10 21:07:50,905 - main_render - INFO - Токен бота корректный, длина: 46 символов
+2025-05-10 21:07:50,905 - main_render - INFO - Токен бота корректный, длина: 46 символов
+2025-05-10 21:07:50,905 - main_render - INFO - Запуск бота через модуль start_bot...
+2025-05-10 21:07:50,905 - main_render - INFO - Запуск бота через модуль start_bot...
+2025-05-10 21:07:50,911 - main_render - ERROR - Критическая ошибка при запуске бота: f-string: unmatched '[' (bot_fixed3.py, line 732)
+2025-05-10 21:07:50,911 - main_render - ERROR - Критическая ошибка при запуске бота: f-string: unmatched '[' (bot_fixed3.py, line 732)
+2025-05-10 21:07:50,912 - main_render - ERROR - Traceback (most recent call last):
+  File "/opt/render/project/src/main_render.py", line 56, in main
+    from start_bot import start_bot
+  File "/opt/render/project/src/start_bot.py", line 21, in <module>
+    from bot_fixed3 import (
+  File "/opt/render/project/src/bot_fixed3.py", line 732
+    InlineKeyboardButton(f"📝 Ред: {template["title"][:15]}...", callback_data=f"edit_template_{template['template_id']}"),
+                                             ^^^^^
+SyntaxError: f-string: unmatched '['
+2025-05-10 21:07:50,912 - main_render - ERROR - Traceback (most recent call last):
+  File "/opt/render/project/src/main_render.py", line 56, in main
+    from start_bot import start_bot
+  File "/opt/render/project/src/start_bot.py", line 21, in <module>
+    from bot_fixed3 import (
+  File "/opt/render/project/src/bot_fixed3.py", line 732
+    InlineKeyboardButton(f"📝 Ред: {template["title"][:15]}...", callback_data=f"edit_template_{template['template_id']}"),
+                                             ^^^^^
+SyntaxError: f-string: unmatched '['
+2025-05-10 21:07:50,912 - __main__ - INFO - Бот успешно запущен!
+2025-05-10 21:07:50,912 - __main__ - INFO - Бот успешно запущен!
+Загружен токен из переменной окружения длиной: 46 символов
+==> Running 'python main_telegram_bot.py'
+2025-05-10 21:08:01,450 - __main__ - INFO - ===== Запуск Telegram бота =====
+2025-05-10 21:08:01,451 - __main__ - INFO - Обнаружена среда Render, запускаем специальную версию...
+2025-05-10 21:08:01,546 - main_render - INFO - ===== Запуск Telegram бота в режиме Render =====
+2025-05-10 21:08:01,546 - main_render - INFO - ===== Запуск Telegram бота в режиме Render =====
+2025-05-10 21:08:03,543 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:08:03,543 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:08:03,543 - service.shared_state - INFO - Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:08:03,543 - service.shared_state - INFO - Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:08:03,544 - main_render - INFO - Инициализация базы данных...
+2025-05-10 21:08:03,544 - main_render - INFO - Инициализация базы данных...
+2025-05-10 21:08:03,544 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 21:08:03,544 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 21:08:03,544 - service.database - INFO - Подключение к PostgreSQL в среде Render...
+2025-05-10 21:08:03,544 - service.database - INFO - Подключение к PostgreSQL в среде Render...
+2025-05-10 21:08:03,662 [INFO] service.database: База данных инициализирована
+2025-05-10 21:08:03,662 [INFO] service.database: База данных инициализирована
+2025-05-10 21:08:03,662 - service.database - INFO - База данных инициализирована
+2025-05-10 21:08:03,662 - service.database - INFO - База данных инициализирована
+2025-05-10 21:08:03,662 - main_render - INFO - База данных инициализирована
+2025-05-10 21:08:03,662 - main_render - INFO - База данных инициализирована
+2025-05-10 21:08:03,662 - main_render - INFO - Токен бота корректный, длина: 46 символов
+2025-05-10 21:08:03,662 - main_render - INFO - Токен бота корректный, длина: 46 символов
+2025-05-10 21:08:03,662 - main_render - INFO - Запуск бота через модуль start_bot...
+2025-05-10 21:08:03,662 - main_render - INFO - Запуск бота через модуль start_bot...
+2025-05-10 21:08:03,667 - main_render - ERROR - Критическая ошибка при запуске бота: f-string: unmatched '[' (bot_fixed3.py, line 732)
+2025-05-10 21:08:03,667 - main_render - ERROR - Критическая ошибка при запуске бота: f-string: unmatched '[' (bot_fixed3.py, line 732)
+2025-05-10 21:08:03,667 - main_render - ERROR - Traceback (most recent call last):
+  File "/opt/render/project/src/main_render.py", line 56, in main
+    from start_bot import start_bot
+  File "/opt/render/project/src/start_bot.py", line 21, in <module>
+    from bot_fixed3 import (
+  File "/opt/render/project/src/bot_fixed3.py", line 732
+    InlineKeyboardButton(f"📝 Ред: {template["title"][:15]}...", callback_data=f"edit_template_{template['template_id']}"),
+                                             ^^^^^
+SyntaxError: f-string: unmatched '['
+2025-05-10 21:08:03,667 - main_render - ERROR - Traceback (most recent call last):
+  File "/opt/render/project/src/main_render.py", line 56, in main
+    from start_bot import start_bot
+  File "/opt/render/project/src/start_bot.py", line 21, in <module>
+    from bot_fixed3 import (
+  File "/opt/render/project/src/bot_fixed3.py", line 732
+    InlineKeyboardButton(f"📝 Ред: {template["title"][:15]}...", callback_data=f"edit_template_{template['template_id']}"),
+                                             ^^^^^
+SyntaxError: f-string: unmatched '['
+2025-05-10 21:08:03,668 - __main__ - INFO - Бот успешно запущен!
+2025-05-10 21:08:03,668 - __main__ - INFO - Бот успешно запущен!
+Загружен токен из переменной окружения длиной: 46 символов
+==> Running 'python main_telegram_bot.py'
+2025-05-10 21:08:25,734 - __main__ - INFO - ===== Запуск Telegram бота =====
+2025-05-10 21:08:25,734 - __main__ - INFO - Обнаружена среда Render, запускаем специальную версию...
+2025-05-10 21:08:25,826 - main_render - INFO - ===== Запуск Telegram бота в режиме Render =====
+2025-05-10 21:08:25,826 - main_render - INFO - ===== Запуск Telegram бота в режиме Render =====
+==> No open ports detected, continuing to scan...
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+2025-05-10 21:08:28,022 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:08:28,022 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:08:28,022 - service.shared_state - INFO - Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:08:28,022 - service.shared_state - INFO - Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:08:28,023 - main_render - INFO - Инициализация базы данных...
+2025-05-10 21:08:28,023 - main_render - INFO - Инициализация базы данных...
+2025-05-10 21:08:28,023 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 21:08:28,023 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 21:08:28,023 - service.database - INFO - Подключение к PostgreSQL в среде Render...
+2025-05-10 21:08:28,023 - service.database - INFO - Подключение к PostgreSQL в среде Render...
+2025-05-10 21:08:28,130 [INFO] service.database: База данных инициализирована
+2025-05-10 21:08:28,130 [INFO] service.database: База данных инициализирована
+2025-05-10 21:08:28,130 - service.database - INFO - База данных инициализирована
+2025-05-10 21:08:28,130 - service.database - INFO - База данных инициализирована
+2025-05-10 21:08:28,130 - main_render - INFO - База данных инициализирована
+2025-05-10 21:08:28,130 - main_render - INFO - База данных инициализирована
+2025-05-10 21:08:28,130 - main_render - INFO - Токен бота корректный, длина: 46 символов
+2025-05-10 21:08:28,130 - main_render - INFO - Токен бота корректный, длина: 46 символов
+2025-05-10 21:08:28,130 - main_render - INFO - Запуск бота через модуль start_bot...
+2025-05-10 21:08:28,130 - main_render - INFO - Запуск бота через модуль start_bot...
+2025-05-10 21:08:28,136 - main_render - ERROR - Критическая ошибка при запуске бота: f-string: unmatched '[' (bot_fixed3.py, line 732)
+2025-05-10 21:08:28,136 - main_render - ERROR - Критическая ошибка при запуске бота: f-string: unmatched '[' (bot_fixed3.py, line 732)
+2025-05-10 21:08:28,136 - main_render - ERROR - Traceback (most recent call last):
+  File "/opt/render/project/src/main_render.py", line 56, in main
+    from start_bot import start_bot
+  File "/opt/render/project/src/start_bot.py", line 21, in <module>
+    from bot_fixed3 import (
+  File "/opt/render/project/src/bot_fixed3.py", line 732
+    InlineKeyboardButton(f"📝 Ред: {template["title"][:15]}...", callback_data=f"edit_template_{template['template_id']}"),
+                                             ^^^^^
+SyntaxError: f-string: unmatched '['
+2025-05-10 21:08:28,136 - main_render - ERROR - Traceback (most recent call last):
+  File "/opt/render/project/src/main_render.py", line 56, in main
+    from start_bot import start_bot
+  File "/opt/render/project/src/start_bot.py", line 21, in <module>
+    from bot_fixed3 import (
+  File "/opt/render/project/src/bot_fixed3.py", line 732
+    InlineKeyboardButton(f"📝 Ред: {template["title"][:15]}...", callback_data=f"edit_template_{template['template_id']}"),
+                                             ^^^^^
+SyntaxError: f-string: unmatched '['
+2025-05-10 21:08:28,137 - __main__ - INFO - Бот успешно запущен!
+2025-05-10 21:08:28,137 - __main__ - INFO - Бот успешно запущен!
+Загружен токен из переменной окружения длиной: 46 символов
+==> Running 'python main_telegram_bot.py'
+2025-05-10 21:09:03,872 - __main__ - INFO - ===== Запуск Telegram бота =====
+2025-05-10 21:09:03,873 - __main__ - INFO - Обнаружена среда Render, запускаем специальную версию...
+2025-05-10 21:09:03,969 - main_render - INFO - ===== Запуск Telegram бота в режиме Render =====
+2025-05-10 21:09:03,969 - main_render - INFO - ===== Запуск Telegram бота в режиме Render =====
+2025-05-10 21:09:06,170 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:09:06,170 [INFO] service.shared_state: Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:09:06,170 - service.shared_state - INFO - Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:09:06,170 - service.shared_state - INFO - Загружен токен из переменной окружения длиной: 46 символов
+2025-05-10 21:09:06,171 - main_render - INFO - Инициализация базы данных...
+2025-05-10 21:09:06,171 - main_render - INFO - Инициализация базы данных...
+2025-05-10 21:09:06,171 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 21:09:06,171 [INFO] service.database: Подключение к PostgreSQL в среде Render...
+2025-05-10 21:09:06,171 - service.database - INFO - Подключение к PostgreSQL в среде Render...
+2025-05-10 21:09:06,171 - service.database - INFO - Подключение к PostgreSQL в среде Render...
+2025-05-10 21:09:06,312 [INFO] service.database: База данных инициализирована
+2025-05-10 21:09:06,312 [INFO] service.database: База данных инициализирована
+2025-05-10 21:09:06,312 - service.database - INFO - База данных инициализирована
+2025-05-10 21:09:06,312 - service.database - INFO - База данных инициализирована
+2025-05-10 21:09:06,313 - main_render - INFO - База данных инициализирована
+2025-05-10 21:09:06,313 - main_render - INFO - База данных инициализирована
+2025-05-10 21:09:06,313 - main_render - INFO - Токен бота корректный, длина: 46 символов
+2025-05-10 21:09:06,313 - main_render - INFO - Токен бота корректный, длина: 46 символов
+2025-05-10 21:09:06,313 - main_render - INFO - Запуск бота через модуль start_bot...
+2025-05-10 21:09:06,313 - main_render - INFO - Запуск бота через модуль start_bot...
+2025-05-10 21:09:06,321 - main_render - ERROR - Критическая ошибка при запуске бота: f-string: unmatched '[' (bot_fixed3.py, line 732)
+2025-05-10 21:09:06,321 - main_render - ERROR - Критическая ошибка при запуске бота: f-string: unmatched '[' (bot_fixed3.py, line 732)
+2025-05-10 21:09:06,322 - main_render - ERROR - Traceback (most recent call last):
+  File "/opt/render/project/src/main_render.py", line 56, in main
+    from start_bot import start_bot
+  File "/opt/render/project/src/start_bot.py", line 21, in <module>
+    from bot_fixed3 import (
+  File "/opt/render/project/src/bot_fixed3.py", line 732
+    InlineKeyboardButton(f"📝 Ред: {template["title"][:15]}...", callback_data=f"edit_template_{template['template_id']}"),
+                                             ^^^^^
+SyntaxError: f-string: unmatched '['
+2025-05-10 21:09:06,322 - main_render - ERROR - Traceback (most recent call last):
+  File "/opt/render/project/src/main_render.py", line 56, in main
+    from start_bot import start_bot
+  File "/opt/render/project/src/start_bot.py", line 21, in <module>
+    from bot_fixed3 import (
+  File "/opt/render/project/src/bot_fixed3.py", line 732
+    InlineKeyboardButton(f"📝 Ред: {template["title"][:15]}...", callback_data=f"edit_template_{template['template_id']}"),
+                                             ^^^^^
+SyntaxError: f-string: unmatched '['
+2025-05-10 21:09:06,322 - __main__ - INFO - Бот успешно запущен!
+2025-05-10 21:09:06,322 - __main__ - INFO - Бот успешно запущен!
+Загружен токен из переменной окружения длиной: 46 символов
