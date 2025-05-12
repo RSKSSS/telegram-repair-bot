@@ -105,7 +105,7 @@ def send_error_notification_to_admin(error_msg, error_traceback=None):
         for user in users:
             try:
                 user_id = user.get('user_id') or user.get('id')
-                if user_id and get_user_role(user_id) == ROLES['ADMIN']:
+                if user_id and get_user_role(user_id) == ROLES['admin']:
                     admin_ids.append(user_id)
             except Exception as e:
                 logger.error(f"Ошибка при проверке администратора: {e}")

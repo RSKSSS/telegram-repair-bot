@@ -223,7 +223,7 @@ def get_admin_user_ids() -> List[int]:
                     from database import get_user_role
                     
                     user_id = user.get('user_id') or user.get('id')
-                    if user_id and get_user_role(user_id) == ROLES['ADMIN']:
+                    if user_id and get_user_role(user_id) == ROLES['admin']:
                         admin_ids.append(user_id)
                 except Exception as e:
                     error_logger.error(f"Ошибка при проверке роли пользователя: {e}")
