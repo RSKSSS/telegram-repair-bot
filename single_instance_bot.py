@@ -15,8 +15,11 @@ from logging.handlers import RotatingFileHandler
 from datetime import datetime
 
 import telebot
-from telebot import types
+from telebot import types, apihelper
 from telebot.apihelper import ApiTelegramException
+
+# Включаем поддержку middleware
+apihelper.ENABLE_MIDDLEWARE = True
 
 # Настройка логирования
 LOG_FOLDER = 'logs'
@@ -221,29 +224,12 @@ def run_bot_with_error_handling():
     
     # Пытаемся импортировать и запустить основной бот
     try:
-        from working_bot import start_bot_polling, bot
+        # Импортируем модуль, но не используем middleware - запускаем напрямую
+        from working_bot import start_bot_polling
         
         # Оборачиваем запуск бота в обработчик ошибок
         try:
-            # Дополнительный обработчик сообщений для отлова ошибок
-            @bot.middleware_handler(update_types=['message', 'callback_query'])
-            def error_catching_middleware(bot_instance, update):
-                try:
-                    # Просто пропускаем сообщение дальше
-                    return update
-                except Exception as e:
-                    # Обрабатываем исключение
-                    logger.error(f"Ошибка при обработке сообщения: {e}")
-                    error_traceback = traceback.format_exc()
-                    logger.error(error_traceback)
-                    
-                    # Отправляем уведомление администратору
-                    send_error_notification_to_admin(f"Ошибка при обработке сообщения: {e}", error_traceback)
-                    
-                    # Возвращаем обновление для продолжения обработки
-                    return update
-            
-            # Запускаем бот
+            # Запускаем бот без middleware, т.к. это вызывает конфликты при инициализации
             start_bot_polling()
             
         except ApiTelegramException as e:
