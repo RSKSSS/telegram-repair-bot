@@ -361,6 +361,9 @@ def handle_callback_query(call):
     """
     Обработчик всех callback-запросов от inline-кнопок
     """
+    # Явно импортируем функции для доступа к базе данных
+    from database import get_order, get_user
+    
     user_id = call.from_user.id
     message_id = call.message.message_id
     callback_data = call.data

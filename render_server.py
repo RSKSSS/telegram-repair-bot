@@ -90,42 +90,67 @@ def run_telegram_bot():
     """Запускает Telegram бот через render_bot.py"""
     logger.info('Запуск Telegram бота...')
     
-    # Добавляем задержку при старте, чтобы предыдущие экземпляры освободили соединение
+    # Проверяем, не запущен ли уже бот с этим токеном
     import time
-    logger.info('Ожидание 30 секунд перед запуском, чтобы предыдущие экземпляры бота освободили Telegram API...')
-    time.sleep(30)
-    
-    # Сначала проверяем TELEGRAM_BOT_TOKEN
+    import requests
     import os
+    import json
+    
     token = os.environ.get('TELEGRAM_BOT_TOKEN')
     if not token:
         logger.error('TELEGRAM_BOT_TOKEN не найден в переменных окружения! Бот не будет запущен.')
         return
     
+    # Сначала проверяем, можем ли мы получить обновления - если нет, значит, другой экземпляр уже работает
+    try:
+        # Пробуем сбросить webhook, если он был установлен
+        logger.info('Сброс webhook перед запуском бота...')
+        requests.get(f'https://api.telegram.org/bot{token}/deleteWebhook')
+        time.sleep(5)  # Ждем немного, чтобы изменения вступили в силу
+        
+        # Проверяем, освободился ли webhook
+        webhook_info = requests.get(f'https://api.telegram.org/bot{token}/getWebhookInfo').json()
+        if webhook_info.get('result', {}).get('url'):
+            logger.warning(f'Webhook не удалось сбросить, он все еще установлен на {webhook_info["result"]["url"]}')
+            logger.info('Повторная попытка сброса webhook и ожидание 30 секунд...')
+            requests.get(f'https://api.telegram.org/bot{token}/deleteWebhook')
+            time.sleep(30)  # Ждем дольше
+    except Exception as e:
+        logger.error(f'Ошибка при проверке/сбросе webhook: {e}')
+    
+    # Добавляем задержку перед запуском, чтобы предыдущие экземпляры освободили соединение
+    logger.info('Ожидание 10 секунд перед запуском бота...')
+    time.sleep(10)
+    
+    # Запускаем бота с вложенными обработчиками ошибок
     try:
         # Пробуем запустить бота с обработкой ошибок из модуля single_instance_bot
         logger.info('Запуск бота через single_instance_bot...')
-        from single_instance_bot import run_bot_with_error_handling
-        run_bot_with_error_handling()
-    except ImportError:
-        logger.warning('Не удалось импортировать single_instance_bot, используем стандартный запуск')
+        # Импортируем модуль, но реальный запуск делаем через working_bot
+        import single_instance_bot
+        
         try:
-            # Запускаем бота через render_bot.py
-            from render_bot import main as start_bot
-            start_bot()
-        except ImportError:
-            logger.error('Не удалось импортировать render_bot.py, пробуем working_bot.py')
-            try:
-                from working_bot import start_bot_polling
-                start_bot_polling()
-            except Exception as e:
-                logger.error(f'Ошибка при запуске бота: {e}')
-                logger.error(traceback.format_exc())
+            # Напрямую запускаем через working_bot
+            logger.info('Запуск бота через working_bot.start_bot_polling...')
+            from working_bot import start_bot_polling
+            start_bot_polling()
         except Exception as e:
-            logger.error(f'Ошибка при запуске бота: {e}')
+            logger.error(f'Ошибка при запуске бота через working_bot: {e}')
             logger.error(traceback.format_exc())
+            
+            # Пробуем альтернативные методы запуска
+            try:
+                # Запускаем бота через render_bot.py
+                logger.info('Попытка запуска через render_bot.py...')
+                from render_bot import main as start_bot
+                start_bot()
+            except ImportError:
+                logger.error('Не удалось импортировать render_bot.py, все способы запуска исчерпаны')
+            except Exception as e:
+                logger.error(f'Ошибка при запуске бота через render_bot: {e}')
+                logger.error(traceback.format_exc())
     except Exception as e:
-        logger.error(f'Ошибка при запуске бота: {e}')
+        logger.error(f'Критическая ошибка при запуске бота: {e}')
         logger.error(traceback.format_exc())
 
 def main():
