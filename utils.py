@@ -140,15 +140,13 @@ def get_main_menu_keyboard(user_id: int) -> InlineKeyboardMarkup:
     if is_admin(user_id):
         # Кнопки для администраторов
         keyboard.add(
-            InlineKeyboardButton("📝 Создать заказ", callback_data="create_order"),
+            InlineKeyboardButton("🔧 Заказы", callback_data="manage_orders"),
             InlineKeyboardButton("👥 Управление пользователями", callback_data="manage_users"),
-            InlineKeyboardButton("📊 Логи активности", callback_data="activity_logs"),
-            InlineKeyboardButton("🔧 Заказы", callback_data="manage_orders")
+            InlineKeyboardButton("📊 Логи активности", callback_data="activity_logs")
         )
     elif is_dispatcher(user_id):
         # Кнопки для диспетчеров
         keyboard.add(
-            InlineKeyboardButton("📝 Создать заказ", callback_data="create_order"),
             InlineKeyboardButton("🔧 Заказы", callback_data="manage_orders")
         )
     elif is_technician(user_id):

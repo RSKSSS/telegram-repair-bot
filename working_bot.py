@@ -6,6 +6,7 @@
 import os
 import logging
 import sys
+import datetime
 
 # Настройка логирования
 logging.basicConfig(
@@ -25,17 +26,22 @@ logger.info("Запуск полной версии бота...")
 
 # Импорт всех необходимых модулей перед запуском
 try:
+    import datetime
+    from telebot import types
     from config import ROLES, ORDER_STATUSES
+    from ui_constants import EMOJI, STATUS_NAMES  # Добавляем STATUS_NAMES
     from database import (
-        save_user, get_user, get_all_users, get_user_role, is_user_approved,
+        save_user, get_all_users, get_user_role, is_user_approved,
         get_unapproved_users, approve_user, reject_user, update_user_role,
-        save_order, update_order, get_order, get_orders_by_user, get_all_orders,
+        save_order, update_order, get_orders_by_user, get_all_orders,
         get_assigned_orders, assign_order, get_technicians, get_order_technicians,
         set_user_state, get_user_state, get_current_order_id, clear_user_state,
         save_problem_template, update_problem_template, get_problem_template,
         get_problem_templates, delete_problem_template, delete_user, delete_order,
         add_activity_log, get_activity_logs, get_admin_activity_summary, update_order_status
     )
+    from database import get_user  # Отдельный импорт из-за проблем с использованием
+    from database import get_order  # Отдельный импорт из-за проблем с использованием
     from utils import (
         get_main_menu_keyboard, get_order_status_keyboard, get_order_management_keyboard,
         get_back_to_orders_keyboard,
@@ -390,14 +396,16 @@ def handle_callback_query(call):
                     f"✅ Пользователь {user_name} подтвержден!",
                     user_id,
                     message_id,
-                    reply_markup=get_back_to_main_menu_keyboard()
+                    reply_markup=get_back_to_main_menu_keyboard(),
+                    parse_mode=None
                 )
                 
                 # Уведомляем пользователя
                 try:
                     bot.send_message(
                         target_user_id,
-                        "✅ Ваша учетная запись подтверждена администратором! Используйте /start для начала работы."
+                        "✅ Ваша учетная запись подтверждена администратором! Используйте /start для начала работы.",
+                        parse_mode=None
                     )
                 except Exception as e:
                     logger.error(f"Ошибка при отправке уведомления пользователю {target_user_id}: {e}")
@@ -432,7 +440,8 @@ def handle_callback_query(call):
                     f"❌ Пользователь {user_name} отклонен!",
                     user_id,
                     message_id,
-                    reply_markup=get_back_to_main_menu_keyboard()
+                    reply_markup=get_back_to_main_menu_keyboard(),
+                    parse_mode=None
                 )
                 
                 # Уведомляем пользователя
@@ -935,7 +944,7 @@ def handle_callback_query(call):
             )
             bot.send_message(
                 user_id,
-                "1️⃣ Введите номер телефона клиента (в формате +7XXXXXXXXXX или 8XXXXXXXXXX):",
+                "1️⃣ Введите номер телефона клиента:",
                 reply_markup=types.ForceReply(selective=True)
             )
             # Устанавливаем состояние пользователя в базе данных
@@ -1696,16 +1705,10 @@ def handle_text_message(message):
         
     elif user_state == "creating_order_client_phone":
         # Обработка создания заказа - шаг 1: телефон клиента
-        # Проверяем формат телефона
-        from utils import validate_phone
-        if not validate_phone(text):
-            bot.send_message(
-                user_id,
-                "⚠️ *Ошибка*\n\nНеверный формат номера телефона. Введите в формате +7XXXXXXXXXX или 8XXXXXXXXXX:",
-                parse_mode="Markdown",
-                reply_markup=types.ForceReply(selective=True)
-            )
-            return
+        # Принимаем любой формат телефона
+        # Записываем логи в debug_log.md
+        with open("debug_log.md", "a") as log_file:
+            log_file.write(f"\n[{datetime.datetime.now()}] Получен номер телефона: {text}\n")
         
         # Сохраняем телефон клиента и запрашиваем имя клиента
         from database import set_user_state
@@ -1714,7 +1717,7 @@ def handle_text_message(message):
         bot.send_message(
             user_id,
             f"Телефон клиента: *{text}*\n\n"
-            "2️⃣ Введите ФИО клиента:",
+            "2️⃣ О клиенте:",
             parse_mode="Markdown",
             reply_markup=types.ForceReply(selective=True)
         )
@@ -1789,6 +1792,14 @@ def handle_text_message(message):
                     except Exception as e:
                         logger.error(f"Ошибка при добавлении лога активности: {e}")
                     
+                    # Создаем инлайн кнопку для перехода к списку заказов
+                    keyboard = types.InlineKeyboardMarkup()
+                    keyboard.add(types.InlineKeyboardButton("📋 Перейти к списку заказов", callback_data="view_orders"))
+                    
+                    # Записываем логи в debug_log.md
+                    with open("debug_log.md", "a") as log_file:
+                        log_file.write(f"\n[{datetime.datetime.now()}] Создан заказ #{order_id}\n")
+                    
                     bot.send_message(
                         user_id,
                         f"✅ *Заказ успешно создан*\n\n"
@@ -1798,7 +1809,8 @@ def handle_text_message(message):
                         f"*Адрес:* {order_info['client_address']}\n"
                         f"*Проблема:* {order_info['problem_description']}\n"
                         f"*Время:* {order_info['scheduled_datetime']}",
-                        parse_mode="Markdown"
+                        parse_mode="Markdown",
+                        reply_markup=keyboard
                     )
                     
                     # Уведомляем администраторов о новом заказе
@@ -1851,8 +1863,24 @@ try:
     # Регистрируем команды AI, если модуль доступен
     register_ai_commands(bot)
     logger.info("AI команды успешно зарегистрированы")
+    
+    # Оставляем только /start и /help команды в меню бота
+    commands = [
+        types.BotCommand("/start", "Начать работу с ботом"),
+        types.BotCommand("/help", "Показать помощь")
+    ]
+    bot.set_my_commands(commands)
+    logger.info("Установлены только команды /start и /help в меню бота")
+    
+    # Записываем логи в debug_log.md
+    with open("debug_log.md", "a") as log_file:
+        log_file.write(f"\n[{datetime.datetime.now()}] Установлены только команды /start и /help в меню бота\n")
+        
 except Exception as e:
-    logger.error(f"Ошибка при регистрации AI команд: {e}")
+    logger.error(f"Ошибка при регистрации команд: {e}")
+    # Записываем ошибку в debug_log.md
+    with open("debug_log.md", "a") as log_file:
+        log_file.write(f"\n[{datetime.datetime.now()}] Ошибка при регистрации команд: {e}\n")
 
 # Запуск бота в режиме polling
 logger.info("Запуск бота в режиме polling...")

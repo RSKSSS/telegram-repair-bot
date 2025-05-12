@@ -114,6 +114,8 @@ def initialize_database():
             client_phone TEXT NOT NULL,
             client_name TEXT NOT NULL,
             problem_description TEXT NOT NULL,
+            client_address TEXT,
+            scheduled_datetime TEXT,
             status TEXT DEFAULT 'new',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             dispatcher_id BIGINT,

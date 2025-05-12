@@ -45,26 +45,28 @@
 
 ## Инструкции по деплою на Render
 
-### Вариант 1: Только телеграм-бот
+### Вариант 1: Только телеграм-бот (с улучшенной обработкой ошибок)
 
 1. Создайте новый Web Service в Render
 2. Настройте следующие параметры:
    - **Runtime**: Python 3.11 (или новее)
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `python run_full_bot.py`
+   - **Start Command**: `python deploy_bot.py`
    - **Environment Variables**:
      - `TELEGRAM_BOT_TOKEN`: [ваш токен бота]
      - `RENDER`: `true`
+     - `LOG_LEVEL`: `INFO` (опционально)
 
 ### Вариант 2: Телеграм-бот и веб-интерфейс
 
 #### Сервис 1: Телеграм-бот
 - **Name**: [ваш проект]-bot
-- **Start Command**: `python run_full_bot.py`
+- **Start Command**: `python deploy_bot.py`
 - **Environment Variables**: 
   - `TELEGRAM_BOT_TOKEN`: [ваш токен бота]
   - `RENDER`: `true`
   - `DATABASE_URL`: [URL вашей базы данных, если используется]
+  - `LOG_LEVEL`: `INFO` (опционально)
 
 #### Сервис 2: Веб-интерфейс
 - **Name**: [ваш проект]-web
