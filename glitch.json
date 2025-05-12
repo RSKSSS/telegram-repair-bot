@@ -1,0 +1,20 @@
+{
+  "install": "pip3 install --no-cache-dir -r deploy_requirements.txt",
+  "start": "python3 deploy.py",
+  "watch": {
+    "ignore": [
+      "\\.pyc$"
+    ],
+    "install": {
+      "include": [
+        "^deploy_requirements\\.txt$"
+      ]
+    },
+    "restart": {
+      "include": [
+        "\\.py$"
+      ]
+    },
+    "throttle": 1000
+  }
+}
