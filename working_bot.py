@@ -1882,6 +1882,22 @@ except Exception as e:
     with open("debug_log.md", "a") as log_file:
         log_file.write(f"\n[{datetime.datetime.now()}] Ошибка при регистрации команд: {e}\n")
 
-# Запуск бота в режиме polling
-logger.info("Запуск бота в режиме polling...")
-bot.polling(none_stop=True, interval=0, timeout=60)
+# Создаем функцию start_bot_polling для запуска бота
+def start_bot_polling():
+    """
+    Запускает бота в режиме polling с обработкой ошибок
+    
+    Returns:
+        bool: True, если запуск успешен, False если произошла ошибка
+    """
+    try:
+        logger.info("Запуск бота в режиме polling...")
+        bot.polling(none_stop=True, interval=1, timeout=60)
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка при запуске бота: {e}")
+        return False
+
+# Если файл запущен напрямую, запускаем бота
+if __name__ == "__main__":
+    start_bot_polling()
